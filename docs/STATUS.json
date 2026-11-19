@@ -7,14 +7,15 @@
       "triggering_reports": []
     },
     "needs_human_decision": [
+      "engine_floor:linux_wayland:webkitgtk",
       "engine_floor:linux_x11:webkitgtk",
       "engine_floor:windows:webview2"
     ],
     "reports": {
       "CI:linux_x11:github-actions": {
         "budget_minutes": 60,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "pass",
+        "stopped_reason": "completed"
       },
       "CI:windows:github-actions": {
         "budget_minutes": 60,
@@ -23,8 +24,8 @@
       },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "blocked"
       },
       "engine_floor:linux_x11:webkitgtk": {
         "budget_minutes": 45,

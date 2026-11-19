@@ -8,10 +8,35 @@
     },
     "needs_human_decision": [],
     "reports": {
+      "CI:linux_x11:github-actions": {
+        "budget_minutes": 60,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "CI:windows:github-actions": {
+        "budget_minutes": 60,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "engine_floor:linux_wayland:webkitgtk": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "engine_floor:linux_x11:webkitgtk": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
       "engine_floor:macos:wkwebview": {
         "budget_minutes": 45,
         "outcome": "pass",
         "stopped_reason": "completed"
+      },
+      "engine_floor:windows:webview2": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
       }
     }
   },

@@ -1,0 +1,30 @@
+name: M0 Windows feasibility
+on:
+  push:
+    paths:
+      - '.github/workflows/m0-windows.yml'
+      - 'spikes/engine-floor/windows/**'
+      - 'spikes/s1/**'
+  pull_request:
+    paths:
+      - '.github/workflows/m0-windows.yml'
+      - 'spikes/engine-floor/windows/**'
+      - 'spikes/s1/**'
+permissions:
+  contents: read
+jobs:
+  engine-floor:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile and launch the native floor host
+        run: ./spikes/engine-floor/windows/run.ps1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: windows-m0
+          path: m0-artifacts/
+          retention-days: 7

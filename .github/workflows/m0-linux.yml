@@ -1,0 +1,52 @@
+name: M0 Linux feasibility
+on:
+  push:
+    paths:
+      - '.github/workflows/m0-linux.yml'
+      - 'spikes/engine-floor/linux/**'
+      - 'spikes/s1/**'
+  pull_request:
+    paths:
+      - '.github/workflows/m0-linux.yml'
+      - 'spikes/engine-floor/linux/**'
+      - 'spikes/s1/**'
+permissions:
+  contents: read
+jobs:
+  engine-floor:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [x11, wayland]
+    env:
+      BACKEND: ${{ matrix.backend }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install native dependencies
+        run: |
+          mkdir -p m0-artifacts
+          set -o pipefail
+          sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev xvfb xauth weston
+      - name: Compile and launch the native floor host
+        run: |
+          set -euo pipefail
+          {
+            printf 'source_commit=%s\nrunner_image=%s/%s\n' "$GITHUB_SHA" "$ImageOS" "$ImageVersion"
+            uname -smr
+            cat /etc/os-release
+            dpkg-query -W libgtk-3-0t64 libwebkit2gtk-4.1-0 xvfb weston
+            cc -O2 -Wall -Wextra -Werror spikes/engine-floor/linux/main.c -o m0-artifacts/muffin-floor $(pkg-config --cflags --libs webkit2gtk-4.1)
+            sha256sum m0-artifacts/muffin-floor
+            stat -c 'binary_bytes=%s' m0-artifacts/muffin-floor
+            timeout 35s bash spikes/engine-floor/linux/run.sh "$BACKEND" "$PWD/m0-artifacts/muffin-floor"
+          } 2>&1 | tee m0-artifacts/engine-floor.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: linux-${{ matrix.backend }}-m0
+          path: m0-artifacts/
+          retention-days: 7

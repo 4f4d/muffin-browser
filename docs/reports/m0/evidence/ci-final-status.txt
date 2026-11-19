@@ -1,0 +1,8 @@
+2026-11-19 | Workflow observation at the S1 handoff
+Commit: 59faf2f832a3fb765a0edafb4b52398358a0b8e2
+Windows runner: https://github.com/4f4d/muffin-browser/actions/runs/44548736389
+Job 135646342526 succeeded. The native floor, candidate exercise and artifact upload all succeeded.
+Linux runner: https://github.com/4f4d/muffin-browser/actions/runs/44548736412
+Job 135646343201 failed at Build and exercise each S1 candidate. Dependency installation, floor compilation, both floor backends and artifact upload succeeded. The handoff relies on the earlier inspected comparison archive and the separate physical-server recovery logs for detailed Linux claims.
+Status guard: https://github.com/4f4d/muffin-browser/actions/runs/44548736356
+Conclusion: success.

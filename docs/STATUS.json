@@ -26,6 +26,9 @@
       "S5:linux_x11:wry-tao",
       "S5:macos:wry-tao",
       "S5:windows:wry-tao",
+      "S8:macos:wry-tao-x64",
+      "S8:windows:wry-tao-arm64",
+      "S8:windows:wry-tao-x64",
       "engine_floor:linux_wayland:webkitgtk",
       "engine_floor:linux_x11:webkitgtk",
       "engine_floor:windows:webview2"
@@ -158,28 +161,28 @@
       },
       "S8:linux_x11:wry-tao-x64": {
         "budget_minutes": 45,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "pass",
+        "stopped_reason": "completed"
       },
       "S8:macos:wry-tao-arm64": {
         "budget_minutes": 45,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "pass",
+        "stopped_reason": "completed"
       },
       "S8:macos:wry-tao-x64": {
         "budget_minutes": 45,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "completed"
       },
       "S8:windows:wry-tao-arm64": {
         "budget_minutes": 45,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "completed"
       },
       "S8:windows:wry-tao-x64": {
         "budget_minutes": 45,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "completed"
       },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,

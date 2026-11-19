@@ -103,6 +103,33 @@ jobs:
               --binary "$target/debug/muffin-s2a-popup" --work-dir "m0-artifacts/s2a-$backend" --timeout-seconds 90 --auto || failed=1
           done
           exit "$failed"
+      - name: Exercise everyday features on headless X11 and Wayland
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' && hashFiles('spikes/s1/followup/s4_fixture.py') != '' }}
+        run: |
+          set -euo pipefail
+          target="$RUNNER_TEMP/muffin-wry-tao"
+          {
+            printf 'source_commit=%s\nrunner_image=%s/%s\n' "$GITHUB_SHA" "$ImageOS" "$ImageVersion"
+            uname -smr
+            rustc -Vv
+            cargo -V
+            python3 --version
+            pkg-config --modversion webkit2gtk-4.1
+            cargo build --locked --manifest-path spikes/s1/wry-tao/Cargo.toml --bin muffin-s4-features --target-dir "$target"
+            sha256sum "$target/debug/muffin-s4-features"
+          } 2>&1 | tee m0-artifacts/s4-build.txt
+          cp "$target/debug/muffin-s4-features" m0-artifacts/
+          failed=0
+          for backend in x11 wayland; do
+            bash spikes/engine-floor/linux/run.sh "$backend" python3 spikes/s1/followup/s4_fixture.py \
+              --binary "$target/debug/muffin-s4-features" --work-dir "$RUNNER_TEMP/s4-$backend" \
+              --timeout-seconds 80 || failed=1
+            mkdir -p "m0-artifacts/s4-$backend"
+            for artifact in "$RUNNER_TEMP/s4-$backend"/*.{log,json,jsonl}; do
+              if [[ -f "$artifact" ]]; then cp "$artifact" "m0-artifacts/s4-$backend/"; fi
+            done
+          done
+          exit "$failed"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

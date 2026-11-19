@@ -70,6 +70,29 @@ jobs:
           Copy-Item $binary m0-artifacts/
           python spikes/s1/followup/s2a_fixture.py --binary $binary --work-dir 'm0-artifacts/s2a-windows' --timeout-seconds 90 --auto
           exit $LASTEXITCODE
+      - name: Exercise everyday features on Windows Server
+        if: ${{ !cancelled() && hashFiles('spikes/s1/followup/s4_fixture.py') != '' }}
+        run: |
+          $target = "$env:RUNNER_TEMP/muffin-wry-tao"
+          $work = "$env:RUNNER_TEMP/s4-windows"
+          $out = 'm0-artifacts/s4-windows'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          @("source_commit=$env:GITHUB_SHA", "runner_image=$env:ImageOS/$env:ImageVersion",
+            "os=$([System.Environment]::OSVersion.Version)", "architecture=$env:PROCESSOR_ARCHITECTURE") |
+            Set-Content 'm0-artifacts/s4-build.txt'
+          rustc -Vv | Add-Content 'm0-artifacts/s4-build.txt'
+          cargo -V | Add-Content 'm0-artifacts/s4-build.txt'
+          python --version | Add-Content 'm0-artifacts/s4-build.txt'
+          cargo build --locked --manifest-path spikes/s1/wry-tao/Cargo.toml --bin muffin-s4-features --target-dir $target 2>&1 |
+            Tee-Object -FilePath 'm0-artifacts/s4-build.txt' -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $binary = Join-Path $target 'debug/muffin-s4-features.exe'
+          (Get-FileHash -Algorithm SHA256 $binary).Hash.ToLower() | Add-Content 'm0-artifacts/s4-build.txt'
+          Copy-Item $binary m0-artifacts/
+          python spikes/s1/followup/s4_fixture.py --binary $binary --work-dir $work --timeout-seconds 80
+          $fixtureExit = $LASTEXITCODE
+          Get-ChildItem -File $work | Where-Object { $_.Extension -in '.log','.json','.jsonl' } | Copy-Item -Destination $out
+          exit $fixtureExit
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

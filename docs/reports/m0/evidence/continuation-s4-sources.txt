@@ -1,0 +1,61 @@
+S4 source-only scope and version anchor. These references do not prove the platform behavior.
+project_commit=cd015831735db3bfea6e8f6ebfa3db424a04bfcc
+9:tao = "=0.37.2"
+10:wry = "=0.57.2"
+13:gtk = "0.18"
+14:webkit2gtk = { version = "=2.0.2", features = ["v2_34"] }
+WRY macOS source: wkwebview/mod.rs and download.rs
+wkwebview/download.rs:93:pub(crate) fn download_did_finish(this: &WryDownloadDelegate, download: &WKDownload) {
+wkwebview/mod.rs:278:          (true, _, _) => WKWebsiteDataStore::nonPersistentDataStore(mtm),
+wkwebview/mod.rs:284:            WKWebsiteDataStore::dataStoreForIdentifier(&identifier, mtm)
+wkwebview/mod.rs:288:        config.setWebsiteDataStore(&data_store);
+wkwebview/mod.rs:949:  pub fn print(&self) -> crate::Result<()> {
+wkwebview/mod.rs:961:        .respondsToSelector(objc2::sel!(printOperationWithPrintInfo:));
+wkwebview/mod.rs:972:        let print_operation = self.webview.printOperationWithPrintInfo(&print_info);
+WRY Windows source: webview2/mod.rs
+309:    let additional_browser_args = pl_attrs.additional_browser_args.unwrap_or_else(|| {
+312:      let default_args = "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection";
+342:      options.set_additional_browser_arguments(additional_browser_args);
+358:      CreateCoreWebView2EnvironmentWithOptions(
+424:          controller_opts.SetIsInPrivateModeEnabled(incognito)?;
+427:            controller_opts.SetProfileName(&HSTRING::from(name))?;
+769:            args.SetCancel(!allow)?;
+880:        webview4.add_DownloadStarting(
+941:                args.SetResultFilePath(&path)?;
+944:                args.SetCancel(true)?;
+1889:      "window.print()",
+WRY Linux source: webkitgtk/mod.rs and web_context.rs
+webkitgtk/web_context.rs:32:  pub fn new(data_directory: Option<&Path>) -> Self {
+webkitgtk/web_context.rs:35:    if let Some(data_directory) = data_directory {
+webkitgtk/web_context.rs:38:        .base_cache_directory(data_directory.to_string_lossy())
+webkitgtk/web_context.rs:39:        .base_data_directory(data_directory.to_string_lossy())
+webkitgtk/web_context.rs:42:        cookie_manager.set_persistent_storage(
+webkitgtk/web_context.rs:43:          &data_directory.join("cookies").to_string_lossy(),
+webkitgtk/web_context.rs:54:  pub fn new_ephemeral() -> Self {
+webkitgtk/web_context.rs:55:    let context = WebContext::new_ephemeral();
+webkitgtk/web_context.rs:314:    context.connect_download_started(move |_context, download| {
+webkitgtk/web_context.rs:318:      download.connect_decide_destination(move |download, suggested_filename| {
+webkitgtk/web_context.rs:355:              download.set_destination(&download_destination.to_string_lossy());
+webkitgtk/web_context.rs:357:              download.cancel();
+webkitgtk/web_context.rs:365:      download.connect_failed({
+webkitgtk/web_context.rs:373:        download.connect_finished({
+webkitgtk/mod.rs:42:  PolicyDecisionType, PrintOperationExt, SettingsExt, URIRequest, URIRequestExt,
+webkitgtk/mod.rs:260:      default_context = WebContext::new_ephemeral();
+webkitgtk/mod.rs:780:    let print = webkit2gtk::PrintOperation::new(&self.webview);
+Primary references checked 2026-11-19
+https://developer.apple.com/documentation/webkit/wkwebsitedatastore?preferredLanguage=occ
+https://developer.apple.com/documentation/webkit/wkdownload
+https://developer.apple.com/documentation/webkit/wkcontentruleliststore
+https://webkit.org/blog/3476/content-blockers-first-look/
+https://webkitgtk.org/reference/webkit2gtk/2.34.4/WebKitUserContentFilterStore.html
+https://webkitgtk.org/reference/webkit2gtk/stable/class.Download.html
+https://webkitgtk.org/reference/webkit2gtk/stable/class.PrintOperation.html
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadoperation?view=webview2-1.0.4314.35
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadstartingeventargs?view=webview2-1.0.4314.35
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/how-to/print
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/how-to/webresourcerequested
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/multi-profile-support
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-related-events
+https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-attachmentmanager
+https://easylist.to/pages/licence.html
+https://github.com/easylist/easylist/blob/master/package.json

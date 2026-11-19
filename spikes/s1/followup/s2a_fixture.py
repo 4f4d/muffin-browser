@@ -64,6 +64,10 @@ function openCase(url) {{
  }}
 }}
 document.addEventListener('click',e=>{{const btn=e.target.closest('[data-case]');if(btn)report('parent-click',{{case:btn.dataset.case,trusted:e.isTrusted}});}});
+if (!{json.dumps(auto)}) {{
+ const rect=document.querySelector('[data-case="script"]').getBoundingClientRect();
+ report('script-button-center',{{x:rect.x+rect.width/2,y:rect.y+rect.height/2,dpr:devicePixelRatio}});
+}}
 window.addEventListener('message',e=>{{
  if(!{json.dumps(origins)}.includes(e.origin)||e.data?.fixture!=='popup-message')return;
  const data={{origin:e.origin,data:e.data}};
@@ -101,7 +105,7 @@ def make_handler(port_index, origins, log_file, log_lock, auto):
                 if not 0 <= size <= 2048:
                     raise ValueError("body size")
                 event = json.loads(self.rfile.read(size))
-                allowed = {"opener-message", "auth-callback", "close-request", "close-observed", "popup-ready", "open-return", "parent-click"}
+                allowed = {"opener-message", "auth-callback", "close-request", "close-observed", "popup-ready", "open-return", "parent-click", "script-button-center"}
                 if not isinstance(event, dict) or event.get("kind") not in allowed:
                     raise ValueError("event shape")
                 record = {"at": round(time.time(), 3), "server": origins[port_index], "event": event}

@@ -21,7 +21,7 @@ $batch = Join-Path $stage 'compile.cmd'
 call "$vcvars"
 if errorlevel 1 exit /b 1
 cd /d "$stage"
-cl /nologo /std:c++17 /O2 /EHsc /I"$sdk\include" "$source" /Fe:"$binary" /link "$sdk\x64\WebView2LoaderStatic.lib" user32.lib ole32.lib shlwapi.lib version.lib
+cl /nologo /std:c++17 /O2 /EHsc /I"$sdk\include" "$source" /Fe:"$binary" /link "$sdk\x64\WebView2LoaderStatic.lib" user32.lib ole32.lib shlwapi.lib version.lib advapi32.lib
 "@ | Set-Content -Encoding ascii $batch
 @(
     "source_commit=$env:GITHUB_SHA"

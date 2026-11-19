@@ -1,0 +1,260 @@
+source_commit=60c5216d48cc7f8de16a03e12aace863ebf02234
+image=muffin-m0a-wayland:59faf2f832a3
+rustc 1.95.0 (59807616e 2026-04-14)
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+Linux 6.8.0-147-generic x86_64
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.5 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+2.52.6
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling pkg-config v0.3.34
+   Compiling hashbrown v0.17.1
+   Compiling equivalent v1.0.3
+   Compiling winnow v0.5.40
+   Compiling target-lexicon v0.12.16
+   Compiling smallvec v1.16.6
+   Compiling version-compare v0.2.1
+   Compiling heck v0.5.0
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling libc v0.2.191
+   Compiling version_check v0.9.5
+   Compiling indexmap v2.14.2
+   Compiling cfg-expr v0.15.8
+   Compiling proc-macro-error-attr v1.0.4
+   Compiling syn v1.0.109
+   Compiling proc-macro-error v1.0.4
+   Compiling syn v3.0.10
+   Compiling syn v2.0.119
+   Compiling futures-core v0.3.34
+   Compiling thiserror v1.0.69
+   Compiling futures-task v0.3.34
+   Compiling once_cell v1.21.4
+   Compiling pin-project-lite v0.2.17
+   Compiling slab v0.4.12
+   Compiling heck v0.4.1
+   Compiling memchr v2.8.3
+   Compiling futures-channel v0.3.34
+   Compiling stable_deref_trait v1.2.1
+   Compiling bitflags v2.13.2
+   Compiling gio v0.18.4
+   Compiling futures-io v0.3.34
+   Compiling writeable v0.6.4
+   Compiling semver v1.0.28
+   Compiling autocfg v1.5.1
+   Compiling litemap v0.8.3
+   Compiling utf_types v1.0.0
+   Compiling rustc_version v0.4.1
+   Compiling icu_properties_data v2.4.0
+   Compiling memoffset v0.9.1
+   Compiling utf8_iter v1.1.0
+   Compiling icu_normalizer_data v2.4.0
+   Compiling field-offset v0.3.6
+   Compiling x11 v2.21.0
+   Compiling gtk v0.18.2
+   Compiling libdbus-sys v0.2.7
+   Compiling x11-dl v2.21.0
+   Compiling parking_lot_core v0.9.12
+   Compiling num-conv v0.2.2
+   Compiling bitflags v1.3.2
+   Compiling crossbeam-utils v0.8.23
+   Compiling time-core v0.1.9
+   Compiling percent-encoding v2.3.2
+   Compiling time-macros v0.2.32
+   Compiling cookie v0.18.2
+   Compiling toml_datetime v0.6.3
+   Compiling serde_spanned v0.6.9
+   Compiling powerfmt v0.2.1
+   Compiling scopeguard v1.2.0
+   Compiling toml_edit v0.20.2
+   Compiling toml_edit v0.19.15
+   Compiling zmij v1.0.23
+   Compiling deranged v0.5.9
+   Compiling cfg-if v1.0.5
+   Compiling thiserror v2.0.21
+   Compiling option-ext v0.2.0
+   Compiling itoa v1.0.19
+   Compiling dirs-sys v0.5.0
+   Compiling lock_api v0.4.14
+   Compiling form_urlencoded v1.2.2
+   Compiling synstructure v0.14.0
+   Compiling time v0.3.55
+   Compiling toml v0.8.2
+   Compiling proc-macro-crate v2.0.2
+   Compiling system-deps v6.2.2
+   Compiling proc-macro-crate v1.3.1
+   Compiling thiserror-impl v1.0.69
+   Compiling dlopen2_derive v0.4.3
+   Compiling gtk3-macros v0.18.2
+   Compiling serde_json v1.0.154
+   Compiling glib-sys v0.18.1
+   Compiling gobject-sys v0.18.0
+   Compiling gio-sys v0.18.1
+   Compiling gdk-sys v0.18.2
+   Compiling futures-macro v0.3.34
+   Compiling zerofrom-derive v0.1.8
+   Compiling yoke-derive v0.8.4
+   Compiling pango-sys v0.18.0
+   Compiling glib-macros v0.18.5
+   Compiling futures-util v0.3.34
+   Compiling cairo-sys-rs v0.18.2
+   Compiling gdk-pixbuf-sys v0.18.0
+   Compiling zerofrom v0.1.8
+   Compiling yoke v0.8.4
+   Compiling atk-sys v0.18.2
+   Compiling zerovec-derive v0.11.7
+   Compiling displaydoc v0.2.7
+   Compiling gtk-sys v0.18.2
+   Compiling zerotrie v0.2.5
+   Compiling zerovec v0.11.9
+   Compiling javascriptcore-rs-sys v1.1.1
+   Compiling futures-executor v0.3.34
+   Compiling soup3-sys v0.5.0
+   Compiling webkit2gtk-sys v2.0.2
+   Compiling tinystr v0.8.5
+   Compiling potential_utf v0.1.6
+   Compiling glib v0.18.5
+   Compiling icu_locale_core v2.4.0
+   Compiling icu_collections v2.4.0
+   Compiling gdkx11-sys v0.18.2
+   Compiling thiserror-impl v2.0.21
+   Compiling wry v0.57.2
+   Compiling bytes v1.12.2
+   Compiling raw-window-handle v0.6.2
+   Compiling icu_provider v2.4.0
+   Compiling dpi v0.1.2
+   Compiling icu_properties v2.4.0
+   Compiling icu_normalizer v2.4.0
+   Compiling http v1.5.0
+   Compiling idna_adapter v1.2.2
+   Compiling gdkwayland-sys v0.18.2
+   Compiling idna v1.1.0
+   Compiling dlopen2 v0.8.2
+   Compiling url v2.5.8
+   Compiling crossbeam-channel v0.5.17
+   Compiling dbus v0.9.12
+   Compiling parking_lot v0.12.5
+   Compiling dirs v7.0.0
+   Compiling log v0.4.35
+   Compiling cairo-rs v0.18.5
+   Compiling atk v0.18.2
+   Compiling javascriptcore-rs v1.1.2
+   Compiling gdk-pixbuf v0.18.5
+   Compiling pango v0.18.3
+   Compiling soup3 v0.5.0
+   Compiling gdk v0.18.2
+   Compiling gdkx11 v0.18.2
+   Compiling webkit2gtk v2.0.2
+   Compiling tao v0.37.2
+   Compiling muffin-s1-wry v0.1.0 (/fixture/spikes/s1/wry-tao)
+    Finished `release` profile [optimized] target(s) in 1m 14s
+dpkg-deb: building package 'muffin-s4-fixture' in '/tmp/muffin-s4-fixture-amd64.deb'.
+ new Debian package, version 2.0.
+ size 547910 bytes: control archive=244 bytes.
+     192 bytes,     6 lines      control
+ Package: muffin-s4-fixture
+ Version: 0.0.0
+ Architecture: amd64
+ Maintainer: Muffin M0a fixture
+ Depends: libgtk-3-0t64, libwebkit2gtk-4.1-0, libx11-6
+ Description: local synthetic WRY TAO fixture
+a2f93bebb644e9c60e27676792660f2ea9be7b5919ced7ea888f56d898a4ae2d  /tmp/extracted/usr/lib/muffin-s4-fixture/muffin-s4-features
+b9df1daa552cdf4462a8dbcf8124551228abef5ee47eab7b7fadc4b59ed4baf9  /tmp/muffin-s4-fixture-amd64.deb
+/tmp/extracted/usr/lib/muffin-s4-fixture/muffin-s4-features bytes=1859248
+/tmp/muffin-s4-fixture-amd64.deb bytes=547910
+1832	/tmp/extracted
+  Class:                             ELF64
+  Type:                              DYN (Position-Independent Executable file)
+  Machine:                           Advanced Micro Devices X86-64
+ 0x0000000000000001 (NEEDED)             Shared library: [libwebkit2gtk-4.1.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgtk-3.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgdk-3.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libcairo.so.2]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgdk_pixbuf-2.0.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libsoup-3.0.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgio-2.0.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libjavascriptcoregtk-4.1.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgobject-2.0.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libglib-2.0.so.0]
+ 0x0000000000000001 (NEEDED)             Shared library: [libdbus-1.so.3]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]
+gstreamer1.0-plugins-bad		 KiB
+gstreamer1.0-plugins-base:amd64	1.24.2-1ubuntu0.7	2456 KiB
+gstreamer1.0-plugins-good:amd64	1.24.2-1ubuntu1.8	7420 KiB
+libgstreamer1.0-0:amd64	1.24.2-1ubuntu0.2	3488 KiB
+libgtk-3-0t64:amd64	3.24.41-4ubuntu1.3	9772 KiB
+libjavascriptcoregtk-4.1-0:amd64	2.52.6-0ubuntu0.24.04.2	31624 KiB
+libwayland-client0:amd64	1.22.0-2.1build1	82 KiB
+libwebkit2gtk-4.1-0:amd64	2.52.6-0ubuntu0.24.04.2	93416 KiB
+libx11-6:amd64	2:1.8.7-1ubuntu0.1	1367 KiB
+package_extraction_run_backend=x11
+{"base_url": "http://127.0.0.1:40761", "content_log": "/tmp/receipt-x11/content-events.jsonl", "downloads": "/tmp/receipt-x11/downloads", "native_log": "/tmp/receipt-x11/native.log"}
+{"core_observed": true, "download_results": [{"bytes": 786432, "matches_expected": true, "name": "download-01.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}, {"bytes": 786432, "matches_expected": true, "name": "download-02.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}], "exit_code": 0, "pdf_navigation_finished": true, "timeout": false}
+{
+  "exit_code": 0,
+  "timeout": false,
+  "core_observed": true,
+  "pdf_navigation_finished": true,
+  "download_results": [
+    {
+      "name": "download-01.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "xdg_origin_url": true
+    },
+    {
+      "name": "download-02.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "xdg_origin_url": true
+    }
+  ]
+}
+package_extraction_run_backend=wayland
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+{"base_url": "http://127.0.0.1:34409", "content_log": "/tmp/receipt-wayland/content-events.jsonl", "downloads": "/tmp/receipt-wayland/downloads", "native_log": "/tmp/receipt-wayland/native.log"}
+{"core_observed": true, "download_results": [{"bytes": 786432, "matches_expected": true, "name": "download-01.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}, {"bytes": 786432, "matches_expected": true, "name": "download-02.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}], "exit_code": 0, "pdf_navigation_finished": true, "timeout": false}
+{
+  "exit_code": 0,
+  "timeout": false,
+  "core_observed": true,
+  "pdf_navigation_finished": true,
+  "download_results": [
+    {
+      "name": "download-01.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "xdg_origin_url": true
+    },
+    {
+      "name": "download-02.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "xdg_origin_url": true
+    }
+  ]
+}

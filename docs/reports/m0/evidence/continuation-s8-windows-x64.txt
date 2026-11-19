@@ -1,0 +1,37 @@
+source_commit=cf8b359cbfd462378a0937393c1ddca8cac06253
+run=https://github.com/4f4d/muffin-browser/actions/runs/44572239827
+artifact=https://github.com/4f4d/muffin-browser/actions/runs/44572239827/artifacts/14555561054
+runner=Windows Server 2025, AMD64, WebView2=156.0.4314.58
+Cargo debug executable from source-identified CI artifact; ZIP contains the fixture executable only.
+binary_sha256=79b12e328b9027e0edd43edec2d461ab9036d2c969edd6ecdfb9782450f1f653
+PE32+ executable (console) x86-64, for MS Windows
+executable_bytes=2500096
+zip_bytes=850683
+zip_sha256=8c3aaae0c096f1a10401f7952a8110959b9f13b0941cbd0b730c6e98404cde0c
+/private/tmp/muffin-s8-packaging/windows-x64/muffin-s4-features.exe:	file format coff-x86-64
+    DLL Name: advapi32.dll
+    DLL Name: ntdll.dll
+    DLL Name: kernel32.dll
+    DLL Name: ole32.dll
+    DLL Name: dwmapi.dll
+    DLL Name: user32.dll
+    DLL Name: api-ms-win-core-synch-l1-2-0.dll
+    DLL Name: shlwapi.dll
+    DLL Name: comctl32.dll
+    DLL Name: gdi32.dll
+    DLL Name: combase.dll
+    DLL Name: shell32.dll
+    DLL Name: imm32.dll
+    DLL Name: oleaut32.dll
+    DLL Name: bcryptprimitives.dll
+    DLL Name: ADVAPI32.dll
+    DLL Name: KERNEL32.dll
+    DLL Name: VCRUNTIME140.dll
+    DLL Name: VCRUNTIME140_1.dll
+    DLL Name: api-ms-win-crt-math-l1-1-0.dll
+    DLL Name: api-ms-win-crt-string-l1-1-0.dll
+    DLL Name: api-ms-win-crt-convert-l1-1-0.dll
+    DLL Name: api-ms-win-crt-runtime-l1-1-0.dll
+    DLL Name: api-ms-win-crt-stdio-l1-1-0.dll
+    DLL Name: api-ms-win-crt-locale-l1-1-0.dll
+    DLL Name: api-ms-win-crt-heap-l1-1-0.dll

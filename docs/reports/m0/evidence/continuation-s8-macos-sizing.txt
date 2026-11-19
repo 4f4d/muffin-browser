@@ -1,0 +1,105 @@
+source_commit=60c5216d48cc7f8de16a03e12aace863ebf02234
+ProductName:		macOS
+ProductVersion:		15.8.3
+BuildVersion:		24H241
+arm64
+rustc 1.95.0 (59807616e 2026-04-14)
+binary: rustc
+commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860
+commit-date: 2026-04-14
+host: aarch64-apple-darwin
+release: 1.95.0
+LLVM version: 22.1.2
+26.2
+package=arm64
+arm64
+299df778ebb8832b60e21b33e1c5269dbae54949fadb0437a1a5117d008f6a39  MuffinS4.app/Contents/MacOS/muffin-s4-features
+819957d4302eaab78c1515fc99ef2128a915339755d5605e280f90c0471433e1  MuffinS4.zip
+binary_bytes=1709776
+zip_bytes=672701
+bundle_allocated_KiB=1676
+ platform 1
+    minos 11.0
+      sdk 26.2
+package=x64
+x86_64
+93e1e4285f7e14539326dc3b9b1e1d14ef7fe513ebca6d3c7b410e091192e6df  MuffinS4.app/Contents/MacOS/muffin-s4-features
+191ec7703f1e7396c38c9989b9f9979498d87f5fbde8562127072f9525360896  MuffinS4.zip
+binary_bytes=1719280
+zip_bytes=695150
+bundle_allocated_KiB=1684
+package=universal
+x86_64 arm64
+29508fedfd4bd640bdef5e67db209d7368846d5edbcf5d02c9601710b0a9050b  MuffinS4.app/Contents/MacOS/muffin-s4-features
+547c2ceb1bb256792bd8216501816f912130887d917288af9acebfb81ebe94dd  MuffinS4.zip
+binary_bytes=3446480
+zip_bytes=1366894
+bundle_allocated_KiB=3372
+ platform 1
+    minos 11.0
+      sdk 26.2
+Representative arm64 linked system dependencies
+	/System/Library/Frameworks/WebKit.framework/Versions/A/WebKit (compatibility version 1.0.0, current version 623.1.14)
+	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices (compatibility version 1.0.0, current version 66.0.0)
+	/System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics (compatibility version 64.0.0, current version 1965.2.3)
+	/System/Library/Frameworks/Carbon.framework/Versions/A/Carbon (compatibility version 2.0.0, current version 170.0.0)
+	/System/Library/Frameworks/CoreVideo.framework/Versions/A/CoreVideo (compatibility version 1.2.0, current version 726.2.0)
+	/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation (compatibility version 150.0.0, current version 4201.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)
+	/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+	/System/Library/Frameworks/AppKit.framework/Versions/C/AppKit (compatibility version 45.0.0, current version 2685.30.107)
+	/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 4201.0.0)
+	/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)
+	/System/Library/Frameworks/ColorSync.framework/Versions/A/ColorSync (compatibility version 1.0.0, current version 3813.2.2)
+	/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices (compatibility version 1.0.0, current version 1226.0.0)
+--- Verified file format, hashes and ZIP checks
+Architecture diagnostics and receipt
+package-id: com.apple.pkg.RosettaUpdateAuto
+version: 1.0.0.0.1.1793883244
+package=arm64
+arm64
+/private/tmp/muffin-s8-packaging/arm64/MuffinS4.app/Contents/MacOS/muffin-s4-features:
+Load command 10
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+ platform MACOS
+    minos 11.0
+      sdk 26.2
+   ntools 1
+     tool LD
+  version 1230.1
+819957d4302eaab78c1515fc99ef2128a915339755d5605e280f90c0471433e1  MuffinS4.zip
+299df778ebb8832b60e21b33e1c5269dbae54949fadb0437a1a5117d008f6a39  MuffinS4.app/Contents/MacOS/muffin-s4-features
+No errors detected in compressed data of /private/tmp/muffin-s8-packaging/arm64/MuffinS4.zip.
+package=x64
+x86_64
+/private/tmp/muffin-s8-packaging/x64/MuffinS4.app/Contents/MacOS/muffin-s4-features:
+Load command 9
+      cmd LC_VERSION_MIN_MACOSX
+  cmdsize 16
+  version 10.12
+      sdk 26.2
+191ec7703f1e7396c38c9989b9f9979498d87f5fbde8562127072f9525360896  MuffinS4.zip
+93e1e4285f7e14539326dc3b9b1e1d14ef7fe513ebca6d3c7b410e091192e6df  MuffinS4.app/Contents/MacOS/muffin-s4-features
+No errors detected in compressed data of /private/tmp/muffin-s8-packaging/x64/MuffinS4.zip.
+package=universal
+x86_64 arm64
+/private/tmp/muffin-s8-packaging/universal/MuffinS4.app/Contents/MacOS/muffin-s4-features (architecture x86_64):
+Load command 9
+      cmd LC_VERSION_MIN_MACOSX
+  cmdsize 16
+  version 10.12
+      sdk 26.2
+/private/tmp/muffin-s8-packaging/universal/MuffinS4.app/Contents/MacOS/muffin-s4-features (architecture arm64):
+Load command 10
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+ platform MACOS
+    minos 11.0
+      sdk 26.2
+   ntools 1
+     tool LD
+  version 1230.1
+547c2ceb1bb256792bd8216501816f912130887d917288af9acebfb81ebe94dd  MuffinS4.zip
+29508fedfd4bd640bdef5e67db209d7368846d5edbcf5d02c9601710b0a9050b  MuffinS4.app/Contents/MacOS/muffin-s4-features
+No errors detected in compressed data of /private/tmp/muffin-s8-packaging/universal/MuffinS4.zip.

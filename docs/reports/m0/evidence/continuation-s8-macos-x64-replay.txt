@@ -1,0 +1,45 @@
+source_commit=60c5216d48cc7f8de16a03e12aace863ebf02234
+tested_slice=x64 host=macOS-15.8.3-arm64
+test_mode=Rosetta translation on Apple silicon
+191ec7703f1e7396c38c9989b9f9979498d87f5fbde8562127072f9525360896  MuffinS4.zip
+93e1e4285f7e14539326dc3b9b1e1d14ef7fe513ebca6d3c7b410e091192e6df  MuffinS4.app/Contents/MacOS/muffin-s4-features
+source_fixture=s4-native pid=18985 webview=20621.3.11.11.3
+normal_profile=default_or_scratch_context private_profile=with_incognito_true
+progress_api=not_exposed_by_generic_WRY_download_callbacks pause_resume=not_tested
+normal_storage_seeded="{\"localStorage\":true,\"cookie\":true}"
+private_storage_observed="{\"localStorage\":false,\"cookie\":false}" private_storage_isolated=true
+download_start allowed=true sequence=1 unique_destination=true url=http://127.0.0.1:59323/download?copy=1
+download_complete success=true url=http://127.0.0.1:59323/download?copy=1
+download_result index=1 success=true url=http://127.0.0.1:59323/download?copy=1
+download_start allowed=true sequence=2 unique_destination=true url=http://127.0.0.1:59323/download?copy=2
+download_complete success=true url=http://127.0.0.1:59323/download?copy=2
+download_result index=2 success=true url=http://127.0.0.1:59323/download?copy=2
+page_finished url=http://127.0.0.1:59323/download?copy=private
+download_start allowed=false reason=fixture-denied
+download_complete success=false url=http://127.0.0.1:59323/denied?copy=blocked
+download_result index=3 success=false url=http://127.0.0.1:59323/denied?copy=blocked
+pdf_navigation_requested=true visual_render=unverified
+pdf_page_load_finished=true visual_render=unverified
+fixture_finished outcome=completed storage_checked=true downloads_started=2 downloads_completed=3 private_auth_denied_requested=true denied_attachment_requested=true pdf_requested=true
+{
+  "exit_code": 0,
+  "timeout": false,
+  "core_observed": true,
+  "pdf_navigation_finished": true,
+  "download_results": [
+    {
+      "name": "download-01.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "apple_quarantine": true
+    },
+    {
+      "name": "download-02.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "apple_quarantine": true
+    }
+  ]
+}

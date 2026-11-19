@@ -1,0 +1,12 @@
+Official distribution references checked 2026-11-19
+Apple universal slices and Rosetta: https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary
+Microsoft Edge WebView2 Runtime Evergreen vs Fixed: https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/evergreen-vs-fixed-version
+Microsoft distribution: https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution
+Microsoft ARM emulation: https://learn.microsoft.com/en-us/windows/arm/apps-on-arm-x86-emulation
+GitHub standard hosted runner list including Windows 11 ARM https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+Ubuntu Noble WebKitGTK 4.1 package dependency metadata: https://packages.ubuntu.com/en/noble/libs/libwebkit2gtk-4.1-0
+Ubuntu Noble listed architecture versions: https://packages.ubuntu.com/search?keywords=webkit2gtk&searchon=names&suite=noble
+GTK3 Wayland: https://docs.gtk.org/gtk3/wayland.html
+WebKitGTK 4.1 API ABI: https://webkitgtk.org/reference/webkit2gtk/stable/
+AppImageKit GTK3 bundle notes, example caveats included: https://github.com/AppImage/AppImageKit/wiki/Bundling-GTK3-apps
+Vendor sizes are documentation, not local measurements. Tested OS/runtime versions are in the companion binary reports.

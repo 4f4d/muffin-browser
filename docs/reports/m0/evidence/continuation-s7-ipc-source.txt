@@ -1,0 +1,47 @@
+S7 pinned WRY 0.57.2 IPC and custom-scheme audit. Installed source fingerprint and selected lines follow.
+inventory_commit=de8662cc2de0645bce09cd9cc8d05352a519ffbd
+wkwebview/mod.rs
+c377d33c2408bcb2d2fbe987b3d000dae5f3325f467ea98192f9dbf0fc0bb7d0  -
+595:      let shares_controller = retain_controller(&manager);
+597:      if shares_controller {
+604:      let ipc_handler_delegate = if shares_controller {
+692:      if w.ipc_handler_delegate.is_some() {
+699:      if !shares_controller {
+850:  fn init(&self, js: &str, for_main_only: bool) {
+854:      let script = WKUserScript::initWithSource_injectionTime_forMainFrameOnly(
+858:        for_main_only,
+wkwebview/class/wry_web_view_delegate.rs
+c9b134859f730a9f7bf40657dd7ef021825b21dbb545f5add2be6341236dfc9b  -
+45:        let body = msg.body();
+49:          let frame_info = msg.frameInfo();
+webkitgtk/mod.rs
+54d47f15deefddeeefa4ba0a9b6f47873ca85d3ab0dfbfe1586d29532ba60314  -
+381:      web_context.register_uri_scheme(&name, handler)?;
+491:          on_page_load_handler(PageLoadEvent::Started, webview.uri().unwrap().to_string());
+494:          on_page_load_handler(PageLoadEvent::Finished, webview.uri().unwrap().to_string());
+738:    manager.connect_script_message_received(None, move |_m, msg| {
+743:        let uri = webview.uri().map(|u| u.to_string()).unwrap_or_default();
+755:    manager.register_script_message_handler("ipc");
+786:    Ok(self.webview.uri().unwrap_or_default().to_string())
+826:  fn init(&self, js: &str, for_main_only: bool) -> Result<()> {
+830:        if for_main_only {
+831:          UserContentInjectedFrames::TopFrame
+webkitgtk/web_context.rs
+f8e78cbfc3a48551a6d739fef92ce11cdae66a0a64f6aa66fdc9dc697917fc39  -
+144:    self.os.context.register_uri_scheme(name, move |request| {
+246:        let webview_id = request
+webview2/mod.rs
+349c93924dd696b1204b468377814315e63336450dfa6b94f83a675cbbb68aa3  -
+843:            let deferral = args.GetDeferral()?;
+980:            args.Source(&mut url)?;
+986:            args.TryGetWebMessageAsString(&mut js)?;
+1088:          let deferral = args.GetDeferral();
+1415:    AddScriptToExecuteOnDocumentCreatedCompletedHandler::wait_for_async_operation(
+1419:          .AddScriptToExecuteOnDocumentCreated(&js, &handler)
+GTK shim passes for_main_only=true and maps it to UserContentInjectedFrames::TopFrame.
+WKWebView shim passes for_main_only=true. Message handler policy still needs native frame validation.
+These are source observations. Availability of raw native message handlers from particular subframes was not exercised.
+https://developer.apple.com/documentation/webkit/wkscriptmessage/frameinfo
+https://developer.apple.com/documentation/webkit/wkframeinfo/securityorigin
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webmessagereceivedeventargs?view=webview2-1.0.4022.49
+https://webkitgtk.org/reference/webkit2gtk/stable/signal.UserContentManager.script-message-received.html

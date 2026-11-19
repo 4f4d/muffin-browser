@@ -1,0 +1,6 @@
+Isolated Ubuntu 24.04 container on the SSH Linux host, development source before package build.
+Offline Cargo resolution lacked tempfile. The isolated retry fetched pinned dependencies.
+Compiler showed GTK 3.24 EventControllerKey was feature gated and WebKit callbacks returned boolean.
+Enabling GTK 3.24 exposed a raw GDK key value and bool callback. The corrected key handling type-checked.
+   Compiling muffin-validation v0.1.0 (/validation)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.20s

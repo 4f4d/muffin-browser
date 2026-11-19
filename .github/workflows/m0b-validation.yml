@@ -1,0 +1,168 @@
+name: M0b validation build
+
+on:
+  push:
+    branches: [main, m0b/validation-build]
+    paths:
+      - '.github/workflows/m0b-validation.yml'
+      - 'spikes/m0b-validation/**'
+  pull_request:
+    paths:
+      - '.github/workflows/m0b-validation.yml'
+      - 'spikes/m0b-validation/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-and-smoke:
+    name: ${{ matrix.target }} package and native smoke
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: macos-arm64
+            runner: macos-15
+          - target: windows-x64
+            runner: windows-2025
+          - target: ubuntu-24.04-x64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Ubuntu GTK and WebKitGTK dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 update
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y --no-install-recommends \
+            build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev xvfb xauth xdotool
+          mkdir -p m0b-artifacts
+          dpkg-query -W build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev xvfb xauth xdotool \
+            | tee m0b-artifacts/native-dependencies.txt
+
+      - name: Record runner and Rust toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p m0b-artifacts
+          {
+            printf 'source_commit=%s\nrunner_os=%s\nrunner_arch=%s\nimage=%s/%s\n' \
+              "$GITHUB_SHA" "$RUNNER_OS" "$(uname -m)" "${ImageOS:-unknown}" "${ImageVersion:-unknown}"
+            rustc -Vv
+            cargo -V
+          } | tee m0b-artifacts/build-environment.txt
+
+      - name: Build locked native executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          target_dir="$GITHUB_WORKSPACE/target/m0b-validation"
+          binary="$target_dir/release/muffin-validation"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then binary="$binary.exe"; fi
+          set -o pipefail
+          MUFFIN_SOURCE_COMMIT="$GITHUB_SHA" cargo build --locked --release \
+            --manifest-path spikes/m0b-validation/Cargo.toml \
+            --bin muffin-validation --target-dir "$target_dir" \
+            2>&1 | tee m0b-artifacts/cargo-build.log
+          test -f "$binary"
+          printf '%s\n' "$binary" > m0b-artifacts/binary-path.txt
+          "$binary" --identity | tee m0b-artifacts/identity.txt
+
+      - name: Run locked Rust tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          MUFFIN_SOURCE_COMMIT="$GITHUB_SHA" cargo test --locked \
+            --manifest-path spikes/m0b-validation/Cargo.toml \
+            --target-dir "$GITHUB_WORKSPACE/target/m0b-validation" \
+            2>&1 | tee m0b-artifacts/cargo-test.log
+
+      - name: Run Python loopback fixture tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python -m unittest discover -s spikes/m0b-validation/fixtures -v
+          else
+            python3 -m unittest discover -s spikes/m0b-validation/fixtures -v
+          fi 2>&1 | tee m0b-artifacts/fixture-tests.log
+
+      - name: Create platform package and SHA metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="$(cat m0b-artifacts/binary-path.txt)"
+          mkdir -p package
+          stage_dir="$RUNNER_TEMP/m0b-validation-package-stage"
+          mkdir -p "$stage_dir"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python spikes/m0b-validation/scripts/package.py \
+              --binary "$binary" --target "${{ matrix.target }}" --source-commit "$GITHUB_SHA" \
+              --out-dir package --stage-dir "$stage_dir"
+          else
+            python3 spikes/m0b-validation/scripts/package.py \
+              --binary "$binary" --target "${{ matrix.target }}" --source-commit "$GITHUB_SHA" \
+              --out-dir package --stage-dir "$stage_dir"
+          fi | tee m0b-artifacts/package.log
+          sed -n 's/^staged_binary=//p' m0b-artifacts/package.log > m0b-artifacts/staged-binary-path.txt
+          test -s m0b-artifacts/staged-binary-path.txt
+
+      - name: Run native synthetic smoke on Linux Xvfb
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="$(cat m0b-artifacts/staged-binary-path.txt)"
+          mkdir -p m0b-artifacts/native-smoke
+          if command -v dbus-run-session >/dev/null 2>&1; then
+            dbus-run-session -- xvfb-run -a python3 spikes/m0b-validation/fixtures/run_native.py \
+              --binary "$binary" --out m0b-artifacts/native-smoke --x11-synthetic-input \
+              2>&1 | tee m0b-artifacts/native-smoke.log
+          else
+            xvfb-run -a python3 spikes/m0b-validation/fixtures/run_native.py \
+              --binary "$binary" --out m0b-artifacts/native-smoke --x11-synthetic-input \
+              2>&1 | tee m0b-artifacts/native-smoke.log
+          fi
+
+      - name: Run native synthetic smoke on macOS and Windows
+        if: runner.os != 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="$(cat m0b-artifacts/staged-binary-path.txt)"
+          mkdir -p m0b-artifacts/native-smoke
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python spikes/m0b-validation/fixtures/run_native.py \
+              --binary "$binary" --out m0b-artifacts/native-smoke \
+              2>&1 | tee m0b-artifacts/native-smoke.log
+          else
+            python3 spikes/m0b-validation/fixtures/run_native.py \
+              --binary "$binary" --out m0b-artifacts/native-smoke \
+              2>&1 | tee m0b-artifacts/native-smoke.log
+          fi
+
+      - name: Upload diagnostics, including failed build or smoke logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: m0b-validation-${{ matrix.target }}-diagnostics
+          path: m0b-artifacts/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload verified package for handoff
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: muffin-m0b-validation-${{ matrix.target }}
+          path: package/
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,4 @@
+Local platform adapter verification, development source before package build.
+Windows target x86_64-pc-windows-msvc from macOS, cargo check --offline --locked. Type-check only.
+   Compiling muffin-validation v0.1.0 (/Users/falcon/Documents/docs/muffin/spikes/m0b-validation)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.75s

@@ -60,3 +60,12 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | S2a GTK popup creation | The automatic Xvfb and Weston runs reached the page but did not reach the popup callback. An XTEST click sent inside the disposable Xvfb instance can distinguish engine gesture gating from missing popup integration. | docs/reports/m0/evidence/continuation-s2a-linux-x11-xtest.txt |
 | S5 Firefox isolated comparison | Direct invocation of the app executable returned 0 immediately without a readiness event or usable process sample. A new LaunchServices process with an explicit disposable profile may produce a measurable native browser instance. | docs/reports/m0/evidence/continuation-s5-browser-alternatives.txt |
 | S5 idle CPU units | The isolated CPU counter check reported roughly 1.56 million raw Darwin ticks for 65 million nanoseconds of controlled work. Convert those counters with the installed Mach timebase and validate the conversion before using idle CPU percentages. | docs/reports/m0/evidence/continuation-s5-browser-alternatives.txt |
+
+## M0b validation build attempt log
+
+| Criterion | Hypothesis before retry | Evidence |
+|---|---|---|
+| Linux isolated build | Fetch the newly locked download-path and file-dialog dependencies in the disposable build environment. The original S1 image predated them. | [Build diagnostics](reports/m0/evidence/m0b-validation-linux-build-notes.txt) |
+| Linux native shortcuts and load events | Enable the GTK 3.24 Rust binding for EventControllerKey and match the WebKitGTK signal signatures. | [Build diagnostics](reports/m0/evidence/m0b-validation-linux-build-notes.txt) |
+| Windows native focus callback | Use the locked COM crate's FocusChangedEventHandler for both controller focus notifications. | [Build diagnostics](reports/m0/evidence/m0b-validation-windows-build-notes.txt) |
+| GTK 3.24 key capture | Read the GTK event's native GDK keyval directly and return the GTK 3 boolean signal result. | [Build diagnostics](reports/m0/evidence/m0b-validation-linux-build-notes.txt) |

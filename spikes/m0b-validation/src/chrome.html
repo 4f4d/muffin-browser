@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; connect-src 'none'; frame-src 'none'">
+<title>Muffin validation controls</title>
+<style>
+:root{color-scheme:light;--ivory:#fffbf4;--cream:#f2e5d4;--espresso:#35231b;--cocoa:#614735;--caramel:#dec1a0;--line:#c7a789;font:14px system-ui;color:var(--espresso);background:var(--cream)}
+*{box-sizing:border-box}
+body{margin:0;padding:7px 10px}
+button,input{font:inherit;color:inherit;border:1px solid var(--line);border-radius:6px;background:var(--ivory)}
+button{cursor:pointer;line-height:24px;padding:0 8px;white-space:nowrap}
+button:disabled{opacity:.48;cursor:default}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cocoa);outline-offset:2px}
+header,nav,form,#tools{display:flex;align-items:center;gap:5px;min-width:0}
+header strong{margin-right:5px;white-space:nowrap}
+#tabs{display:flex;align-items:center;gap:3px;min-width:0;overflow:auto;padding:1px}
+#tabs button{overflow:hidden;text-overflow:ellipsis;max-width:156px}
+#tabs button[aria-selected="true"]{background:var(--caramel);font-weight:650}
+nav{margin-top:6px}
+form{flex:1}
+input{width:100%;height:30px;padding:0 7px;min-width:6em;direction:ltr}
+#transport{font-size:12px;color:var(--cocoa);min-width:38px}
+#status{font-size:12px;margin-top:3px;color:var(--cocoa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:17px}
+#tools{margin-top:8px;flex-wrap:wrap}
+#tools[hidden]{display:none}
+</style>
+<header aria-label="Tabs">
+  <strong>Muffin · Engineering build</strong>
+  <div id="tabs" role="tablist" aria-label="Open tabs"></div>
+  <button data-action="new_tab" title="New tab">+</button>
+  <button data-action="new_private">Private</button>
+  <button data-action="close_tab" title="Close active tab">Close tab</button>
+</header>
+<nav aria-label="Navigation">
+  <button id="back" data-action="back" title="Back">←</button>
+  <button id="forward" data-action="forward" title="Forward">→</button>
+  <button id="reload" data-action="reload">Reload</button>
+  <button id="stop" data-action="stop">Stop</button>
+  <form id="location"><span id="transport" aria-label="Transport"></span>
+    <input id="address" aria-label="Address or search" autocomplete="off" spellcheck="false" maxlength="4096">
+    <button type="submit">Go</button>
+  </form>
+  <button data-action="focus_page">Page</button>
+  <button id="tool-button" data-action="toggle_tools" aria-expanded="false">Test tools</button>
+</nav>
+<div id="status" role="status"></div>
+<section id="tools" aria-label="Validation controls" hidden>
+  <button data-action="print">Print</button>
+  <button id="mute" data-action="toggle_mute">Mute</button>
+  <button data-action="choose_downloads">Download folder</button>
+  <button id="cancel" data-action="cancel_downloads">Cancel active downloads</button>
+  <button data-action="release_inactive">Release inactive views</button>
+</section>
+<script>
+(() => {
+  "use strict";
+  const byId = id => document.getElementById(id);
+  const address = byId("address");
+  const pending = [];
+  const offer = (action, value) => {
+    if (pending.length < 16) pending.push(value === undefined ? {action} : {action, value});
+  };
+  document.addEventListener("click", event => {
+    const action = event.target.closest("button")?.dataset.action;
+    if (action) offer(action);
+  });
+  byId("location").addEventListener("submit", event => {
+    event.preventDefault();
+    offer("navigate", address.value);
+    address.blur();
+  });
+  let active;
+  let lastTabs;
+  const control = Object.freeze({
+    take: () => pending.shift() ?? null,
+    focus: () => { address.focus(); address.select(); },
+    render: state => {
+      const replaceAddress = active !== state.selected || document.activeElement !== address;
+      active = state.selected;
+      if (replaceAddress && address.value !== state.url) address.value = state.url;
+      const tabs = JSON.stringify(state.tabs);
+      if (tabs !== lastTabs) {
+        lastTabs = tabs;
+        byId("tabs").replaceChildren(...state.tabs.map(tab => {
+          const item = document.createElement("button");
+          item.type = "button";
+          item.setAttribute("role", "tab");
+          item.setAttribute("aria-selected", String(tab.id === state.selected));
+          item.textContent = (tab.private ? "Private · " : "") + tab.title + (tab.audio ? " ♪" : "");
+          item.addEventListener("click", () => offer("select_tab", tab.id));
+          return item;
+        }));
+      }
+      byId("transport").textContent = state.transport;
+      byId("back").disabled = !state.back;
+      byId("forward").disabled = !state.forward;
+      byId("stop").disabled = !state.loading;
+      byId("tools").hidden = !state.tools;
+      byId("tool-button").setAttribute("aria-expanded", String(state.tools));
+      byId("mute").disabled = state.muted === null;
+      byId("mute").textContent = state.muted ? "Unmute" : "Mute";
+      byId("cancel").disabled = !state.cancel;
+      byId("status").textContent = state.status;
+    }
+  });
+  Object.defineProperty(window, "muffinControls", {value: control});
+})();
+</script>
+</html>

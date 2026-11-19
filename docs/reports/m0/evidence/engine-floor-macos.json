@@ -1,0 +1,218 @@
+{
+  "binary_architecture": "arm64",
+  "binary_bytes": 83216,
+  "binary_sha256": "e5d11c7119a35530cd076f5b9731548d540f3a7ae7f3f35e9c8829da3ec50b66",
+  "bundle_disk_kib": 88,
+  "bundle_file_bytes": 83743,
+  "cpu_count": 10,
+  "machine": "Mac16,12",
+  "memory_bytes": 25769803776,
+  "method": {
+    "attribution": "new WebKit helper PIDs measured by prelaunch versus post-navigation process snapshots; timing association",
+    "memory": "Darwin proc_pid_rusage RUSAGE_INFO_V0; parent tree and new system WebKit helpers reported separately",
+    "profile": "nonpersistent WKWebsiteDataStore",
+    "sampling": "five sequential launches; sample process memory two seconds after navigation, then terminate",
+    "startup": "new host process to navigation finished and JavaScript response; not first paint"
+  },
+  "os_build": "24H241",
+  "os_version": "15.8.3",
+  "power": "Now drawing from 'Battery Power'",
+  "power_configuration": "Battery Power:\n Sleep On Power Button 1\n lowpowermode         1\n standby              1\n ttyskeepawake        1\n hibernatemode        3\n powernap             1\n hibernatefile        /var/vm/sleepimage\n displaysleep         10\n womp                 0\n networkoversleep     0\n sleep                1\n lessbright           1\n tcpkeepalive         1\n disksleep            10\nAC Power:\n Sleep On Power Button 1\n lowpowermode         0\n standby              1\n ttyskeepawake        1\n hibernatemode        3\n powernap             1\n hibernatefile        /var/vm/sleepimage\n displaysleep         10\n womp                 0\n networkoversleep     0\n sleep                0\n tcpkeepalive         1\n disksleep            10",
+  "recorded_at": "2026-11-19T13:46:25.034927+00:00",
+  "runs": [
+    {
+      "navigation_ready_ms": 1808.813,
+      "new_webkit_helpers": [
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 16843256,
+          "pid": 94014,
+          "process": "com.apple.WebKit.GPU",
+          "resident_bytes": 29360128
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17285744,
+          "pid": 94015,
+          "process": "com.apple.WebKit.WebContent",
+          "resident_bytes": 34619392
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 4620768,
+          "pid": 94016,
+          "process": "com.apple.WebKit.Networking",
+          "resident_bytes": 16400384
+        }
+      ],
+      "page": {
+        "url": "about:blank",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
+      },
+      "parent_tree": [
+        {
+          "physical_footprint_bytes": 19514448,
+          "pid": 93999,
+          "process": "muffin-floor",
+          "resident_bytes": 79560704
+        }
+      ]
+    },
+    {
+      "navigation_ready_ms": 336.953,
+      "new_webkit_helpers": [
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17416720,
+          "pid": 94053,
+          "process": "com.apple.WebKit.GPU",
+          "resident_bytes": 26722304
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17597016,
+          "pid": 94054,
+          "process": "com.apple.WebKit.WebContent",
+          "resident_bytes": 27213824
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 4588000,
+          "pid": 94055,
+          "process": "com.apple.WebKit.Networking",
+          "resident_bytes": 13172736
+        }
+      ],
+      "page": {
+        "url": "about:blank",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
+      },
+      "parent_tree": [
+        {
+          "physical_footprint_bytes": 19252256,
+          "pid": 94052,
+          "process": "muffin-floor",
+          "resident_bytes": 79134720
+        }
+      ]
+    },
+    {
+      "navigation_ready_ms": 341.665,
+      "new_webkit_helpers": [
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17449488,
+          "pid": 94075,
+          "process": "com.apple.WebKit.GPU",
+          "resident_bytes": 26886144
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17662576,
+          "pid": 94076,
+          "process": "com.apple.WebKit.WebContent",
+          "resident_bytes": 27230208
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 4522488,
+          "pid": 94077,
+          "process": "com.apple.WebKit.Networking",
+          "resident_bytes": 13058048
+        }
+      ],
+      "page": {
+        "url": "about:blank",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
+      },
+      "parent_tree": [
+        {
+          "physical_footprint_bytes": 19596440,
+          "pid": 94074,
+          "process": "muffin-floor",
+          "resident_bytes": 76021760
+        }
+      ]
+    },
+    {
+      "navigation_ready_ms": 412.172,
+      "new_webkit_helpers": [
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17547792,
+          "pid": 94102,
+          "process": "com.apple.WebKit.GPU",
+          "resident_bytes": 26492928
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17547888,
+          "pid": 94103,
+          "process": "com.apple.WebKit.WebContent",
+          "resident_bytes": 27066368
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 4637152,
+          "pid": 94104,
+          "process": "com.apple.WebKit.Networking",
+          "resident_bytes": 13172736
+        }
+      ],
+      "page": {
+        "url": "about:blank",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
+      },
+      "parent_tree": [
+        {
+          "physical_footprint_bytes": 19596416,
+          "pid": 94101,
+          "process": "muffin-floor",
+          "resident_bytes": 79298560
+        }
+      ]
+    },
+    {
+      "navigation_ready_ms": 376.235,
+      "new_webkit_helpers": [
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17416720,
+          "pid": 94129,
+          "process": "com.apple.WebKit.GPU",
+          "resident_bytes": 26509312
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 17646168,
+          "pid": 94130,
+          "process": "com.apple.WebKit.WebContent",
+          "resident_bytes": 27426816
+        },
+        {
+          "parent_pid": 1,
+          "physical_footprint_bytes": 4620768,
+          "pid": 94131,
+          "process": "com.apple.WebKit.Networking",
+          "resident_bytes": 13156352
+        }
+      ],
+      "page": {
+        "url": "about:blank",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
+      },
+      "parent_tree": [
+        {
+          "physical_footprint_bytes": 18957392,
+          "pid": 94128,
+          "process": "muffin-floor",
+          "resident_bytes": 79298560
+        }
+      ]
+    }
+  ],
+  "runtime_distribution": "OS-provided Apple WebKit",
+  "source_commit": "fe451df41ec15258119f2e2259e9f5b1a9141f22",
+  "webkit_framework_bundle_version": "20621.3.11.11.3",
+  "zip_bytes": 15978
+}

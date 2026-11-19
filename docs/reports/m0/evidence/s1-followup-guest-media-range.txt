@@ -1,0 +1,9 @@
+Evidence source: original tool output retained by the delegated Codex environment investigator during the S1 GTK desktop budget on 2026-11-19. Redacted SSH destination. No post-stop rerun.
+
+ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=8 <authorized-server> 'curl -L --fail --silent --show-error --range 0-16777215 --max-time 30 --max-filesize 16777216 -o /dev/null -w "range_http=%{http_code}\nrange_bytes=%{size_download}\nrange_speed_bytes_s=%{speed_download}\nrange_seconds=%{time_total}\n" https://releases.ubuntu.com/24.04/ubuntu-24.04.5.1-desktop-amd64.iso'
+
+curl: (28) Operation timed out after 30000 milliseconds with 6351877 out of 16777216 bytes received
+range_http=206
+range_bytes=6351877
+range_speed_bytes_s=211725
+range_seconds=30.000476

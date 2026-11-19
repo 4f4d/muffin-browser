@@ -210,6 +210,8 @@ Create a `/spikes` area, not production architecture. Every spike report lives i
 
 **2026-11-19 execution checkpoint.** The engine-floor and S1 findings, including the mixed substrate evidence and held follow-on spikes, are in the [M0a handoff](reports/m0/M0A_SUMMARY.md). The product and platform decisions remain with the human.
 
+**2026-11-19 authorized S1 follow-up.** The [separate scope and timing record](reports/m0/S1_FOLLOW_UP_SCOPE.md) bounds four WRY + TAO desktop investigations. The [updated capability matrix](reports/m0/M0A_S1_FOLLOW_UP.md) records interactive Mac input and composition evidence, the Mac fixture trust boundary, and blocked Windows 11 and GNOME desktop investigations. The S1 gate remains open for human review.
+
 ### M0b — Human-in-the-loop validation (human)
 
 M0b is human-operated, not an autonomous Codex milestone. Codex may prepare test pages/binaries and validate or summarize records when asked, but it must not execute tests requiring the human, fabricate results, or fill blank cells.

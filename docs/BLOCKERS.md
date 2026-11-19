@@ -41,3 +41,9 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | Stock Tauri Linux layout | Product-substrate limitation seen in both tested backend configurations. X11 shows stacked panes and an overlay-load error. Evidence in docs/reports/m0/spikes/S1-linux_x11-tauri.md and S1-linux_wayland-tauri.md. | Human decides how to proceed with Linux support or a justified alternate layout. |
 | WRY Wayland initial allocation and desktop input | Startup geometry discrepancy persisted. The headless session lacked seat and GPU evidence. Evidence in docs/reports/m0/evidence/s1-wry-server-wayland-recovery.txt. | Human reviews the need for an interactive Wayland S1 and the candidate recommendation. |
 | Native accelerators and production crash recovery | Current fixtures do not establish a portable native shortcut path. WebKitGTK API termination/reload exercised an intentional Linux path only. | Revisit in a focused S1 and subsequently in the native-hook inventory after the substrate gate. |
+
+## S1 follow-up attempt log
+
+| Criterion | Hypothesis before retry | Artifact |
+|---|---|---|
+| AppKit fixture build | Deriving the concrete WRY handle pointer with `ptr::from_ref` will resolve the Rust type-inference error before casting to `AnyObject`. | docs/reports/m0/evidence/s1-followup-mac-compile.txt |

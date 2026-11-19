@@ -1,0 +1,2 @@
+First macOS follow-up fixture build: Rust E0282 on erased NSView pointer casts in observe() and focus_native().
+The cargo fmt invocation also rejected --bin. Formatting was scoped to the new source with rustfmt.

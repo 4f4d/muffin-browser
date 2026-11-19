@@ -1,0 +1,34 @@
+source_commit=44445ee2fe23655235e99ff3b148ca4358461cb0
+backend=private-xvfb-x11
+cached_image=muffin-m0a-x11:8c8d36f50895
+rustc 1.95.0 (59807616e 2026-04-14)
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+Linux 6.8.0-147-generic x86_64
+2.52.6
+   Compiling muffin-s1-wry v0.1.0 (/fixture/spikes/s1/wry-tao)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.10s
+f4876b1710d9aa467e27c981193522ee8dd4f5c0e267443145e3cc6f77878921  /fixture-target/debug/muffin-s2a-popup
+{"content_log": "/tmp/s2a-output/content-events.jsonl", "cross_origin": "http://127.0.0.1:41683", "native_log": "/tmp/s2a-output/native.log", "source": "loopback-only synthetic fixture", "start_url": "http://127.0.0.1:42575/"}
+xvfb_fixture_click x=58 y=128 dpr=1
+fixture_finished outcome=timeout child_terminated=true
+run_status=124 click_status=0
+----- native.log
+engine_version=2.52.6
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+fixture_ready auto=false
+navigation pane=parent allowed=true url=http://127.0.0.1:42575/
+page_finished pane=parent url=http://127.0.0.1:42575/
+window_focus pane=parent
+popup_request url=http://127.0.0.1:42575/popup/window-open size=None position=None
+popup_decision=create native_window_count=1
+window_focus pane=popup_or_slot
+navigation pane=popup allowed=true url=http://127.0.0.1:42575/popup/window-open
+page_finished pane=popup url=http://127.0.0.1:42575/popup/window-open
+----- content-events.jsonl
+{"at":1795106419.3,"server":"http://127.0.0.1:42575","event":{"kind":"script-button-center","data":{"x":58.40625,"y":127.875,"dpr":1}}}
+{"at":1795106419.472,"server":"http://127.0.0.1:42575","event":{"kind":"open-return","data":{"url":"/popup/window-open","active":true,"has_handle":true}}}
+{"at":1795106419.473,"server":"http://127.0.0.1:42575","event":{"kind":"parent-click","data":{"case":"script","trusted":true}}}
+{"at":1795106419.478,"server":"http://127.0.0.1:42575","event":{"kind":"popup-ready","data":{"path":"/popup/window-open","opener":true,"opener_read":true,"ipc":"undefined","focused":true}}}
+----- downloads.json
+[]

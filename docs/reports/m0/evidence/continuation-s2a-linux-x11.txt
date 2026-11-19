@@ -1,0 +1,38 @@
+source_commit=a07e2e54591122dc6b694ba333359312a2f0ee70
+backend=x11
+cached_image=muffin-m0a-x11:8c8d36f50895
+rustc 1.95.0 (59807616e 2026-04-14)
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+Linux 6.8.0-147-generic x86_64
+2.52.6
+   Compiling muffin-s1-wry v0.1.0 (/fixture/spikes/s1/wry-tao)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.30s
+f4876b1710d9aa467e27c981193522ee8dd4f5c0e267443145e3cc6f77878921  /fixture-target/debug/muffin-s2a-popup
+{"content_log": "/tmp/s2a-output/content-events.jsonl", "cross_origin": "http://127.0.0.1:34097", "native_log": "/tmp/s2a-output/native.log", "source": "loopback-only synthetic fixture", "start_url": "http://127.0.0.1:44003/?mode=auto"}
+fixture_finished exit_code=0
+----- native.log
+engine_version=2.52.6
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+fixture_ready auto=true
+navigation pane=parent allowed=true url=http://127.0.0.1:44003/?mode=auto
+page_finished pane=parent url=http://127.0.0.1:44003/?mode=auto
+fixture_closed reason=bounded_auto_window popups=0
+fixture_closed reason=bounded_auto_window popups=0
+----- content-events.jsonl
+{"at":1795106269.455,"server":"http://127.0.0.1:44003","event":{"kind":"open-return","data":{"url":"/popup/window-open","active":false,"has_handle":false}}}
+{"at":1795106269.456,"server":"http://127.0.0.1:44003","event":{"kind":"parent-click","data":{"case":"script","trusted":false}}}
+{"at":1795106270.306,"server":"http://127.0.0.1:44003","event":{"kind":"parent-click","data":{"case":"implicit","trusted":false}}}
+{"at":1795106271.156,"server":"http://127.0.0.1:44003","event":{"kind":"parent-click","data":{"case":"noopener","trusted":false}}}
+{"at":1795106272.006,"server":"http://127.0.0.1:44003","event":{"kind":"open-return","data":{"url":"http://127.0.0.1:34097/popup/cross-origin","active":false,"has_handle":false}}}
+{"at":1795106272.007,"server":"http://127.0.0.1:44003","event":{"kind":"parent-click","data":{"case":"cross","trusted":false}}}
+{"at":1795106272.857,"server":"http://127.0.0.1:44003","event":{"kind":"open-return","data":{"url":"/redirect?same","active":false,"has_handle":false}}}
+{"at":1795106272.859,"server":"http://127.0.0.1:44003","event":{"kind":"parent-click","data":{"case":"same-redirect","trusted":false}}}
+{"at":1795106273.708,"server":"http://127.0.0.1:44003","event":{"kind":"open-return","data":{"url":"/redirect?cross","active":false,"has_handle":false}}}
+{"at":1795106273.71,"server":"http://127.0.0.1:44003","event":{"kind":"parent-click","data":{"case":"cross-redirect","trusted":false}}}
+{"at":1795106274.558,"server":"http://127.0.0.1:44003","event":{"kind":"open-return","data":{"url":"/auth/start","active":false,"has_handle":false}}}
+{"at":1795106274.56,"server":"http://127.0.0.1:44003","event":{"kind":"parent-click","data":{"case":"auth","trusted":false}}}
+{"at":1795106275.403,"server":"http://127.0.0.1:44003","event":{"kind":"parent-click","data":{"case":"blocked","trusted":false}}}
+----- downloads.json
+[]
+fixture_runner_exit=0

@@ -156,6 +156,31 @@
         "outcome": "pass",
         "stopped_reason": "completed"
       },
+      "S8:linux_x11:wry-tao-x64": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "S8:macos:wry-tao-arm64": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "S8:macos:wry-tao-x64": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "S8:windows:wry-tao-arm64": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "S8:windows:wry-tao-x64": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,
         "outcome": "inconclusive",

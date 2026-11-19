@@ -1,0 +1,338 @@
+source_inventory_commit=013e71329ab6a3794bb89dac44e3a6ca30baf5f0
+Versions: exact candidates WRY 0.57.2, TAO 0.37.2. APIs listed from installed source; no runtime test in S3 itself.
+WRY src/lib.rs
+8aedf7a6044639ad8ad4d446829d3928c8cb037bd6fdb5e7fe5c6b72ddf1ee70  -
+1076:  pub fn with_custom_protocol<F>(mut self, name: String, handler: F) -> Self
+1200:  pub fn with_drag_drop_handler<F>(mut self, handler: F) -> Self
+1309:  pub fn with_navigation_handler(mut self, callback: impl Fn(String) -> bool + 'static) -> Self {
+1346:  pub fn with_permission_handler<F>(mut self, handler: F) -> Self
+1362:  pub fn with_download_started_handler(
+1383:  pub fn with_download_completed_handler(
+1407:  pub fn with_new_window_req_handler(
+1448:  pub fn with_on_page_load_handler(
+1636:  fn with_on_web_content_process_terminate_handler(self, handler: impl Fn() + 'static) -> Self;
+1656:  fn with_on_web_content_process_terminate_handler(mut self, handler: impl Fn() + 'static) -> Self {
+1812:  fn with_default_context_menus(self, enabled: bool) -> Self;
+1890:  fn with_default_context_menus(mut self, enabled: bool) -> Self {
+2041:  fn build_gtk<W>(self, widget: &'a W) -> Result<WebView>
+2061:  fn build_gtk<W>(self, widget: &'a W) -> Result<WebView>
+2123:  pub fn print(&self) -> Result<()> {
+2196:  pub fn zoom(&self, scale_factor: f64) -> Result<()> {
+2216:  pub fn load_url(&self, url: &str) -> Result<()> {
+2221:  pub fn reload(&self) -> crate::Result<()> {
+2226:  pub fn go_forward(&self) -> Result<()> {
+2231:  pub fn go_back(&self) -> Result<()> {
+2266:  pub fn set_bounds(&self, bounds: Rect) -> Result<()> {
+2271:  pub fn set_visible(&self, visible: bool) -> Result<()> {
+2276:  pub fn focus(&self) -> Result<()> {
+2285:  pub fn focus_parent(&self) -> Result<()> {
+2345:  fn controller(&self) -> ICoreWebView2Controller;
+2351:  fn webview(&self) -> ICoreWebView2;
+2382:  fn controller(&self) -> ICoreWebView2Controller {
+2390:  fn webview(&self) -> ICoreWebView2 {
+2430:  fn webview(&self) -> webkit2gtk::WebView;
+2447:  fn webview(&self) -> webkit2gtk::WebView {
+2495:  fn webview(&self) -> Retained<WryWebView>;
+2499:  fn ns_window(&self) -> Retained<NSWindow>;
+2514:  fn webview(&self) -> Retained<WryWebView> {
+2522:  fn ns_window(&self) -> Retained<NSWindow> {
+2543:  fn webview(&self) -> Retained<WryWebView>;
+2550:  fn webview(&self) -> Retained<WryWebView> {
+WRY src/permissions.rs
+/// Permission types that can be requested by the webview.
+///
+/// See [`crate::WebViewBuilder::with_permission_handler`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum PermissionKind {
+  /// Microphone access permission.
+  Microphone,
+  /// Camera access permission.
+  Camera,
+  /// Geolocation access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_GEOLOCATION`.
+  /// - **Linux**: Supported via `GeolocationPermissionRequest`.
+  /// - **Android**: Supported via `WebChromeClient.onGeolocationPermissionsShowPrompt`.
+  /// - **macOS / iOS**: Not yet supported by platform backends.
+  Geolocation,
+  /// Notifications permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_NOTIFICATIONS`.
+  /// - **Linux**: Supported via `NotificationPermissionRequest`.
+  /// - **macOS / Android / iOS**: Not yet supported by platform backends.
+  Notifications,
+  /// Clipboard read permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_CLIPBOARD_READ`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  ClipboardRead,
+  /// Display capture permission (for getDisplayMedia).
+  DisplayCapture,
+  /// Midi access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_MIDI_SYSTEM_EXCLUSIVE_MESSAGES`.
+  /// - **Android**: Supported via `android.webkit.resource.MIDI_SYSEX`.
+  /// - **macOS / Linux / iOS**: Not yet supported by platform backends.
+  Midi,
+  /// Sensors (accelerometer, gyroscope, etc.) access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_OTHER_SENSORS`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  Sensors,
+  /// Media key system access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Android**: Supported via `android.webkit.resource.PROTECTED_MEDIA_ID`.
+  /// - **Windows / macOS / Linux / iOS**: Not yet supported by platform backends.
+  MediaKeySystemAccess,
+  /// Local fonts access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_LOCAL_FONTS`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  LocalFonts,
+  /// Window management permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  WindowManagement,
+  /// Pointer lock permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Linux**: Supported via `PointerLockPermissionRequest`.
+  /// - **Windows / macOS / Android / iOS**: Not yet supported by platform backends.
+  PointerLock,
+  /// Automatic downloads permission (multiple downloads without user interaction).
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  AutomaticDownloads,
+  /// File system access permission (read/write via File System Access API).
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_FILE_READ_WRITE`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  FileSystemAccess,
+  /// Media autoplay permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_AUTOPLAY`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  Autoplay,
+  /// Other unrecognized permission type.
+  Other,
+}
+
+impl std::fmt::Display for PermissionKind {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::Microphone => write!(f, "microphone"),
+      Self::Camera => write!(f, "camera"),
+      Self::Geolocation => write!(f, "geolocation"),
+      Self::Notifications => write!(f, "notifications"),
+      Self::ClipboardRead => write!(f, "clipboard-read"),
+      Self::DisplayCapture => write!(f, "display-capture"),
+      Self::Midi => write!(f, "midi"),
+      Self::Sensors => write!(f, "sensors"),
+      Self::MediaKeySystemAccess => write!(f, "media-key-system-access"),
+      Self::LocalFonts => write!(f, "local-fonts"),
+      Self::WindowManagement => write!(f, "window-management"),
+      Self::PointerLock => write!(f, "pointer-lock"),
+      Self::AutomaticDownloads => write!(f, "automatic-downloads"),
+      Self::FileSystemAccess => write!(f, "file-system-access"),
+      Self::Autoplay => write!(f, "autoplay"),
+      Self::Other => write!(f, "other"),
+    }
+  }
+}
+
+/// Response for permission requests.
+///
+/// See [`crate::WebViewBuilder::with_permission_handler`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum PermissionResponse {
+  /// Grant the permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Android**: Not supported for runtime permissions; the normal Android
+  ///   permission flow is used instead.
+  Allow,
+  /// Deny the permission.
+  Deny,
+  /// Use the platform or browser default behavior.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows / macOS / Android**: The default behavior is to continue the
+  ///   platform or browser permission flow.
+  /// - **Linux**: The default behavior is [`Self::Deny`]
+  #[default]
+  Default,
+WRY src/wkwebview/class/wry_web_view_ui_delegate.rs
+100:    #[unsafe(method(webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:))]
+101:    fn run_file_upload_panel(
+105:      _frame: &WKFrameInfo,
+138:    #[unsafe(method(webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:))]
+142:      _origin: &WKSecurityOrigin,
+143:      _frame: &WKFrameInfo,
+150:          PermissionResponse::Allow => WKPermissionDecision::Grant,
+163:              (PermissionResponse::Allow, PermissionResponse::Allow) => WKPermissionDecision::Grant,
+173:        WKPermissionDecision::Grant
+181:    unsafe fn create_web_view_for_navigation_action(
+194:        let screen_frame = screen.frame();
+235:                screen_frame.size.height - y.doubleValue() - size.height
+WRY src/wkwebview/navigation.rs, download.rs and mod.rs
+download.rs:17:pub(crate) fn navigation_download_action(
+download.rs:32:pub(crate) fn navigation_download_response(
+download.rs:46:pub(crate) fn download_policy(
+download.rs:93:pub(crate) fn download_did_finish(this: &WryDownloadDelegate, download: &WKDownload) {
+download.rs:103:pub(crate) fn download_did_fail(
+navigation.rs:64:pub(crate) fn navigation_policy(
+navigation.rs:73:    let can_download = action.respondsToSelector(objc2::sel!(shouldPerformDownload));
+navigation.rs:105:pub(crate) fn navigation_policy_response(
+navigation.rs:130:  if let Some(on_web_content_process_terminate) =
+navigation.rs:131:    &this.ivars().on_web_content_process_terminate_handler
+navigation.rs:133:    on_web_content_process_terminate();
+mod.rs:278:          (true, _, _) => WKWebsiteDataStore::nonPersistentDataStore(mtm),
+mod.rs:645:        pl_attrs.on_web_content_process_terminate_handler,
+mod.rs:745:            ns_window.makeFirstResponder(Some(&webview));
+mod.rs:854:      let script = WKUserScript::initWithSource_injectionTime_forMainFrameOnly(
+mod.rs:1028:      self.webview.setPageZoom(scale_factor);
+mod.rs:1131:      window.makeFirstResponder(Some(&self.webview));
+mod.rs:1139:      window.makeFirstResponder(Some(&self.ns_view));
+TAO src/window.rs
+ae592cf59f1878fa59e6bbe376124bbb16e01e2c514d611284111749b6604782  -
+661:  pub fn scale_factor(&self) -> f64 {
+855:  pub fn set_focus(&self) {
+867:  pub fn set_focusable(&self, focusable: bool) {
+877:  pub fn is_focused(&self) -> bool {
+1069:  pub fn set_fullscreen(&self, fullscreen: Option<Fullscreen>) {
+1305:  pub fn drag_window(&self) -> Result<(), ExternalError> {
+1356:  pub fn current_monitor(&self) -> Option<MonitorHandle> {
+Pinned objc2-web-kit 0.3.2 WKWebView.rs
+277:        pub unsafe fn loadFileURL_allowingReadAccessToURL(
+585:        pub unsafe fn setAllMediaPlaybackSuspended_completionHandler(
+620:        pub unsafe fn requestMediaPlaybackStateWithCompletionHandler(
+629:        pub unsafe fn requestMediaPlaybackState(
+820:        pub unsafe fn findString_withConfiguration_completionHandler(
+966:        pub unsafe fn printOperationWithPrintInfo(
+1004:        pub unsafe fn fullscreenState(&self) -> WKFullscreenState;
+Official vendor references
+https://developer.apple.com/documentation/webkit/wkuidelegate
+https://developer.apple.com/documentation/webkit/wknavigationdelegate
+https://developer.apple.com/documentation/webkit/wkdownload
+https://developer.apple.com/documentation/webkit/wkwebview?language=objc
+https://developer.apple.com/documentation/appkit/nsevent/addlocalmonitorforevents(matching:handler:)
+https://developer.apple.com/documentation/appkit/nsworkspace/open(_:)
+WRY src/webview2/mod.rs, Windows inspected bindings and registration
+349c93924dd696b1204b468377814315e63336450dfa6b94f83a675cbbb68aa3  -
+67:  pub controller: ICoreWebView2Controller,
+167:          .cast::<ICoreWebView2Controller4>()
+388:  ) -> Result<ICoreWebView2Controller> {
+391:    // we don't use CreateCoreWebView2ControllerCompletedHandler::wait_for_async
+394:    let handler = CreateCoreWebView2ControllerCompletedHandler::create(Box::new(
+408:          let controller_opts = env10.CreateCoreWebView2ControllerOptions()?;
+411:            if let Ok(opts3) = controller_opts.cast::<ICoreWebView2ControllerOptions3>() {
+430:          env10.CreateCoreWebView2ControllerWithOptions(hwnd, &controller_opts, &handler)?;
+432:        _ => env.CreateCoreWebView2Controller(hwnd, &handler)?,
+447:    controller: &ICoreWebView2Controller,
+524:        webview.add_PermissionRequested(
+525:          &PermissionRequestedEventHandler::create(Box::new(|_, args| {
+544:        webview.add_PermissionRequested(
+545:          &PermissionRequestedEventHandler::create(Box::new(move |_, args| {
+624:        let _ = controller.MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
+649:      settings.SetAreDefaultContextMenusEnabled(pl_attrs.default_context_menus)?;
+650:      settings.SetIsZoomControlEnabled(attributes.zoom_hotkeys_enabled)?;
+662:          settings3.SetAreBrowserAcceleratorKeysEnabled(false)?;
+756:        webview.add_NavigationStarting(
+757:          &NavigationStartingEventHandler::create(Box::new(move |_, args| {
+783:      webview.add_NewWindowRequested(
+784:        &NewWindowRequestedEventHandler::create(Box::new(move |webview, args| {
+880:        webview4.add_DownloadStarting(
+881:          &DownloadStartingEventHandler::create(Box::new(move |_, args| {
+1335:          let controller = dwrefdata as *mut ICoreWebView2Controller;
+1363:          let controller = dwrefdata as *mut ICoreWebView2Controller;
+1364:          let _ = (*controller).MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
+1368:          let controller = dwrefdata as *mut ICoreWebView2Controller;
+1378:          drop(Box::from_raw(dwrefdata as *mut ICoreWebView2Controller));
+1389:  unsafe fn attach_parent_subclass(parent: HWND, controller: &ICoreWebView2Controller) {
+1550:    unsafe { self.controller.SetZoomFactor(scale_factor) }.map_err(Into::into)
+1674:        .MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC)
+1986:  controller: &ICoreWebView2Controller,
+1995:    let controller2: ICoreWebView2Controller2 = controller.cast()?;
+Windows SDK official references, checked by Codex docs researcher
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controller
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadoperation?view=webview2-1.0.4314.35
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-related-events
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenurequestedeventargs
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_8
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2?view=webview2-1.0.3179.45
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/winrt/microsoft_web_webview2_core/corewebview2?view=webview2-winrt-1.0.4022.49
+Linux candidate and bindings verified by read-only specialist
+9:tao = "=0.37.2"
+10:wry = "=0.57.2"
+13:gtk = "0.18"
+14:webkit2gtk = { version = "=2.0.2", features = ["v2_34"] }
+wry/src/webkitgtk/mod.rs
+362:    w.webview.connect_load_changed(move |webview, event| {
+474:    webview.connect_close(move |webview| unsafe { webview.destroy() });
+489:      webview.connect_load_changed(move |webview, load_event| match load_event {
+503:      webview.connect_create(move |webview, action| {
+563:      webview.connect_decide_policy(move |_webview, policy_decision, policy_type| {
+565:          PolicyDecisionType::NavigationAction => &navigation_handler,
+595:      webview.connect_permission_request(move |_webview, request| {
+768:      inspector.connect_closed(move |_| {
+868:    self.webview.set_zoom_level(scale_factor);
+1042:  pub fn focus(&self) -> Result<()> {
+1047:  pub fn focus_parent(&self) -> Result<()> {
+wry/src/webkitgtk/web_context.rs
+120:    download_started_callback: Option<Box<dyn FnMut(String, &mut PathBuf) -> bool>>,
+307:    download_started_handler: Option<Box<dyn FnMut(String, &mut PathBuf) -> bool>>,
+312:    let download_started_handler = Rc::new(RefCell::new(download_started_handler));
+314:    context.connect_download_started(move |_context, download| {
+317:      let download_started_handler = download_started_handler.clone();
+318:      download.connect_decide_destination(move |download, suggested_filename| {
+322:          if let Some(download_started_handler) = download_started_handler.borrow_mut().as_mut() {
+354:            if download_started_handler(uri, &mut download_destination) {
+365:      download.connect_failed({
+373:        download.connect_finished({
+tao/src/event.rs and platform/unix.rs
+351:  Focused(bool),
+360:  KeyboardInput {
+377:  ModifiersChanged(ModifiersState),
+387:    #[deprecated = "Deprecated in favor of WindowEvent::ModifiersChanged"]
+402:    #[deprecated = "Deprecated in favor of WindowEvent::ModifiersChanged"]
+411:    #[deprecated = "Deprecated in favor of WindowEvent::ModifiersChanged"]
+488:      Focused(f) => Focused(*f),
+489:      KeyboardInput {
+493:      } => KeyboardInput {
+499:      ModifiersChanged(modifiers) => ModifiersChanged(*modifiers),
+79:  fn gtk_window(&self) -> &gtk::ApplicationWindow;
+83:  fn default_vbox(&self) -> Option<&gtk::Box>;
+92:  fn gtk_window(&self) -> &gtk::ApplicationWindow {
+96:  fn default_vbox(&self) -> Option<&gtk::Box> {
+https://docs.rs/webkit2gtk/2.0.2/webkit2gtk/
+https://docs.rs/gtk/0.18.2/gtk/
+https://webkitgtk.org/reference/webkit2gtk/stable/method.WebView.terminate_web_process.html

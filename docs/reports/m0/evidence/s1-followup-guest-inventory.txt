@@ -1,0 +1,19 @@
+S1 follow-up guest inventory, 2026-11-19
+Local host: Apple Silicon macOS 15.8.3. UTM and VMware Fusion are installed.
+UTM profile inventory found three configurations. No profile was identified as Ubuntu Desktop or Windows 11. An explicitly Linux-named configuration is Kali ARM64 using Apple virtualization. Its metadata identifies storage and display hardware, but does not establish GNOME, X11 or Wayland.
+Bounded search of Documents and regular VM locations found no .vmx, .pvm, or .vbox. VMware vmrun did not start and the UTM CLI did not provide a usable listing. No guest console was active in the desktop inventory.
+The project owner could not identify a desktop VM entry point.
+The earlier Windows artifact came from Windows Server 2025, so it is excluded from Windows 11 desktop acceptance.
+
+Ubuntu server follow-up: a helper's initial SSH attempts returned No route to host. A later Tailscale probe returned a pong. BatchMode SSH with strict host-key checking then succeeded.
+Ubuntu 24.04.5 LTS x86_64. Login session type tty only. No GNOME shell, GDM, Xorg, Xwayland, Weston or XRDP command identified in the server probe.
+QEMU, qemu-img and virsh available. /dev/kvm writable to the SSH test account. No readable renderD128 at the checked device path.
+MemAvailable 12011176 KiB and temporary filesystem 306114912 KiB free at probe. Standard libvirt image path had zero .qcow2/.img files available to inventory and no libvirt guest was listed.
+No Windows 11 or Ubuntu GNOME desktop test ran during this inventory. No host settings or user accounts changed.
+
+Disposable GNOME live guest feasibility check, run from the SSH host:
+Canonical Ubuntu 24.04.5.1 AMD64 Desktop live ISO published size: 6250332160 bytes.
+Published SHA-256: 4da4a0c9035da8e68a59a838674f403f0a54472c78a83b4fb7f78d03588f85a7.
+Listing: https://releases.ubuntu.com/24.04/
+Checksums: https://releases.ubuntu.com/24.04/SHA256SUMS
+A bounded HTTPS Range request for 16777216 bytes returned HTTP 206 and transferred 6351877 bytes in 30 seconds (211725 bytes/s) before the time limit. The download at that observed rate would take approximately 8.2 hours. This estimate applies to the tested route only. The response was discarded to /dev/null. No full ISO was downloaded, and no guest was provisioned or booted.

@@ -1,0 +1,6 @@
+Method: ffmpeg PNG decode to rgb24. The red fixture background is RGB 179,0,54. Count exact pixels and their bounding rectangle. Coordinates are zero-based and inclusive.
+s1-x11-wry-tao.png size=1000x700 matching_pixels=37943 red_bbox=(190, 42, 459, 185) sha256=fa0570357cdd214d138fb7adffadf7f2c6dee0061aad96a99b1b52198cf0009c
+s1-wry-linux-server-x11.png size=1000x700 matching_pixels=37943 red_bbox=(190, 42, 459, 185) sha256=fa0570357cdd214d138fb7adffadf7f2c6dee0061aad96a99b1b52198cf0009c
+s1-x11-tauri.png size=1000x700 matching_pixels=0 red_bbox=None sha256=71268fcc7324720a752c823609c2f86dfa7efc380a55997f649b9b998508de37
+s1-windows-wry-tao.png size=986x690 matching_pixels=37987 red_bbox=(190, 72, 459, 215) sha256=0f9ab2ee6318b1c0767f82991e4657b51a22e4be3ea403e630e9ab2f0d47544e
+s1-windows-tauri.png size=986x690 matching_pixels=37987 red_bbox=(190, 72, 459, 215) sha256=b244b3f8efc5c6b2359d14a29c9f1484519edfbbf7bf057fc0235ebf93ccd31c

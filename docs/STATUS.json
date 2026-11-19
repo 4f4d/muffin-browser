@@ -127,6 +127,26 @@
         "outcome": "inconclusive",
         "stopped_reason": "completed"
       },
+      "S5:linux_wayland:wry-tao": {
+        "budget_minutes": 60,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "S5:linux_x11:wry-tao": {
+        "budget_minutes": 60,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "S5:macos:wry-tao": {
+        "budget_minutes": 60,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
+      "S5:windows:wry-tao": {
+        "budget_minutes": 60,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,
         "outcome": "inconclusive",

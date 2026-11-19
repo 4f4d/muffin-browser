@@ -55,3 +55,5 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | Criterion | Hypothesis before retry | Artifact |
 |---|---|---|
 | S2a portable fixture builds | The first integrated build reports E0106. Name the builder lifetime explicitly so the navigation wrapper returns the same builder lifetime. | docs/reports/m0/evidence/continuation-s2a-build-attempt.txt |
+| S2a interactive Mac control | The native app started, but the desktop tool expired before a click. A bounded programmatic run can separate engine/callback observations from the unavailable desktop control. Programmatic clicks carry no trusted gesture. | docs/reports/m0/evidence/continuation-s2a-macos-interactive.txt |
+| S2a GTK build | The isolated build reports E0277 because TAO already returns a borrowed GTK container. Pass the existing borrow directly to WRY. | docs/reports/m0/evidence/continuation-s2a-linux-build-attempt.txt |

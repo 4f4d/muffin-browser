@@ -1,0 +1,65 @@
+First committed GTK build attempt in two cached containers. Both exited 101 before runtime.
+source_commit=029cf1a8a6c993282192900e9f150ff3812901b3
+backend=x11
+cached_image=muffin-m0a-x11:8c8d36f50895
+rustc 1.95.0 (59807616e 2026-04-14)
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+Linux 6.8.0-147-generic x86_64
+2.52.6
+   Compiling muffin-s1-wry v0.1.0 (/fixture/spikes/s1/wry-tao)
+error[E0277]: the trait bound `&gtk::auto::box_::Box: glib::object::IsA<gtk::auto::container::Container>` is not satisfied
+    --> src/bin/muffin-s2a-popup.rs:37:30
+     |
+  37 |     return builder.build_gtk(&window.default_vbox().expect("TAO GTK container"));
+     |                    --------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `glib::object::IsA<gtk::auto::container::Container>` is not implemented for `&gtk::auto::box_::Box`
+     |                    |
+     |                    required by a bound introduced by this call
+     |
+note: required by a bound in `build_gtk`
+    --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wry-0.57.2/src/lib.rs:2043:8
+     |
+2041 |   fn build_gtk<W>(self, widget: &'a W) -> Result<WebView>
+     |      --------- required by a bound in this associated function
+2042 |   where
+2043 |     W: gtk::prelude::IsA<gtk::Container>;
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `WebViewBuilderExtUnix::build_gtk`
+help: consider removing the leading `&`-reference
+     |
+  37 -     return builder.build_gtk(&window.default_vbox().expect("TAO GTK container"));
+  37 +     return builder.build_gtk(window.default_vbox().expect("TAO GTK container"));
+     |
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `muffin-s1-wry` (bin "muffin-s2a-popup") due to 1 previous error
+source_commit=029cf1a8a6c993282192900e9f150ff3812901b3
+backend=wayland
+cached_image=muffin-m0a-wayland:59faf2f832a3
+rustc 1.95.0 (59807616e 2026-04-14)
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+Linux 6.8.0-147-generic x86_64
+2.52.6
+   Compiling muffin-s1-wry v0.1.0 (/fixture/spikes/s1/wry-tao)
+error[E0277]: the trait bound `&gtk::auto::box_::Box: glib::object::IsA<gtk::auto::container::Container>` is not satisfied
+    --> src/bin/muffin-s2a-popup.rs:37:30
+     |
+  37 |     return builder.build_gtk(&window.default_vbox().expect("TAO GTK container"));
+     |                    --------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `glib::object::IsA<gtk::auto::container::Container>` is not implemented for `&gtk::auto::box_::Box`
+     |                    |
+     |                    required by a bound introduced by this call
+     |
+note: required by a bound in `build_gtk`
+    --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wry-0.57.2/src/lib.rs:2043:8
+     |
+2041 |   fn build_gtk<W>(self, widget: &'a W) -> Result<WebView>
+     |      --------- required by a bound in this associated function
+2042 |   where
+2043 |     W: gtk::prelude::IsA<gtk::Container>;
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `WebViewBuilderExtUnix::build_gtk`
+help: consider removing the leading `&`-reference
+     |
+  37 -     return builder.build_gtk(&window.default_vbox().expect("TAO GTK container"));
+  37 +     return builder.build_gtk(window.default_vbox().expect("TAO GTK container"));
+     |
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `muffin-s1-wry` (bin "muffin-s2a-popup") due to 1 previous error

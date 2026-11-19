@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Serve a loopback-only popup fixture and optionally launch its native host."""
 import argparse
+import hashlib
 import http.server
 import json
 import subprocess
@@ -14,12 +15,12 @@ class FixtureServer(http.server.ThreadingHTTPServer):
     allow_reuse_address = True
 
 
-def popup_page(origins, title, auth=False):
+def popup_page(origins, title, auth=False, auto=False):
     return f"""<!doctype html><meta charset="utf-8"><title>{title}</title>
 <h1>{title}</h1><p id="state"></p>
 <button id="notify">Send opener message</button>
 <button id="close">Request window.close()</button>
-<a href="{origins[0]}/download" download>Download synthetic file</a>
+<a id="download" href="{origins[0]}/download" download>Download synthetic file</a>
 <pre id="events"></pre><script>
 const report=(kind,data={{}})=>fetch('/event',{{method:'POST',headers:{{'content-type':'application/json'}},body:JSON.stringify({{kind,data}})}});
 document.querySelector('#state').textContent=JSON.stringify({{opener:window.opener?'present':'null',ipc:typeof window.ipc}});
@@ -30,6 +31,13 @@ document.querySelector('#notify').onclick=()=>{{if(window.opener)window.opener.p
 document.querySelector('#close').onclick=()=>{{report('close-request',{{opener:!!window.opener}});window.close();}};
 window.addEventListener('message',e=>document.querySelector('#events').textContent+=JSON.stringify({{origin:e.origin,data:e.data}})+'\\n');
 {"report('auth-callback',{synthetic:true,query:location.search});" if auth else ""}
+if ({json.dumps(auto)}) {{
+ if (window.opener) document.querySelector('#notify').click();
+ if (location.pathname === '/popup/window-open') {{
+  setTimeout(()=>document.querySelector('#download').click(),100);
+  setTimeout(()=>document.querySelector('#close').click(),1800);
+ }}
+}}
 </script>"""
 
 
@@ -51,6 +59,9 @@ function openCase(url) {{
  const active=navigator.userActivation?.isActive ?? null;
  const popup=window.open(url,'_blank');
  report('open-return',{{url,active,has_handle:!!popup}});
+ if (popup && url === '/popup/window-open' && {json.dumps(auto)}) {{
+  setTimeout(()=>report('close-observed',{{closed:popup.closed}}),3500);
+ }}
 }}
 document.addEventListener('click',e=>{{const btn=e.target.closest('[data-case]');if(btn)report('parent-click',{{case:btn.dataset.case,trusted:e.isTrusted}});}});
 window.addEventListener('message',e=>{{
@@ -66,7 +77,7 @@ if ({json.dumps(auto)}) {{
 </script>"""
 
 
-def make_handler(port_index, origins, log_file, log_lock):
+def make_handler(port_index, origins, log_file, log_lock, auto):
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -90,7 +101,7 @@ def make_handler(port_index, origins, log_file, log_lock):
                 if not 0 <= size <= 2048:
                     raise ValueError("body size")
                 event = json.loads(self.rfile.read(size))
-                allowed = {"opener-message", "auth-callback", "close-request", "popup-ready", "open-return", "parent-click"}
+                allowed = {"opener-message", "auth-callback", "close-request", "close-observed", "popup-ready", "open-return", "parent-click"}
                 if not isinstance(event, dict) or event.get("kind") not in allowed:
                     raise ValueError("event shape")
                 record = {"at": round(time.time(), 3), "server": origins[port_index], "event": event}
@@ -110,12 +121,12 @@ def make_handler(port_index, origins, log_file, log_lock):
             if self.path == "/auth/consent":
                 return self.respond(302, b"", "text/plain", [("Location", origins[0] + "/auth/callback?code=SYNTHETIC-CODE")])
             if self.path.startswith("/auth/callback"):
-                return self.respond(200, popup_page(origins, "synthetic auth callback", True))
+                return self.respond(200, popup_page(origins, "synthetic auth callback", auth=True, auto=auto))
             if self.path == "/download":
                 return self.respond(200, b"SYNTHETIC-DOWNLOAD-CONTENT\n", "application/octet-stream",
                                     [("Content-Disposition", 'attachment; filename="muffin-s2a.txt"')])
             if self.path.startswith("/popup/"):
-                return self.respond(200, popup_page(origins, self.path))
+                return self.respond(200, popup_page(origins, self.path, auto=auto))
             if self.path in ("/", "/?mode=auto") and port_index == 0:
                 return self.respond(200, opener_page(origins, self.path.endswith("mode=auto")))
             self.respond(404, "not found", "text/plain")
@@ -141,7 +152,7 @@ def main():
         origins.append(f"http://127.0.0.1:{server.server_port}")
         servers.append(server)
     for index, server in enumerate(servers):
-        server.RequestHandlerClass = make_handler(index, origins, log_file, log_lock)
+        server.RequestHandlerClass = make_handler(index, origins, log_file, log_lock, args.auto)
     threads = [threading.Thread(target=server.serve_forever, daemon=True) for server in servers]
     for thread in threads:
         thread.start()
@@ -180,6 +191,12 @@ def main():
             server.shutdown()
             server.server_close()
         log_file.close()
+    downloads = []
+    for artifact in sorted(work.glob("popup-download-*.txt")):
+        contents = artifact.read_bytes()
+        downloads.append({"name": artifact.name, "sha256": hashlib.sha256(contents).hexdigest(),
+                          "bytes": len(contents), "matches": contents == b"SYNTHETIC-DOWNLOAD-CONTENT\n"})
+    (work / "downloads.json").write_text(json.dumps(downloads, indent=2) + "\n", encoding="utf-8")
     return exit_code
 
 

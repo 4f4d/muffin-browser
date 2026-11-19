@@ -34,7 +34,7 @@ fn allowed(url: &str, origins: &[String; 2]) -> bool {
 }
 fn build(builder: WebViewBuilder<'_>, window: &Window) -> wry::Result<WebView> {
     #[cfg(target_os = "linux")]
-    return builder.build_gtk(&window.default_vbox().expect("TAO GTK container"));
+    return builder.build_gtk(window.default_vbox().expect("TAO GTK container"));
     #[cfg(not(target_os = "linux"))]
     builder.build(window)
 }

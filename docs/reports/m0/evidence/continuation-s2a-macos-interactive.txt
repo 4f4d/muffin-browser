@@ -1,0 +1,21 @@
+source_commit=029cf1a8a6c993282192900e9f150ff3812901b3
+5e5aa44933674e078b9a9d3d76260c1ea3c359cf1bc86cd6bf1d9f2c17fce2bf  /private/tmp/muffin-continuation-s2a-gui/MuffinS2a.app/Contents/MacOS/muffin-s2a-popup
+ProductName:		macOS
+ProductVersion:		15.8.3
+BuildVersion:		24H241
+arm64
+rustc 1.95.0 (59807616e 2026-04-14)
+binary: rustc
+commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860
+commit-date: 2026-04-14
+host: aarch64-apple-darwin
+release: 1.95.0
+LLVM version: 22.1.2
+mode=interactive native macOS desktop; local CUA requests
+Desktop control returned unknown or expired node_repl continuation before interaction.
+Launcher exit 124 (420-second bound). Content event count: 0.
+engine_version=20621.3.11.11.3
+fixture_ready auto=false
+window_focus pane=parent
+navigation pane=parent allowed=true url=http://127.0.0.1:55681/
+page_finished pane=parent url=http://127.0.0.1:55681/

@@ -1,0 +1,45 @@
+source_commit=5cc7570acfc2122a01ddfb43a2850390578ea2e6
+runner_image=ubuntu24/20261111.127.1
+Linux 7.0.0-1014-aws x86_64
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.5 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+libgtk-3-0t64:amd64	3.24.41-4ubuntu1.3
+libwebkit2gtk-4.1-0:amd64	2.52.6-0ubuntu0.24.04.2
+weston	13.0.0-4build3
+xvfb	2:21.1.12-1ubuntu1.9
+5bebb791e4c5e3be28a23b54f96eaae197041a2269188419847e453f5c0455b7  m0-artifacts/muffin-floor
+binary_bytes=17376
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+
+(muffin-floor:5320): Gdk-CRITICAL **: 14:02:42.953: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+libEGL warning: failed to get driver name for fd -1
+
+libEGL warning: MESA-LOADER: failed to retrieve device information
+
+libEGL warning: failed to get driver name for fd -1
+
+MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)
+libEGL warning: egl: failed to create dri2 screen
+
+(muffin-floor:5320): Gdk-CRITICAL **: 14:02:49.281: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+gtk=3.24.41
+webkitgtk=2.52.6
+backend=GdkWaylandDisplay
+uri=about:blank
+user_agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/60.5 Safari/605.1.15

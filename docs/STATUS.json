@@ -7,7 +7,13 @@
       "triggering_reports": []
     },
     "needs_human_decision": [],
-    "reports": {}
+    "reports": {
+      "engine_floor:macos:wkwebview": {
+        "budget_minutes": 45,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      }
+    }
   },
   "m0b_manual_tests": {
     "DL-01": {

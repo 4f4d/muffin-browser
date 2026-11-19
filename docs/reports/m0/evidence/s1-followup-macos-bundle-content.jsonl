@@ -1,0 +1,5 @@
+{"at":1795102246.776,"name":"fetch-probes","data":{"positive_control":{"status":200,"expected":true},"private_file":{"error":"TypeError"},"chrome_uri":{"error":"TypeError"}}}
+{"at":1795102246.869,"name":"command-attempt","data":{"scheme_link":"activated","window_ipc":"undefined","webkit_ipc":"undefined","postMessage":"available"}}
+{"at":1795102246.87,"name":"inert-postmessage","data":{"observed":true}}
+{"at":1795102246.951,"name":"navigation-attempt","data":{"target":"file"}}
+{"at":1795102247.027,"name":"navigation-attempt","data":{"target":"chrome"}}

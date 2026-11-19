@@ -1,0 +1,26 @@
+source_fixture=interactive-follow-up webkit=20621.3.11.11.3 pid=55581
+appkit_key_monitor=true
+chrome_protocol_response allowed=true
+chrome_loaded controllable=true
+content_loaded=true
+appkit active=true key=true responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+window_number=14458
+dom pane=content "{\"focus\":false,\"active\":\"BODY\",\"width\":880,\"height\":513,\"testInput\":\"\"}"
+dom pane=chrome "{\"focus\":true,\"active\":\"INPUT\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+appkit active=false key=false responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+dom pane=chrome "{\"focus\":false,\"active\":\"INPUT\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+appkit active=true key=true responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+dom pane=chrome "{\"focus\":true,\"active\":\"BODY\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+chrome_ipc_received allowed=true
+native_command_count=1
+navigation_denied view=content scheme=muffin-followup
+navigation_denied view=content scheme=muffin-chrome
+appkit active=true key=true responder=wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=content
+dom pane=content "{\"focus\":true,\"active\":\"BODY\",\"width\":880,\"height\":513,\"testInput\":\"\"}"
+dom pane=chrome "{\"focus\":false,\"active\":\"BODY\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+chrome_ipc_received allowed=true
+native_command_count=2
+appkit active=true key=true responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+dom pane=content "{\"focus\":false,\"active\":\"BODY\",\"width\":880,\"height\":513,\"testInput\":\"\"}"
+dom pane=chrome "{\"focus\":true,\"active\":\"BODY\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+fixture_end commands=2

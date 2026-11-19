@@ -1,0 +1,50 @@
+source_fixture=interactive-follow-up webkit=20621.3.11.11.3 pid=51719
+appkit_key_monitor=true
+chrome_protocol_response allowed=true
+chrome_loaded controllable=true
+content_loaded=true
+appkit active=true key=true responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+window_number=14383
+dom pane=content "{\"focus\":false,\"active\":\"BODY\",\"width\":880,\"height\":513,\"testInput\":\"\"}"
+dom pane=chrome "{\"focus\":true,\"active\":\"INPUT\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+appkit active=false key=false responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+dom pane=chrome "{\"focus\":false,\"active\":\"INPUT\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+appkit_test_key=a
+appkit_shortcut=Chrome
+make_first_responder target=Chrome returned=true
+appkit_after_focus active=true key=true responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+dom_before_explicit_focus target=Chrome "{\"focus\":false,\"active\":\"INPUT\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+fixture_dom_focus_requested target=Chrome dispatched=true
+appkit active=true key=true responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+dom pane=content "{\"focus\":false,\"active\":\"INPUT\",\"width\":880,\"height\":513,\"testInput\":\"a\"}"
+dom pane=chrome "{\"focus\":true,\"active\":\"INPUT\",\"width\":880,\"height\":72,\"testInput\":\"\"}"
+appkit_test_key=b
+appkit_shortcut=Content
+make_first_responder target=Content returned=true
+appkit_after_focus active=true key=true responder=wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=content
+dom_before_explicit_focus target=Content "{\"focus\":false,\"active\":\"INPUT\",\"width\":880,\"height\":513,\"testInput\":\"a\"}"
+fixture_dom_focus_requested target=Content dispatched=true
+appkit_test_key=c
+appkit active=true key=true responder=wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=content
+dom pane=chrome "{\"focus\":false,\"active\":\"INPUT\",\"width\":880,\"height\":72,\"testInput\":\"b\"}"
+dom pane=content "{\"focus\":true,\"active\":\"INPUT\",\"width\":880,\"height\":513,\"testInput\":\"ac\"}"
+appkit active=false key=false responder=wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=content
+dom pane=content "{\"focus\":false,\"active\":\"INPUT\",\"width\":880,\"height\":513,\"testInput\":\"ac\"}"
+appkit active=true key=true responder=wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=content
+dom pane=content "{\"focus\":true,\"active\":\"INPUT\",\"width\":880,\"height\":513,\"testInput\":\"ac\"}"
+chrome_ipc_received allowed=true
+native_command_count=1
+dom pane=chrome "{\"focus\":false,\"active\":\"BODY\",\"width\":880,\"height\":72,\"testInput\":\"b\"}"
+dom pane=content "{\"focus\":true,\"active\":\"BODY\",\"width\":880,\"height\":513,\"testInput\":\"ac\"}"
+navigation_denied view=content scheme=muffin-followup
+appkit active=false key=false responder=wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=content
+dom pane=content "{\"focus\":false,\"active\":\"BODY\",\"width\":880,\"height\":513,\"testInput\":\"ac\"}"
+navigation_denied view=content scheme=muffin-chrome
+appkit active=true key=true responder=wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=content
+dom pane=content "{\"focus\":true,\"active\":\"BODY\",\"width\":880,\"height\":513,\"testInput\":\"ac\"}"
+chrome_ipc_received allowed=true
+native_command_count=2
+appkit active=true key=true responder=..NSKVONotifying_wry::wkwebview::class::wry_web_view::WryWebView0.57.2 pane=chrome
+dom pane=chrome "{\"focus\":true,\"active\":\"BODY\",\"width\":880,\"height\":72,\"testInput\":\"b\"}"
+dom pane=content "{\"focus\":false,\"active\":\"BODY\",\"width\":880,\"height\":513,\"testInput\":\"ac\"}"
+fixture_end commands=2

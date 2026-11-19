@@ -1,0 +1,20 @@
+source_commit=473fded310521524e6fa43cabc7b8e36d82e2009
+report=docs/reports/m0/spikes/S1-follow-up-macos-wry-tao.md
+ProductName:		macOS
+ProductVersion:		15.8.3
+BuildVersion:		24H241
+arm64
+rustc 1.95.0 (59807616e 2026-04-14)
+binary: rustc
+commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860
+commit-date: 2026-04-14
+host: aarch64-apple-darwin
+release: 1.95.0
+LLVM version: 22.1.2
+executable_sha256=2d1bae1ba3315a0d8f2c4cecbb3d31be31d9920624773ad6a005ef6d8ab4dc0a
+window_capture_sha256=ce3c747965192ef556ce50e0ca3b859330d5d2a9ad2b922b65da0d8e85d045bc
+  pixelWidth: 1760
+  pixelHeight: 1226
+Window capture: interactive CUA native window snapshot, exported byte-for-byte via a one-shot loopback-only form.
+Alternate WindowServer command returned: could not create image from window.
+JPEG red envelope from RGB decode, inclusive: (420, 144, 939, 395). Top and bottom cross the chrome/content boundary at y=200.

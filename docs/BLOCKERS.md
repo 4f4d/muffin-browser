@@ -48,3 +48,4 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 |---|---|---|
 | AppKit fixture build | Deriving the concrete WRY handle pointer with `ptr::from_ref` will resolve the Rust type-inference error before casting to `AnyObject`. | docs/reports/m0/evidence/s1-followup-mac-compile.txt |
 | Interactive GNOME on server | A live transport probe can distinguish temporary SSH routing loss from current guest availability. | docs/reports/m0/evidence/s1-followup-guest-inventory.txt |
+| Interactive GNOME guest availability | A KVM-backed temporary guest booted from official Ubuntu 24.04 Desktop live media may provide an interactive GNOME console without changing the host OS. Check transfer feasibility and keep remote display on loopback. | docs/reports/m0/evidence/s1-followup-guest-inventory.txt |

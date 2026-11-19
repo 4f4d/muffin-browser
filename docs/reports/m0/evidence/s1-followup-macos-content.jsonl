@@ -1,0 +1,7 @@
+{"at":1795101790.1,"name":"input-enter","data":{"observed":true}}
+{"at":1795101796.712,"name":"input-enter","data":{"observed":true}}
+{"at":1795101801.175,"name":"fetch-probes","data":{"positive_control":{"status":200,"expected":true},"private_file":{"error":"TypeError"},"chrome_uri":{"error":"TypeError"}}}
+{"at":1795101805.294,"name":"command-attempt","data":{"scheme_link":"activated","window_ipc":"undefined","webkit_ipc":"undefined","postMessage":"available"}}
+{"at":1795101805.296,"name":"inert-postmessage","data":{"observed":true}}
+{"at":1795101809.644,"name":"navigation-attempt","data":{"target":"file"}}
+{"at":1795101809.723,"name":"navigation-attempt","data":{"target":"chrome"}}

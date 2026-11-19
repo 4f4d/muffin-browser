@@ -1,0 +1,4 @@
+2026-11-19 | Verified host key; user-authorized Ubuntu runtime setup.
+Noninteractive package-manager access failed before package changes: sudo: a password is required
+The SSH user cannot read the DRM primary device. No package changes were made.
+Unprivileged user namespace: uid_map write denied. Docker server 29.9.0 responded without escalation on the server.

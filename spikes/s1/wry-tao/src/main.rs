@@ -125,6 +125,7 @@ fn inspect(view: &WebView, label: &'static str, proxy: EventLoopProxy<Signal>) -
 }
 
 fn main() -> wry::Result<()> {
+    println!("native_app_pid={}", std::process::id());
     let port: u16 = env::var("MUFFIN_FIXTURE_PORT")
         .expect("local fixture port")
         .parse()

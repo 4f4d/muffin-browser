@@ -15,7 +15,7 @@ if arguments[1] == "activate" {
     exit(application.activate() ? 0 : 1)
 }
 guard arguments[1] == "capture", arguments.count == 4 else { exit(2) }
-let windows = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID)
+let windows = CGWindowListCopyWindowInfo(.optionAll, kCGNullWindowID)
 let matching = (windows as? [[String: Any]] ?? []).filter {
     $0[kCGWindowOwnerPID as String] as? Int32 == pid && $0[kCGWindowLayer as String] as? Int == 0
 }

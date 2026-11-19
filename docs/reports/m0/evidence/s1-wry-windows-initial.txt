@@ -1,0 +1,109 @@
+source_commit=a19b1cb5c8d05833c42f526d5a71739834876884
+runner_image=win25-vs2026/20261103.298.1
+rustc 1.99.1 (58cf8f9c3 2026-10-13)
+binary: rustc
+commit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67
+commit-date: 2026-10-13
+host: x86_64-pc-windows-msvc
+release: 1.99.1
+LLVM version: 23.1.1
+binary_sha256=3c054b868f58fe0810e79848a46a0ec61377ec023c7ec8c79c86a323a77ef97e
+workflow=https://github.com/4f4d/muffin-browser/actions/runs/44542235415
+fixture_http="GET /start HTTP/1.1" 200 -
+engine=156.0.4314.58
+scale=1
+resize_parent=(900, 620)
+resize_parent=(900, 620)
+loaded=chrome about:blank
+loaded=overlay about:blank
+loaded=content http://127.0.0.1:64593/start
+inspection=overlay {"focused":false,"height":144,"ipc":"undefined","tauri":"undefined","title":"M0 overlay","url":"about:blank","width":270}
+inspection=initial-chrome {"focused":false,"height":72,"ipc":"undefined","tauri":"undefined","title":"M0 chrome","url":"about:blank","width":900}
+inspection=initial-content {"focused":true,"height":548,"ipc":"undefined","tauri":"undefined","title":"M0 content","url":"http://127.0.0.1:64593/start","width":900}
+resize_parent=(1000, 700)
+inspection=resized-chrome {"focused":false,"height":72,"ipc":"undefined","tauri":"undefined","title":"M0 chrome","url":"about:blank","width":1000}
+inspection=resized-content {"focused":true,"height":628,"ipc":"undefined","tauri":"undefined","title":"M0 content","url":"http://127.0.0.1:64593/start","width":1000}
+fixture_http="GET /next HTTP/1.1" 200 -
+loaded=content http://127.0.0.1:64593/next
+inspection=navigated {"focused":true,"height":628,"ipc":"undefined","tauri":"undefined","title":"M0 next","url":"http://127.0.0.1:64593/next","width":1000}
+fixture_http="GET /start?tab=0-0 HTTP/1.1" 200 -
+loaded=tab-0-0 http://127.0.0.1:64593/start?tab=0-0
+cycle_complete=1
+fixture_http="GET /start?tab=1-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-2 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-3 HTTP/1.1" 200 -
+loaded=tab-1-0 http://127.0.0.1:64593/start?tab=1-0
+loaded=tab-1-1 http://127.0.0.1:64593/start?tab=1-1
+loaded=tab-1-2 http://127.0.0.1:64593/start?tab=1-2
+loaded=tab-1-3 http://127.0.0.1:64593/start?tab=1-3
+fixture_http="GET /start?tab=1-4 HTTP/1.1" 200 -
+loaded=tab-1-4 http://127.0.0.1:64593/start?tab=1-4
+cycle_complete=5
+fixture_http="GET /start?tab=2-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-2 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-3 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-4 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-5 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-6 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-7 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-8 HTTP/1.1" 200 -
+loaded=tab-2-0 http://127.0.0.1:64593/start?tab=2-0
+loaded=tab-2-1 http://127.0.0.1:64593/start?tab=2-1
+loaded=tab-2-2 http://127.0.0.1:64593/start?tab=2-2
+loaded=tab-2-3 http://127.0.0.1:64593/start?tab=2-3
+loaded=tab-2-4 http://127.0.0.1:64593/start?tab=2-4
+loaded=tab-2-5 http://127.0.0.1:64593/start?tab=2-5
+loaded=tab-2-6 http://127.0.0.1:64593/start?tab=2-6
+loaded=tab-2-7 http://127.0.0.1:64593/start?tab=2-7
+loaded=tab-2-8 http://127.0.0.1:64593/start?tab=2-8
+fixture_http="GET /start?tab=2-9 HTTP/1.1" 200 -
+loaded=tab-2-9 http://127.0.0.1:64593/start?tab=2-9
+cycle_complete=10
+fixture_http="GET /start?tab=3-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-2 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-3 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-4 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-5 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-6 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-7 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-8 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-9 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-10 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-11 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-12 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-13 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-14 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-15 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-16 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-17 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-18 HTTP/1.1" 200 -
+loaded=tab-3-0 http://127.0.0.1:64593/start?tab=3-0
+loaded=tab-3-1 http://127.0.0.1:64593/start?tab=3-1
+loaded=tab-3-2 http://127.0.0.1:64593/start?tab=3-2
+loaded=tab-3-3 http://127.0.0.1:64593/start?tab=3-3
+loaded=tab-3-4 http://127.0.0.1:64593/start?tab=3-4
+loaded=tab-3-5 http://127.0.0.1:64593/start?tab=3-5
+loaded=tab-3-6 http://127.0.0.1:64593/start?tab=3-6
+loaded=tab-3-7 http://127.0.0.1:64593/start?tab=3-7
+loaded=tab-3-8 http://127.0.0.1:64593/start?tab=3-8
+loaded=tab-3-9 http://127.0.0.1:64593/start?tab=3-9
+loaded=tab-3-10 http://127.0.0.1:64593/start?tab=3-10
+loaded=tab-3-11 http://127.0.0.1:64593/start?tab=3-11
+loaded=tab-3-12 http://127.0.0.1:64593/start?tab=3-12
+loaded=tab-3-13 http://127.0.0.1:64593/start?tab=3-13
+loaded=tab-3-14 http://127.0.0.1:64593/start?tab=3-14
+loaded=tab-3-15 http://127.0.0.1:64593/start?tab=3-15
+loaded=tab-3-16 http://127.0.0.1:64593/start?tab=3-16
+loaded=tab-3-17 http://127.0.0.1:64593/start?tab=3-17
+loaded=tab-3-18 http://127.0.0.1:64593/start?tab=3-18
+fixture_http="GET /start?tab=3-19 HTTP/1.1" 200 -
+loaded=tab-3-19 http://127.0.0.1:64593/start?tab=3-19
+cycle_complete=20
+inspection=focused-content {"focused":true,"height":628,"ipc":"undefined","tauri":"undefined","title":"M0 next","url":"http://127.0.0.1:64593/next","width":1000}
+inspection=focused-chrome {"focused":true,"height":72,"ipc":"undefined","tauri":"undefined","title":"M0 chrome","url":"about:blank","width":1000}
+screenshot_ready=true
+fixture_result=pass
+capture_warning=S1 window could not be located for capture

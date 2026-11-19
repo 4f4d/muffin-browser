@@ -1,0 +1,16 @@
+[package]
+name = "muffin-s1-tauri"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[build-dependencies]
+tauri-build = "=2.7.6"
+
+[dependencies]
+tauri = { version = "=2.12.7", features = ["unstable"] }
+serde = { version = "1", features = ["derive"] }
+
+[features]
+default = []
+custom-protocol = ["tauri/custom-protocol"]

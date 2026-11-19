@@ -35,6 +35,7 @@ def main():
     parser.add_argument("binary", type=Path)
     parser.add_argument("--hold", type=int, default=0)
     parser.add_argument("--mac-helper", type=Path)
+    parser.add_argument("--bundle-log", type=Path, help="launch a macOS app bundle using LaunchServices")
     args = parser.parse_args()
     with ThreadingHTTPServer(("127.0.0.1", 0), Fixture) as server:
         thread = Thread(target=server.serve_forever, daemon=True)
@@ -43,6 +44,19 @@ def main():
         env["MUFFIN_FIXTURE_PORT"] = str(server.server_port)
         env["MUFFIN_S1_HOLD"] = str(args.hold)
         try:
+            if args.bundle_log:
+                log = args.bundle_log.resolve()
+                log.touch()
+                with subprocess.Popen([
+                    "/usr/bin/open", "-n", "-W", "-a", str(args.binary.resolve()),
+                    "--stdout", str(log), "--stderr", str(log.with_suffix(".stderr")),
+                    "--env", "MUFFIN_FIXTURE_PORT=" + env["MUFFIN_FIXTURE_PORT"],
+                    "--env", "MUFFIN_S1_HOLD=" + env["MUFFIN_S1_HOLD"],
+                ]) as launch:
+                    result = launch.wait(timeout=175 + args.hold)
+                    if "fixture_result=pass" not in log.read_text(errors="replace"):
+                        result = 1
+                raise SystemExit(result)
             with subprocess.Popen([args.binary.resolve()], env=env) as app:
                 print(f"fixture_app_pid={app.pid}", flush=True)
                 try:

@@ -1,0 +1,6 @@
+{
+  "identifier": "chrome-only",
+  "description": "No native commands are granted to fixture WebViews.",
+  "webviews": ["chrome"],
+  "permissions": []
+}

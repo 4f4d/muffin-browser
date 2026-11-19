@@ -12,8 +12,25 @@ public static class MuffinWindow {
     [StructLayout(LayoutKind.Sequential)] public struct Rectangle {
         public int Left, Top, Right, Bottom;
     }
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    public static extern IntPtr FindWindow(string className, string title);
+    private delegate bool WindowCallback(IntPtr hwnd, IntPtr extra);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(WindowCallback callback, IntPtr extra);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+    public static IntPtr FindForProcess(uint pid) {
+        IntPtr found = IntPtr.Zero;
+        EnumWindows((hwnd, extra) => {
+            uint owner;
+            GetWindowThreadProcessId(hwnd, out owner);
+            Rectangle rect;
+            if (owner == pid && IsWindowVisible(hwnd) && GetWindowRect(hwnd, out rect) &&
+                rect.Right - rect.Left >= 720 && rect.Bottom - rect.Top >= 520) {
+                found = hwnd;
+                return false;
+            }
+            return true;
+        }, IntPtr.Zero);
+        return found;
+    }
     [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool GetWindowRect(IntPtr window, out Rectangle rect);
 }
@@ -22,7 +39,10 @@ $process = Start-Process python -ArgumentList "spikes/s1/run_fixture.py $Binary 
 try {
     for ($sample = 0; $sample -lt 700 -and -not $process.HasExited; $sample++) {
         if (Select-String -Path "$Stem.txt" -Pattern '^screenshot_ready=true$' -Quiet) {
-            $handle = [MuffinWindow]::FindWindow($null, $Title)
+            $pidEntry = Select-String -Path "$Stem.txt" -Pattern '^fixture_app_pid=(\d+)$' | Select-Object -First 1
+            if (!$pidEntry) { throw "Missing fixture PID for $Title" }
+            $fixturePid = [uint32]$pidEntry.Matches[0].Groups[1].Value
+            $handle = [MuffinWindow]::FindForProcess($fixturePid)
             $rect = New-Object MuffinWindow+Rectangle
             if ($handle -ne [IntPtr]::Zero -and [MuffinWindow]::GetWindowRect($handle, [ref]$rect)) {
                 $width = $rect.Right - $rect.Left

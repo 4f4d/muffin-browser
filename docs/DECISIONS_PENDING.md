@@ -4,10 +4,10 @@ Do not ask the user about routine engineering choices that can be settled by evi
 
 | Decision | Default approach | Evidence required | Owner/status |
 |---|---|---|---|
-| Tauri vs WRY+TAO | Run comparable multi-WebView spikes; choose the least complex option that passes | API stability, native handles, security boundaries, lifecycle, overlays, X11/Wayland/Windows/macOS tests | M0 / open |
-| Minimum OS/runtime versions | Choose versions that balance reach and security/feature support | Current OS share not required; test matrix, WebKit/WebView2 requirements, packaging dependencies | M0 / open |
-| Linux support status | Validate X11 and Wayland separately; beta-label unsupported combinations | GTK/WebKitGTK baseline, package deps, focus/bounds/z-order, GPU/IME tests | M0 / open |
-| CPU architectures | Start with architectures that can be built and tested natively; add others only with CI evidence | Runner availability and actual install tests | M0 / open |
+| Tauri vs WRY+TAO | Run comparable multi-WebView spikes; choose the least complex option that passes | API stability, native handles, security boundaries, lifecycle, overlays, X11/Wayland/Windows/macOS tests | **Human** / open after mixed S1 evidence; see [ADR 0001](adr/0001-m0a-substrate-evidence.md) |
+| Minimum OS/runtime versions | Choose versions that balance reach and security/feature support | Current OS share not required; test matrix, WebKit/WebView2 requirements, packaging dependencies | M0 / tested versions recorded; shipping floors open |
+| Linux support status | Validate X11 and Wayland separately; beta-label unsupported combinations | GTK/WebKitGTK baseline, package deps, focus/bounds/z-order, GPU/IME tests | **Human** / X11 and Wayland remain open; stock Tauri layout failed both probes |
+| CPU architectures | Start with architectures that can be built and tested natively; add others only with CI evidence | Runner availability and actual install tests | M0 / macOS arm64 and x64 runner observations only; shipping architectures open |
 | App chrome layout | Prototype compact horizontal tabs and collapsible vertical tabs | Real app screenshots, keyboard navigation, narrow-window usability | M1 / open |
 | OAuth and passkeys | Test provider flows; document any policy/entitlement blocker | Google/Microsoft/GitHub; Apple entitlement eligibility; WebAuthn on each target | M0 / open |
 | PDF rendering | Prefer reliable native viewer; use pdf.js if a supported platform lacks one | Fixture tests on each engine, size, security, licence | M0 / open |
@@ -22,3 +22,5 @@ Do not ask the user about routine engineering choices that can be settled by evi
 | Sign-in product gate | Pass = SI-01 to SI-04 as defined in `docs/M0B_MANUAL_TESTS.md` | M0b recorded results on bare metal or valid VMs | **Human** / open |
 | Per-platform go / beta / no-go | Recommendation from `M0A_SUMMARY.md` | M0a + M0b evidence | **Human** / open |
 | LICENSE for the public repository | None until decided | Dependency licence compatibility; intent (permissive vs copyleft) | **Human** / open |
+
+See the [M0a handoff](reports/m0/M0A_SUMMARY.md) for the evidence, remaining S1 criteria, and dependent spikes held at the substrate gate. M0b remains human-operated.

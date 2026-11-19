@@ -1,0 +1,5 @@
+2026-11-19 | Delegated Tauri macOS fixture
+The writer reported an initial incompatible dependency selection for Tauri 2.12.7 and a tauri-build 2.5.3 pin. The subsequent 2.7.6 pin reached the compiler, as shown in the retained compile output. The resolver's original stdout was overwritten by the next build and is unavailable.
+Integrated manifest: spikes/s1/tauri/src-tauri/Cargo.toml
+Integrated lock: spikes/s1/tauri/src-tauri/Cargo.lock
+Exact selected dependency versions: tauri 2.12.7, tauri-build 2.7.6, tauri-runtime-wry 2.12.5, wry 0.57.3.

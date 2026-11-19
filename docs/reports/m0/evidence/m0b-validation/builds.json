@@ -52,7 +52,15 @@
           "environment": "Headless Weston in isolated Ubuntu container on headless host",
           "summary": "linux-host-3f883-wayland-summary.json"
         }
-      ]
+      ],
+      "hosted_diagnostics": {
+        "environment": "GitHub Actions Ubuntu 24.04 x64 VM with Xvfb and native XTEST popup action",
+        "job_url": "https://github.com/4f4d/muffin-browser/actions/runs/44591002246/job/135796669038",
+        "binary_sha256": "ee28335720f8f3cc47e16cd0f3bb8af82cb49d44f23bc6387d53368866433178",
+        "summary": "linux-ci-3f883-summary.json",
+        "outcome": "failed payload verification; engine completed two operations but neither matching payload appeared in the expected download directory",
+        "verified_package_uploaded": false
+      }
     }
   ],
   "earlier_ci": [

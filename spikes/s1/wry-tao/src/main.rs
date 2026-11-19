@@ -358,7 +358,7 @@ fn main() -> wry::Result<()> {
                     }
                     #[cfg(target_os = "linux")]
                     4 if group == COUNTS.len() && exercise_termination => {
-                        use webkit2gtk::prelude::WebViewExt as _;
+                        use webkit2gtk::WebViewExt as _;
                         use wry::WebViewExtUnix;
                         let native = content.webview();
                         let events = proxy.clone();

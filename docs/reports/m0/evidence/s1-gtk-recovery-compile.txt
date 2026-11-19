@@ -1,0 +1,6 @@
+Source commit: 25c35c6160c563dd5376c46b53aebf01e7da8efe
+Environment: existing Ubuntu 24.04 fixture image, locked offline Cargo build
+error[E0432]: unresolved import webkit2gtk::prelude
+error[E0599]: no method named connect_web_process_terminated found for webkit2gtk::WebView
+error[E0599]: no method named terminate_web_process found for webkit2gtk::WebView
+rustc suggests trait webkit2gtk::WebViewExt is implemented but not in scope.

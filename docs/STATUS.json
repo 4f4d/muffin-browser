@@ -7,6 +7,7 @@
       "triggering_reports": []
     },
     "needs_human_decision": [
+      "S1-follow-up:macos:wry-tao",
       "S1:linux_wayland:wry-tao",
       "S1:linux_x11:wry-tao",
       "S1:macos:tauri",
@@ -40,8 +41,8 @@
       },
       "S1-follow-up:macos:wry-tao": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "blocked"
       },
       "S1-follow-up:windows:wry-tao": {
         "budget_minutes": 45,

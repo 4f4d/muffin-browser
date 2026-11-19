@@ -18,6 +18,10 @@
       "S1:windows:tauri",
       "S1:windows:wry-tao",
       "S2a:macos:wry-tao",
+      "S4:linux_wayland:wry-tao",
+      "S4:linux_x11:wry-tao",
+      "S4:macos:wry-tao",
+      "S4:windows:wry-tao",
       "engine_floor:linux_wayland:webkitgtk",
       "engine_floor:linux_x11:webkitgtk",
       "engine_floor:windows:webview2"
@@ -105,23 +109,23 @@
       },
       "S4:linux_wayland:wry-tao": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "completed"
       },
       "S4:linux_x11:wry-tao": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "completed"
       },
       "S4:macos:wry-tao": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "completed"
       },
       "S4:windows:wry-tao": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "completed"
       },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,

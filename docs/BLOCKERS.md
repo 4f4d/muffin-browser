@@ -47,3 +47,4 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | Criterion | Hypothesis before retry | Artifact |
 |---|---|---|
 | AppKit fixture build | Deriving the concrete WRY handle pointer with `ptr::from_ref` will resolve the Rust type-inference error before casting to `AnyObject`. | docs/reports/m0/evidence/s1-followup-mac-compile.txt |
+| Interactive GNOME on server | A live transport probe can distinguish temporary SSH routing loss from current guest availability. | docs/reports/m0/evidence/s1-followup-guest-inventory.txt |

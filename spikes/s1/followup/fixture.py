@@ -90,7 +90,7 @@ def main() -> int:
     shutil.copyfile(binary, executable)
     executable.chmod(executable.stat().st_mode | 0o111)
     marker = 'MFF-' + uuid.uuid4().hex
-    private_file = base / 'synthetic-private-canary.txt'
+    private_file = resources / 'synthetic-private-canary.txt'
     private_file.write_text('Synthetic local canary: ' + marker + '\n', encoding='utf-8')
     (bundle / 'Contents' / 'Info.plist').write_bytes(plistlib.dumps({
         'CFBundleExecutable': 'MuffinFollowup', 'CFBundleIdentifier': 'local.muffin.followup.fixture',

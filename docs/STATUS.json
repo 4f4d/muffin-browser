@@ -28,6 +28,11 @@
         "outcome": "pass",
         "stopped_reason": "completed"
       },
+      "S1-follow-up:macos:wry-tao": {
+        "budget_minutes": 90,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
       "S1:linux_wayland:tauri": {
         "budget_minutes": 90,
         "outcome": "fail",

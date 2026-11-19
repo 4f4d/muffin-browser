@@ -15,7 +15,7 @@ permissions:
 jobs:
   engine-floor:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 28
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p m0-artifacts
           sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 update
-          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libwebkit2gtk-4.1-dev xvfb xauth weston
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libwebkit2gtk-4.1-dev xvfb xauth weston x11-utils imagemagick
       - name: Compile the native floor host
         id: build
         run: |
@@ -48,6 +48,35 @@ jobs:
         run: |
           set -o pipefail
           timeout 35s bash spikes/engine-floor/linux/run.sh wayland "$PWD/m0-artifacts/muffin-floor" 2>&1 | tee m0-artifacts/engine-floor-wayland.txt
+      - name: Build and exercise each S1 candidate
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' && hashFiles('spikes/s1/wry-tao/Cargo.toml') != '' }}
+        run: |
+          set -euo pipefail
+          printf 'source_commit=%s\nrunner_image=%s/%s\n' "$GITHUB_SHA" "$ImageOS" "$ImageVersion" > m0-artifacts/s1-build.txt
+          rustc -Vv >> m0-artifacts/s1-build.txt
+          failed=0
+          for candidate in wry-tao tauri; do
+            manifest="spikes/s1/$candidate/Cargo.toml"
+            if [[ "$candidate" == tauri ]]; then manifest=spikes/s1/tauri/src-tauri/Cargo.toml; fi
+            [[ -f "$manifest" ]] || continue
+            if [[ "$candidate" == wry-tao ]]; then
+              name=muffin-s1-wry
+              title='Muffin S1 WRY TAO'
+            else
+              name=muffin-s1-tauri
+              title='Muffin S1 Tauri'
+            fi
+            if ! cargo build --locked --manifest-path "$manifest" --target-dir "$RUNNER_TEMP/muffin-$candidate" 2>&1 | tee "m0-artifacts/s1-$candidate-build.txt"; then
+              failed=1
+              continue
+            fi
+            binary="$RUNNER_TEMP/muffin-$candidate/debug/$name"
+            cp "$binary" m0-artifacts/
+            sha256sum "$binary" | awk '{print $1}' > "m0-artifacts/s1-$candidate-binary.sha256"
+            bash spikes/engine-floor/linux/run.sh x11 bash spikes/s1/capture-x11.sh "$binary" "$title" "m0-artifacts/s1-x11-$candidate.txt" "m0-artifacts/s1-x11-$candidate.png" || failed=1
+            bash spikes/engine-floor/linux/run.sh wayland python3 spikes/s1/run_fixture.py "$binary" > "m0-artifacts/s1-wayland-$candidate.txt" 2>&1 || failed=1
+          done
+          exit "$failed"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

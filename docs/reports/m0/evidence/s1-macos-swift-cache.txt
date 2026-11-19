@@ -1,0 +1,3 @@
+Initial command: swiftc spikes/s1/capture-macos.swift -o /private/tmp/muffin-capture-s1
+error opening [user cache]/clang/ModuleCache/Swift-3AJJN1UPT8RFK.swiftmodule for output: Operation not permitted
+unable to load standard library for target arm64-apple-macosx15.0

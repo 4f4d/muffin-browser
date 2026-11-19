@@ -1,0 +1,29 @@
+identity {"app_commit":"ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c","binary_architecture":"x86_64","binary_sha256":"fc29a8b00db135a690f80ab04a0d0db338ed66abc45b7159e94f2d819cded4d7","dependencies":{"webkit":"WebView2 Evergreen Runtime"},"engine_version":"156.0.4314.58","host_architecture":"AMD64","locked":{"tao":"0.37.2","wry":"0.57.2"},"os":"windows","os_version":"Microsoft Windows [Version 10.0.26100.33674]"}
+chrome_created isolated=true
+native_view_focused role=Chrome
+smoke_case=trusted_chrome_committed result=fail
+view_created role=Tab(1) private=false
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=normal_store_relaunch_navigation result=pass
+smoke_case=normal_local_storage_persists_after_relaunch result=pass
+smoke_case=normal_cookie_persists_after_relaunch result=pass
+focus_requested role=Chrome
+native_view_focused role=Chrome
+native_view_focused role=Tab(1)
+native_view_focused role=Tab(1)
+smoke_case=relaunch_private_is_lazy result=pass
+view_created role=Tab(2) private=true
+focus_requested role=Tab(2)
+native_view_focused role=Tab(2)
+navigation role=Tab(2) phase=started
+navigation role=Tab(2) phase=finished
+smoke_case=private_store_empty_after_relaunch result=pass
+smoke_complete required_cases_ok=false desktop_popup=see_cases
+view_released role=Tab(1) private=false
+view_released role=Tab(2) private=true
+shutdown storage_views=closed
+smoke_complete required_cases_ok=false desktop_popup=see_cases
+shutdown storage_views=closed

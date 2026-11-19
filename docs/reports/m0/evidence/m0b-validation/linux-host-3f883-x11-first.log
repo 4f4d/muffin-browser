@@ -1,0 +1,177 @@
+identity {"app_commit":"3f883b353fce9e3a2c47844d18fb93afcd01a90c","binary_architecture":"x86_64","binary_sha256":"b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7","dependencies":{"gtk":"3.24.41","kernel":"6.8.0-147-generic","session":"forced x11","webkit":"WebKitGTK 4.1"},"engine_version":"2.52.6","host_architecture":"x86_64","locked":{"tao":"0.37.2","wry":"0.57.2"},"os":"linux","os_version":"Ubuntu 24.04.5 LTS"}
+
+(muffin-validation:33): dbind-WARNING **: 18:48:25.460: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+chrome_created isolated=true
+native_view_focused role=Chrome
+focus_requested role=Chrome
+smoke_case=trusted_chrome_committed result=pass
+chrome_command_accepted
+focus_requested role=Chrome
+smoke_case=trusted_chrome_command_created_lazy_tab result=pass
+smoke_case=new_tab_has_no_content_webview result=pass
+view_created role=Tab(1) private=false
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=navigation_home result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=navigation_target result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=back result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=forward result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=reload result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=cross_origin_redirect result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+smoke_case=start_slow_navigation result=pass
+navigation_error role=Tab(1)
+navigation role=Tab(1) phase=finished
+smoke_case=stop_navigation result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=security_fixture result=pass
+smoke_case=content_cannot_act_as_chrome_or_read_resources result=pass
+smoke_case=remote_file_url_blocked result=pass
+navigation_denied role=Tab(1) class=unsupported
+smoke_case=remote_external_protocol_blocked result=pass
+address_rejected
+smoke_case=address_rejects_malformed_url result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=upload_fixture result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=synthetic_upload_submission result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=authenticated_download_login result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=synthetic_login_redirect result=pass
+navigation_error role=Tab(1)
+download_engine_signal role=Tab(1)
+download_started id=1
+navigation role=Tab(1) phase=finished
+download_engine_failure class=Some(Destination)
+download_finished id=1 success=false
+smoke_case=cookie_authenticated_download result=fail
+focus_requested role=Tab(1)
+navigation_error role=Tab(1)
+download_engine_signal role=Tab(1)
+download_started id=2
+navigation role=Tab(1) phase=finished
+download_engine_failure class=Some(Destination)
+download_finished id=2 success=false
+smoke_case=duplicate_download_destination result=fail
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+pdf_disposition inline_navigation=true download=false
+smoke_case=pdf_native_route result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+WebKit wasn't able to find a WebVTT encoder. Subtitles handling will be degraded unless gst-plugins-bad is installed.
+GStreamer element fakevideosink not found. Please install it
+WebKit wasn't able to find a WebVTT encoder. Subtitles handling will be degraded unless gst-plugins-bad is installed.
+
+** (WebKitWebProcess:143): WARNING **: 18:48:48.481: WebKit wasn't able to find the GL video sink dependencies. Hardware-accelerated zero-copy video rendering can't be enabled without this plugin.
+WebKit wasn't able to find a WebVTT encoder. Subtitles handling will be degraded unless gst-plugins-bad is installed.
+
+** (WebKitWebProcess:143): WARNING **: 18:48:48.498: WebKit wasn't able to find the GL video sink dependencies. Hardware-accelerated zero-copy video rendering can't be enabled without this plugin.
+WebKit wasn't able to find a WebVTT encoder. Subtitles handling will be degraded unless gst-plugins-bad is installed.
+
+** (WebKitWebProcess:143): WARNING **: 18:48:48.501: WebKit wasn't able to find the GL video sink dependencies. Hardware-accelerated zero-copy video rendering can't be enabled without this plugin.
+WebKit wasn't able to find a WebVTT encoder. Subtitles handling will be degraded unless gst-plugins-bad is installed.
+navigation role=Tab(1) phase=finished
+smoke_case=media_fixture_navigation result=pass
+smoke_case=pcm_audio_metadata result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=large_download_fixture result=pass
+navigation_error role=Tab(1)
+download_engine_signal role=Tab(1)
+download_started id=3
+navigation role=Tab(1) phase=finished
+download_engine_failure class=Some(Destination)
+download_finished id=3 success=false
+smoke_case=native_download_progress result=fail
+smoke_case=native_download_cancellation result=fail
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=return_to_popup_fixture result=pass
+fixture_input=programmatic_popup
+popup_created id=1 private=false
+navigation role=Popup(1) phase=started
+navigation role=Popup(1) phase=finished
+smoke_case=popup_opener_and_cross_origin_message result=pass
+smoke_case=popup_preserved_opener result=pass
+popup_closed id=1 reason=webview
+smoke_case=popup_webview_close result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=normal_store_reached result=pass
+smoke_case=normal_store_written result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=normal_store_next_navigation result=pass
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=normal_store_return_navigation result=pass
+smoke_case=normal_store_retained result=pass
+focus_requested role=Chrome
+native_view_focused role=Chrome
+smoke_case=new_private_view_is_lazy result=pass
+view_created role=Tab(2) private=true
+focus_requested role=Tab(2)
+native_view_focused role=Tab(2)
+navigation role=Tab(2) phase=started
+navigation role=Tab(2) phase=finished
+smoke_case=private_store_isolated_from_normal result=pass
+smoke_case=private_store_written result=pass
+focus_requested role=Chrome
+native_view_focused role=Chrome
+smoke_case=second_private_view_is_lazy result=pass
+view_created role=Tab(3) private=true
+focus_requested role=Tab(3)
+native_view_focused role=Tab(3)
+navigation role=Tab(3) phase=started
+navigation role=Tab(3) phase=finished
+smoke_case=private_sessions_are_separate result=pass
+view_released role=Tab(3) private=true
+focus_requested role=Tab(2)
+native_view_focused role=Tab(2)
+smoke_case=close_private_tab result=pass
+smoke_case=first_private_view_still_live result=pass
+view_released role=Tab(2) private=true
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+smoke_case=close_first_private_tab result=pass
+smoke_case=normal_store_unchanged_by_private_close result=pass
+focus_requested role=Chrome
+native_view_focused role=Chrome
+smoke_case=release_inactive_normal_view result=pass
+view_released role=Tab(1) private=false
+smoke_case=inactive_webviews_released result=pass
+smoke_complete required_cases_ok=false desktop_popup=see_cases
+shutdown storage_views=closed

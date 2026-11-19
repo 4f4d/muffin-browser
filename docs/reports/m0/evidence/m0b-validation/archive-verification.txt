@@ -1,0 +1,4 @@
+Source 3f883b353fce9e3a2c47844d18fb93afcd01a90c
+macos-arm64 archive and enclosed executable match metadata (Mach-O 64-bit executable arm64)
+windows-x64 archive and enclosed executable match metadata (PE32+ executable (console) x86-64, for MS Windows)
+ubuntu-24.04-x64 archive and enclosed executable match metadata (ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=15bfd402f553e9480eefec6726cc7747eb75689b, not stripped)

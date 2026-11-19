@@ -1,0 +1,175 @@
+identity {"app_commit":"623d39b4fd037d60ac5f0eb1fdba0e2dd02bdd6d","binary_architecture":"x86_64","binary_sha256":"446a23f16ccceaa3d6936cf16752eb8ec828d4ed8120fb6b0e07172cac6324f1","dependencies":{"webkit":"WebView2 Evergreen Runtime"},"engine_version":"156.0.4314.58","host_architecture":"AMD64","locked":{"tao":"0.37.2","wry":"0.57.2"},"os":"windows","os_version":"Microsoft Windows [Version 10.0.26100.33674]"}
+chrome_created isolated=true
+navigation_denied role=Chrome class=unsupported
+native_view_focused role=Chrome
+focus_requested role=Chrome
+navigation_error role=Chrome
+native_view_focused role=Chrome
+smoke_case=trusted_chrome_committed result=pass
+smoke_case=trusted_chrome_command_created_lazy_tab result=fail
+smoke_case=new_tab_has_no_content_webview result=pass
+view_created role=Tab(1) private=false
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=navigation_home result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=navigation_target result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=back result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=forward result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=reload result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=cross_origin_redirect result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+smoke_case=start_slow_navigation result=pass
+navigation role=Tab(1) phase=finished
+navigation_error role=Tab(1)
+smoke_case=stop_navigation result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=security_fixture result=pass
+smoke_case=content_cannot_act_as_chrome_or_read_resources result=fail
+smoke_case=remote_file_url_blocked result=fail
+navigation_denied role=Tab(1) class=unsupported
+navigation role=Tab(1) phase=finished
+navigation_error role=Tab(1)
+smoke_case=remote_external_protocol_blocked result=fail
+address_rejected
+smoke_case=address_rejects_malformed_url result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=upload_fixture result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=synthetic_upload_submission result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=authenticated_download_login result=pass
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=synthetic_login_redirect result=pass
+navigation role=Tab(1) phase=finished
+navigation_error role=Tab(1)
+download_started id=1
+download_finished id=1 success=true
+smoke_case=cookie_authenticated_download result=pass
+navigation role=Tab(1) phase=finished
+navigation_error role=Tab(1)
+smoke_case=duplicate_download_destination result=fail
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+pdf_disposition inline_navigation=true download=false
+smoke_case=pdf_native_route result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=media_fixture_navigation result=pass
+smoke_case=pcm_audio_metadata result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=large_download_fixture result=pass
+navigation role=Tab(1) phase=finished
+navigation_error role=Tab(1)
+download_started id=2
+smoke_case=native_download_progress result=pass
+download_finished id=2 success=false
+smoke_case=native_download_cancellation result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=return_to_popup_fixture result=pass
+fixture_input=programmatic_popup
+popup_created id=1 private=false
+native_view_focused role=Popup(1)
+navigation role=Popup(1) phase=started
+navigation role=Popup(1) phase=finished
+smoke_case=popup_opener_and_cross_origin_message result=pass
+smoke_case=popup_preserved_opener result=pass
+popup_closed id=1 reason=webview
+smoke_case=popup_webview_close result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=normal_store_reached result=pass
+smoke_case=normal_store_written result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=normal_store_next_navigation result=pass
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=normal_store_return_navigation result=pass
+smoke_case=normal_store_retained result=pass
+focus_requested role=Chrome
+native_view_focused role=Chrome
+native_view_focused role=Tab(1)
+native_view_focused role=Tab(1)
+smoke_case=new_private_view_is_lazy result=pass
+view_created role=Tab(2) private=true
+focus_requested role=Tab(2)
+native_view_focused role=Tab(2)
+navigation role=Tab(2) phase=started
+navigation role=Tab(2) phase=finished
+smoke_case=private_store_isolated_from_normal result=pass
+smoke_case=private_store_written result=pass
+focus_requested role=Chrome
+native_view_focused role=Chrome
+native_view_focused role=Tab(2)
+native_view_focused role=Tab(2)
+smoke_case=second_private_view_is_lazy result=pass
+view_created role=Tab(3) private=true
+focus_requested role=Tab(3)
+native_view_focused role=Tab(3)
+navigation role=Tab(3) phase=started
+navigation role=Tab(3) phase=finished
+smoke_case=private_sessions_are_separate result=pass
+view_released role=Tab(3) private=true
+focus_requested role=Tab(2)
+native_view_focused role=Tab(2)
+smoke_case=close_private_tab result=fail
+smoke_case=first_private_view_still_live result=pass
+view_released role=Tab(2) private=true
+focus_requested role=Tab(1)
+native_view_focused role=Tab(1)
+smoke_case=close_first_private_tab result=fail
+smoke_case=normal_store_unchanged_by_private_close result=pass
+focus_requested role=Chrome
+native_view_focused role=Chrome
+native_view_focused role=Tab(1)
+native_view_focused role=Tab(1)
+smoke_case=release_inactive_normal_view result=pass
+view_released role=Tab(1) private=false
+smoke_case=inactive_webviews_released result=pass
+smoke_complete required_cases_ok=false desktop_popup=see_cases
+shutdown storage_views=closed

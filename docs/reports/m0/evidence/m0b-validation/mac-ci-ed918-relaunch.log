@@ -1,0 +1,22 @@
+identity {"app_commit":"ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c","binary_architecture":"aarch64","binary_sha256":"a7a1a15f11c1de5e5ef376eb44bf566a9bdb897b2f64fa31b3948acd499a342c","dependencies":{"ui":"AppKit","webkit":"system WebKit"},"engine_version":"20621.3.11.11.3","host_architecture":"arm64","locked":{"tao":"0.37.2","wry":"0.57.2"},"os":"macos","os_version":"15.8.2 24H232"}
+chrome_created isolated=true
+focus_requested role=Chrome
+smoke_case=trusted_chrome_committed result=pass
+view_created role=Tab(1) private=false
+focus_requested role=Tab(1)
+navigation role=Tab(1) phase=started
+navigation role=Tab(1) phase=finished
+smoke_case=normal_store_relaunch_navigation result=pass
+smoke_case=normal_local_storage_persists_after_relaunch result=pass
+smoke_case=normal_cookie_persists_after_relaunch result=pass
+focus_requested role=Chrome
+smoke_case=relaunch_private_is_lazy result=pass
+view_created role=Tab(2) private=true
+focus_requested role=Tab(2)
+navigation role=Tab(2) phase=started
+navigation role=Tab(2) phase=finished
+smoke_case=private_store_empty_after_relaunch result=pass
+smoke_complete required_cases_ok=true desktop_popup=no_omissions
+view_released role=Tab(1) private=false
+view_released role=Tab(2) private=true
+shutdown storage_views=closed

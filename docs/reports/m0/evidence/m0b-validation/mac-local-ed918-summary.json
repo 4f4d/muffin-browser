@@ -1,0 +1,117 @@
+{
+  "first": {
+    "exit": 0,
+    "required_cases_ok": true,
+    "popup": "pass",
+    "native_x11_gesture_posted": null,
+    "identity": {
+      "app_commit": "ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c",
+      "binary_architecture": "aarch64",
+      "binary_sha256": "74356468582b47142668ab6329a9d8d30bc9d8253b7fc41f603c0b1dc0845b6d",
+      "dependencies": {
+        "ui": "AppKit",
+        "webkit": "system WebKit"
+      },
+      "engine_version": "20621.3.11.11.3",
+      "host_architecture": "arm64",
+      "locked": {
+        "tao": "0.37.2",
+        "wry": "0.57.2"
+      },
+      "os": "macos",
+      "os_version": "15.8.3 24H241"
+    },
+    "cases": {
+      "trusted_chrome_committed": "pass",
+      "trusted_chrome_command_created_lazy_tab": "pass",
+      "new_tab_has_no_content_webview": "pass",
+      "navigation_home": "pass",
+      "navigation_target": "pass",
+      "back": "pass",
+      "forward": "pass",
+      "reload": "pass",
+      "cross_origin_redirect": "pass",
+      "start_slow_navigation": "pass",
+      "stop_navigation": "pass",
+      "security_fixture": "pass",
+      "content_cannot_act_as_chrome_or_read_resources": "pass",
+      "remote_file_url_blocked": "pass",
+      "remote_external_protocol_blocked": "pass",
+      "address_rejects_malformed_url": "pass",
+      "upload_fixture": "pass",
+      "synthetic_upload_submission": "pass",
+      "authenticated_download_login": "pass",
+      "synthetic_login_redirect": "pass",
+      "cookie_authenticated_download": "pass",
+      "duplicate_download_destination": "pass",
+      "pdf_native_route": "pass",
+      "media_fixture_navigation": "pass",
+      "pcm_audio_metadata": "pass",
+      "large_download_fixture": "pass",
+      "large_download_completion": "pass",
+      "return_to_popup_fixture": "pass",
+      "popup_opener_and_cross_origin_message": "pass",
+      "popup_preserved_opener": "pass",
+      "popup_webview_close": "pass",
+      "normal_store_reached": "pass",
+      "normal_store_written": "pass",
+      "normal_store_next_navigation": "pass",
+      "normal_store_return_navigation": "pass",
+      "normal_store_retained": "pass",
+      "new_private_view_is_lazy": "pass",
+      "private_store_isolated_from_normal": "pass",
+      "private_store_written": "pass",
+      "second_private_view_is_lazy": "pass",
+      "private_sessions_are_separate": "pass",
+      "close_private_tab": "pass",
+      "first_private_view_still_live": "pass",
+      "close_first_private_tab": "pass",
+      "normal_store_unchanged_by_private_close": "pass",
+      "release_inactive_normal_view": "pass",
+      "inactive_webviews_released": "pass"
+    }
+  },
+  "downloads": {
+    "count": 2,
+    "expected_sha256": "b826c819d53f137d93c1edfaa379d0d0600a2b579530efcea1effb4cdf3071f8",
+    "bytes": [
+      20992,
+      20992
+    ],
+    "platform_marks_present": [
+      true,
+      true
+    ]
+  },
+  "relaunch": {
+    "exit": 0,
+    "required_cases_ok": true,
+    "popup": "not_applicable",
+    "native_x11_gesture_posted": null,
+    "identity": {
+      "app_commit": "ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c",
+      "binary_architecture": "aarch64",
+      "binary_sha256": "74356468582b47142668ab6329a9d8d30bc9d8253b7fc41f603c0b1dc0845b6d",
+      "dependencies": {
+        "ui": "AppKit",
+        "webkit": "system WebKit"
+      },
+      "engine_version": "20621.3.11.11.3",
+      "host_architecture": "arm64",
+      "locked": {
+        "tao": "0.37.2",
+        "wry": "0.57.2"
+      },
+      "os": "macos",
+      "os_version": "15.8.3 24H241"
+    },
+    "cases": {
+      "trusted_chrome_committed": "pass",
+      "normal_store_relaunch_navigation": "pass",
+      "normal_local_storage_persists_after_relaunch": "pass",
+      "normal_cookie_persists_after_relaunch": "pass",
+      "relaunch_private_is_lazy": "pass",
+      "private_store_empty_after_relaunch": "pass"
+    }
+  }
+}

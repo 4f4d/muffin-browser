@@ -1,0 +1,6 @@
+Generator: spikes/m0b-prep/make_media.sh. Synthetic local generation and ffprobe stream metadata.
+h264-aac.mp4 h264 video, aac audio
+vp9.webm vp9 video
+av1.webm av1 video
+opus.ogg opus audio
+This establishes encoded formats. Engine playback, seeking, fullscreen and audio controls remain distinct cases.

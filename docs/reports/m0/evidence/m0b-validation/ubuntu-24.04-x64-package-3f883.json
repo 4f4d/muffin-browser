@@ -1,0 +1,31 @@
+{
+  "application": "Muffin M0b Validation",
+  "binary_path": "muffin-m0b-validation/muffin-validation",
+  "binary_sha256": "b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7",
+  "macos_bundle_identifier": null,
+  "native_identity": {
+    "app_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+    "binary_architecture": "x86_64",
+    "binary_sha256": "b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7",
+    "dependencies": {
+      "gtk": "3.24.41",
+      "kernel": "6.8.0-147-generic",
+      "session": "unknown",
+      "webkit": "WebKitGTK 4.1"
+    },
+    "engine_version": "2.52.6",
+    "host_architecture": "x86_64",
+    "locked": {
+      "tao": "0.37.2",
+      "wry": "0.57.2"
+    },
+    "os": "linux",
+    "os_version": "Ubuntu 24.04.5 LTS"
+  },
+  "package": "muffin-m0b-validation-ubuntu-24.04-x64.tar.gz",
+  "package_format": "tar.gz",
+  "package_sha256": "257dd927953f6a849ceda7f841148a8653abf12b09baf5b5a144246db178973d",
+  "schema": 1,
+  "source_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+  "target": "ubuntu-24.04-x64"
+}

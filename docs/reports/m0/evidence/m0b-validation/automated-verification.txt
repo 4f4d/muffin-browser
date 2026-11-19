@@ -1,0 +1,55 @@
+source=3f883b353fce9e3a2c47844d18fb93afcd01a90c
+
+python3 -m unittest discover -s tools/tests -v
+
+----------------------------------------------------------------------
+Ran 82 tests in 4.308s
+
+OK
+
+python3 -m unittest discover -s spikes/s7 -v
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.000s
+
+OK
+
+python3 spikes/s7/check_evidence.py
+S1 fixture boundary evidence matches the positive and negative checks.
+S1 fixture boundary evidence matches the positive and negative checks.
+popup_state=verified_fixture_subset
+downloads_storage_and_controlled_recovery=verified_fixture_subset
+workflow=m0-linux.yml immutable_actions=2
+workflow=m0-windows.yml immutable_actions=2
+workflow=m0b-validation.yml immutable_actions=1
+workflow=status-guard.yml immutable_actions=1
+overlay_capture=s1-followup-macos-overlay.jpg dimensions=1760x1226 red_pixels=127702 bbox=(420, 144, 939, 395) crosses_y=200
+overlay_capture=s1-wry-linux-server-x11.png dimensions=1000x700 red_pixels=37943 bbox=(190, 42, 459, 185) crosses_y=72
+overlay_capture=s1-windows-wry-tao.png dimensions=986x690 red_pixels=37987 bbox=(190, 72, 459, 215) crosses_y=102
+overlay_capture=s1-x11-tauri.png red_pixels=0 negative_control=true
+S7 evidence subset verified
+
+cargo test --offline --locked --manifest-path spikes/m0b-validation/Cargo.toml
+running 5 tests
+test downloads::tests::unsafe_names_are_data_not_paths ... ok
+test policy::tests::trusted_command_parser_is_closed_and_bounded ... ok
+test policy::tests::malformed_file_credential_and_external_top_level_urls_are_denied ... ok
+test policy::tests::address_search_and_loopback_policy ... ok
+test downloads::tests::destination_is_unique_and_completion_releases_the_request ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+python3 -m unittest discover -s spikes/m0b-validation/fixtures -v
+
+----------------------------------------------------------------------
+Ran 7 tests in 7.076s
+
+OK
+
+python3 tools/gen_status.py && python3 tools/gen_status.py --check
+wrote docs/STATUS.json
+OK: docs/STATUS.json matches generated output
+
+git diff --check
+exit=0

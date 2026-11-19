@@ -1,0 +1,6 @@
+Source 3f883b353fce9e3a2c47844d18fb93afcd01a90c. Compile only from the Apple Silicon host.
+cargo check --offline --locked --manifest-path spikes/m0b-validation/Cargo.toml --target x86_64-apple-darwin
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.18s
+cargo check --offline --locked --manifest-path spikes/m0b-validation/Cargo.toml --target aarch64-pc-windows-msvc
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 10.13s
+No corresponding native runtime test or validation package was prepared.

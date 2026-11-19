@@ -1,0 +1,29 @@
+{
+  "application": "Muffin M0b Validation",
+  "binary_path": "Muffin.app/Contents/MacOS/Muffin",
+  "binary_sha256": "611c3c93750c8b6322227fc8517b85b5a72404b8e1174862c21d022f62f525f4",
+  "macos_bundle_identifier": "org.muffin.m0b-validation",
+  "native_identity": {
+    "app_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+    "binary_architecture": "aarch64",
+    "binary_sha256": "611c3c93750c8b6322227fc8517b85b5a72404b8e1174862c21d022f62f525f4",
+    "dependencies": {
+      "ui": "AppKit",
+      "webkit": "system WebKit"
+    },
+    "engine_version": "20621.3.11.11.3",
+    "host_architecture": "arm64",
+    "locked": {
+      "tao": "0.37.2",
+      "wry": "0.57.2"
+    },
+    "os": "macos",
+    "os_version": "15.8.2 24H232"
+  },
+  "package": "muffin-m0b-validation-macos-arm64.zip",
+  "package_format": "zip",
+  "package_sha256": "20b5a316b8f525d080c9aa727344f72e20c01e5906747f76c39d2d6ebbc027f1",
+  "schema": 1,
+  "source_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+  "target": "macos-arm64"
+}

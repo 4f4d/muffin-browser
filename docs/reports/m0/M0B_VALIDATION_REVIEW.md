@@ -1,0 +1,20 @@
+# Independent M0b validation handoff assessment
+
+## Disposition
+
+Accept this documented engineering handoff. Hold M0b acceptance, platform readiness and production gates.
+
+The configured independent reviewer inspected the application changes from the M0a baseline `89eaae097da767ec35611d2770ecb104e77def1e` to validation source `3f883b353fce9e3a2c47844d18fb93afcd01a90c`, the platform manifests and native smoke logs, and the human result status. The reviewer made no source or evidence changes. The primary orchestrator recorded the assessment here. [Preparation and build guide](M0B_PREPARATION.md), [build manifest](evidence/m0b-validation/builds.json)
+
+| Scope | Independent finding |
+|---|---|
+| Package identity | All three archive and enclosed native executable hashes independently match their metadata and the final application source. [Archive verification](evidence/m0b-validation/archive-verification.txt) |
+| macOS | Hosted arm64 receipts show successful required synthetic cases and relaunch, popup opener and close, authenticated downloads, and the complete 8 MiB payload hash. [macOS smoke](evidence/m0b-validation/mac-ci-3f883-summary.json) |
+| Windows | Hosted Windows Server 2025 receipts show successful required synthetic cases and relaunch, including popup opener and close, repeat authenticated downloads, progress and live cancellation. The Windows 11 desktop remains unverified. [Windows smoke](evidence/m0b-validation/windows-ci-3f883-summary.json) |
+| Ubuntu | The exact staged ELF reproduced four download failures in Xvfb and headless Weston. The native logs classify destination errors, while the fixture logs establish HTTP 200 attachments. Normal storage and private isolation passed the relaunch cases. The Linux archive is partial. No GNOME desktop or bare-metal rendering gate is satisfied. [Xvfb](evidence/m0b-validation/linux-host-3f883-x11-summary.json), [Weston](evidence/m0b-validation/linux-host-3f883-wayland-summary.json), [native error](evidence/m0b-validation/linux-host-3f883-x11-first.log), [fixture responses](evidence/m0b-validation/linux-host-3f883-x11-fixture-routes.jsonl) |
+| Security and smoke gates | Early review identified that absent popup behavior could yield a passing aggregate. Final desktop runs require the popup cases. The optional headless profile reports inconclusive popup attempts explicitly. The reviewer found no additional actionable source problem in the final diff beyond the reproduced Linux download failure. The limited synthetic evidence leaves production boundary and renderer recovery open. [Security assessment](M0B_VALIDATION_SECURITY.md), [smoke runner](../../../spikes/m0b-validation/fixtures/run_native.py) |
+| Verification and project stage | Independent runs passed the repository's 82 tests, the six S7 policy tests, the S7 artifact verifier, generator verification and baseline-to-source diff checking. Manual M0b records and prior M0a artifacts are unchanged. Each manual test still has zero recorded cases, and generated platform acceptance levels remain `not_run`. [Verification evidence](evidence/m0b-validation/automated-verification.txt), [generated status](../../STATUS.json) |
+
+When the reviewer inspected the final GitHub Actions run, its macOS and Windows jobs had succeeded and the Ubuntu job was still in progress. The local Ubuntu package and its two headless executions are independently identified in the manifest. The reviewer did not make the substrate or per-platform release decision. [Hosted workflow](https://github.com/4f4d/muffin-browser/actions/runs/44591002246)
+
+The owner can begin supported human cases using the verified macOS and Windows engineering packages, and use the partial Linux package for supported cases once an appropriate desktop is available. Hold Linux DL-01 pending a verified destination path. Apply the original human criteria and bare-metal restrictions. M1 remains gated. [Manual test mapping](M0B_PREPARATION.md), [human result runbook](../../M0B_MANUAL_TESTS.md)

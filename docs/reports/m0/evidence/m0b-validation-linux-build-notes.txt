@@ -4,3 +4,17 @@ Compiler showed GTK 3.24 EventControllerKey was feature gated and WebKit callbac
 Enabling GTK 3.24 exposed a raw GDK key value and bool callback. The corrected key handling type-checked.
    Compiling muffin-validation v0.1.0 (/validation)
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.20s
+
+Scope of local development pilot logs: Ubuntu 24.04.5 x86_64 image on authorized headless host; WebKitGTK 2.52.6, GTK 3.24.41 and Xvfb.
+Initial WRY validation process stopped emitting events following the popup probe and the outer driver timed out. A GLib timer restored bounded scheduling. The Linux fixture then separately retained the popup host after the peer close request.
+The GTK destroy signal drove the recorded host closure. The downloaded attachments still received HTTP 200 but the native operation reported Destination failures. An outer case erroneously counted an unrelated interruption as cancellation in one development run; the final runner requires a live native attachment and its subsequent interruption.
+identity {"app_commit":"unversioned","binary_architecture":"x86_64","binary_sha256":"10d053ccbf96d82c35c535f2d89af7ea6b260f7704e4904ed4d36fc3a7aaa7b6","dependencies":{"gtk":"3.24.41","kernel":"6.8.0-147-generic","session":"forced x11","webkit":"WebKitGTK 4.1"},"engine_version":"2.52.6","host_architecture":"x86_64","locked":{"tao":"0.37.2","wry":"0.57.2"},"os":"linux","os_version":"Ubuntu 24.04.5 LTS"}
+download_engine_failure class=Some(Destination)
+download_engine_failure class=Some(Destination)
+download_engine_failure class=Some(Destination)
+smoke_case=native_download_progress result=fail
+popup_closed id=1 reason=webview
+smoke_case=popup_webview_close result=pass
+smoke_complete required_cases_ok=false desktop_popup=see_cases
+identity {"app_commit":"unversioned","binary_architecture":"x86_64","binary_sha256":"10d053ccbf96d82c35c535f2d89af7ea6b260f7704e4904ed4d36fc3a7aaa7b6","dependencies":{"gtk":"3.24.41","kernel":"6.8.0-147-generic","session":"forced x11","webkit":"WebKitGTK 4.1"},"engine_version":"2.52.6","host_architecture":"x86_64","locked":{"tao":"0.37.2","wry":"0.57.2"},"os":"linux","os_version":"Ubuntu 24.04.5 LTS"}
+smoke_complete required_cases_ok=true desktop_popup=no_omissions

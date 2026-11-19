@@ -1,0 +1,69 @@
+{
+  "application_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+  "scope": "M0b preparation only. No human manual case was recorded.",
+  "builds": [
+    {
+      "target": "macos-arm64",
+      "outcome": "required synthetic cases passed",
+      "archive": "muffin-m0b-validation-macos-arm64.zip",
+      "local_archive": "docs/reports/m0/evidence-private/m0b-validation-2026-11-19/3f883b353fce9e3a2c47844d18fb93afcd01a90c/hosted-mac/muffin-m0b-validation-macos-arm64.zip",
+      "metadata": "macos-arm64-package-3f883.json",
+      "binary_sha256": "611c3c93750c8b6322227fc8517b85b5a72404b8e1174862c21d022f62f525f4",
+      "archive_sha256": "20b5a316b8f525d080c9aa727344f72e20c01e5906747f76c39d2d6ebbc027f1",
+      "run_url": "https://github.com/4f4d/muffin-browser/actions/runs/44591002246",
+      "runtime_evidence": [
+        {
+          "environment": "macOS 15 hosted arm64 VM",
+          "summary": "mac-ci-3f883-summary.json"
+        }
+      ]
+    },
+    {
+      "target": "windows-x64",
+      "outcome": "required synthetic cases passed",
+      "archive": "muffin-m0b-validation-windows-x64.zip",
+      "local_archive": "docs/reports/m0/evidence-private/m0b-validation-2026-11-19/3f883b353fce9e3a2c47844d18fb93afcd01a90c/hosted-windows/muffin-m0b-validation-windows-x64.zip",
+      "metadata": "windows-x64-package-3f883.json",
+      "binary_sha256": "ffbf56483a232142689b5be183e444d44effc54bb1b6d4c6a8932b5eca5e08ce",
+      "archive_sha256": "7002bd676340632e6a46d2c14ee5caac9c12b2263a692ab8d00a238ffd809584",
+      "run_url": "https://github.com/4f4d/muffin-browser/actions/runs/44591002246",
+      "runtime_evidence": [
+        {
+          "environment": "Windows Server 2025 hosted x64 VM",
+          "summary": "windows-ci-3f883-summary.json"
+        }
+      ]
+    },
+    {
+      "target": "ubuntu-24.04-x64",
+      "outcome": "partial engineering build; native download cases failed",
+      "archive": "muffin-m0b-validation-ubuntu-24.04-x64.tar.gz",
+      "local_archive": "docs/reports/m0/evidence-private/m0b-validation-2026-11-19/3f883b353fce9e3a2c47844d18fb93afcd01a90c/host-linux/package/muffin-m0b-validation-ubuntu-24.04-x64.tar.gz",
+      "metadata": "ubuntu-24.04-x64-package-3f883.json",
+      "binary_sha256": "b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7",
+      "archive_sha256": "257dd927953f6a849ceda7f841148a8653abf12b09baf5b5a144246db178973d",
+      "run_url": null,
+      "runtime_evidence": [
+        {
+          "environment": "Xvfb in isolated Ubuntu container on headless host",
+          "summary": "linux-host-3f883-x11-summary.json"
+        },
+        {
+          "environment": "Headless Weston in isolated Ubuntu container on headless host",
+          "summary": "linux-host-3f883-wayland-summary.json"
+        }
+      ]
+    }
+  ],
+  "earlier_ci": [
+    {
+      "commit": "623d39b4fd037d60ac5f0eb1fdba0e2dd02bdd6d",
+      "run_url": "https://github.com/4f4d/muffin-browser/actions/runs/44587595122"
+    },
+    {
+      "commit": "ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c",
+      "run_url": "https://github.com/4f4d/muffin-browser/actions/runs/44589539715"
+    }
+  ],
+  "checksum_verification": "archive-verification.txt"
+}

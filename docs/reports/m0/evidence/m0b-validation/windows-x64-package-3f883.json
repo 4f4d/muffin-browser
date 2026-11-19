@@ -1,0 +1,28 @@
+{
+  "application": "Muffin M0b Validation",
+  "binary_path": "muffin-m0b-validation\\muffin-validation.exe",
+  "binary_sha256": "ffbf56483a232142689b5be183e444d44effc54bb1b6d4c6a8932b5eca5e08ce",
+  "macos_bundle_identifier": null,
+  "native_identity": {
+    "app_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+    "binary_architecture": "x86_64",
+    "binary_sha256": "ffbf56483a232142689b5be183e444d44effc54bb1b6d4c6a8932b5eca5e08ce",
+    "dependencies": {
+      "webkit": "WebView2 Evergreen Runtime"
+    },
+    "engine_version": "156.0.4314.58",
+    "host_architecture": "AMD64",
+    "locked": {
+      "tao": "0.37.2",
+      "wry": "0.57.2"
+    },
+    "os": "windows",
+    "os_version": "Microsoft Windows [Version 10.0.26100.33674]"
+  },
+  "package": "muffin-m0b-validation-windows-x64.zip",
+  "package_format": "zip",
+  "package_sha256": "7002bd676340632e6a46d2c14ee5caac9c12b2263a692ab8d00a238ffd809584",
+  "schema": 1,
+  "source_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+  "target": "windows-x64"
+}

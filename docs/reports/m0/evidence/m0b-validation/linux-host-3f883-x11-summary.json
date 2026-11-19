@@ -1,0 +1,118 @@
+{
+  "first": {
+    "exit": 1,
+    "required_cases_ok": false,
+    "popup": "pass",
+    "native_x11_gesture_posted": null,
+    "identity": {
+      "app_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+      "binary_architecture": "x86_64",
+      "binary_sha256": "b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7",
+      "dependencies": {
+        "gtk": "3.24.41",
+        "kernel": "6.8.0-147-generic",
+        "session": "forced x11",
+        "webkit": "WebKitGTK 4.1"
+      },
+      "engine_version": "2.52.6",
+      "host_architecture": "x86_64",
+      "locked": {
+        "tao": "0.37.2",
+        "wry": "0.57.2"
+      },
+      "os": "linux",
+      "os_version": "Ubuntu 24.04.5 LTS"
+    },
+    "cases": {
+      "trusted_chrome_committed": "pass",
+      "trusted_chrome_command_created_lazy_tab": "pass",
+      "new_tab_has_no_content_webview": "pass",
+      "navigation_home": "pass",
+      "navigation_target": "pass",
+      "back": "pass",
+      "forward": "pass",
+      "reload": "pass",
+      "cross_origin_redirect": "pass",
+      "start_slow_navigation": "pass",
+      "stop_navigation": "pass",
+      "security_fixture": "pass",
+      "content_cannot_act_as_chrome_or_read_resources": "pass",
+      "remote_file_url_blocked": "pass",
+      "remote_external_protocol_blocked": "pass",
+      "address_rejects_malformed_url": "pass",
+      "upload_fixture": "pass",
+      "synthetic_upload_submission": "pass",
+      "authenticated_download_login": "pass",
+      "synthetic_login_redirect": "pass",
+      "cookie_authenticated_download": "fail",
+      "duplicate_download_destination": "fail",
+      "pdf_native_route": "pass",
+      "media_fixture_navigation": "pass",
+      "pcm_audio_metadata": "pass",
+      "large_download_fixture": "pass",
+      "native_download_progress": "fail",
+      "native_download_cancellation": "fail",
+      "return_to_popup_fixture": "pass",
+      "popup_opener_and_cross_origin_message": "pass",
+      "popup_preserved_opener": "pass",
+      "popup_webview_close": "pass",
+      "normal_store_reached": "pass",
+      "normal_store_written": "pass",
+      "normal_store_next_navigation": "pass",
+      "normal_store_return_navigation": "pass",
+      "normal_store_retained": "pass",
+      "new_private_view_is_lazy": "pass",
+      "private_store_isolated_from_normal": "pass",
+      "private_store_written": "pass",
+      "second_private_view_is_lazy": "pass",
+      "private_sessions_are_separate": "pass",
+      "close_private_tab": "pass",
+      "first_private_view_still_live": "pass",
+      "close_first_private_tab": "pass",
+      "normal_store_unchanged_by_private_close": "pass",
+      "release_inactive_normal_view": "pass",
+      "inactive_webviews_released": "pass"
+    }
+  },
+  "downloads": {
+    "count": 0,
+    "expected_sha256": "b826c819d53f137d93c1edfaa379d0d0600a2b579530efcea1effb4cdf3071f8",
+    "bytes": [],
+    "platform_marks_present": [],
+    "large_download_bytes": [],
+    "large_download_expected_sha256": "2cebb3a0fd285c2991ffa3f55c71d70c3142a2a032c3cd6fcfb67d18faae3b08"
+  },
+  "relaunch": {
+    "exit": 0,
+    "required_cases_ok": true,
+    "popup": "not_applicable",
+    "native_x11_gesture_posted": null,
+    "identity": {
+      "app_commit": "3f883b353fce9e3a2c47844d18fb93afcd01a90c",
+      "binary_architecture": "x86_64",
+      "binary_sha256": "b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7",
+      "dependencies": {
+        "gtk": "3.24.41",
+        "kernel": "6.8.0-147-generic",
+        "session": "forced x11",
+        "webkit": "WebKitGTK 4.1"
+      },
+      "engine_version": "2.52.6",
+      "host_architecture": "x86_64",
+      "locked": {
+        "tao": "0.37.2",
+        "wry": "0.57.2"
+      },
+      "os": "linux",
+      "os_version": "Ubuntu 24.04.5 LTS"
+    },
+    "cases": {
+      "trusted_chrome_committed": "pass",
+      "normal_store_relaunch_navigation": "pass",
+      "normal_local_storage_persists_after_relaunch": "pass",
+      "normal_cookie_persists_after_relaunch": "pass",
+      "relaunch_private_is_lazy": "pass",
+      "private_store_empty_after_relaunch": "pass"
+    }
+  }
+}

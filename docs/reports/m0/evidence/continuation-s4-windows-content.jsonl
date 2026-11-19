@@ -1,0 +1,9 @@
+{"environment": "loopback synthetic only", "payload_bytes": 786432, "expected_sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e"}
+{"at":1795107831.249,"event":{"kind":"storage_observation","data":{"profile":"normal","bridge":"undefined","localStoragePresent":false,"cookiePresent":false}}}
+{"at":1795107831.633,"event":{"kind":"storage_observation","data":{"profile":"private","bridge":"undefined","localStoragePresent":false,"cookiePresent":false}}}
+{"at":1795107831.652,"event":{"kind":"storage_observation","data":{"profile":"private","localStoragePresent":false,"cookiePresent":false}}}
+{"at":1795107831.653,"event":{"kind":"download_request","copy":"1","authorized":true,"bytes":786432}}
+{"at":1795107831.669,"event":{"kind":"download_request","copy":"2","authorized":true,"bytes":786432}}
+{"at":1795107831.755,"event":{"kind":"download_request","copy":"private","authorized":false,"bytes":0}}
+{"at": 1795107832.758, "event": {"kind": "denied_attachment_response"}}
+{"at": 1795107833.758, "event": {"kind": "pdf_response", "bytes": 595}}

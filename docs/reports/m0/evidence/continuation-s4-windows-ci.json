@@ -1,0 +1,28 @@
+{
+  "source_commit": "cf8b359cbfd462378a0937393c1ddca8cac06253",
+  "run": "https://github.com/4f4d/muffin-browser/actions/runs/44572239827",
+  "job": "https://github.com/4f4d/muffin-browser/actions/runs/44572239827/job/135730176125",
+  "conclusion": "success",
+  "steps": [
+    {
+      "name": "Compile and launch the native floor host",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build and exercise the S1 candidates in scope",
+      "conclusion": "success"
+    },
+    {
+      "name": "Exercise loopback popup fixture on Windows Server",
+      "conclusion": "success"
+    },
+    {
+      "name": "Exercise everyday features on Windows Server",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+      "conclusion": "success"
+    }
+  ]
+}

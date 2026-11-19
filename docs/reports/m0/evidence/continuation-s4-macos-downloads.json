@@ -1,0 +1,22 @@
+{
+  "exit_code": 0,
+  "timeout": false,
+  "core_observed": true,
+  "pdf_navigation_finished": true,
+  "download_results": [
+    {
+      "name": "download-01.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "apple_quarantine": true
+    },
+    {
+      "name": "download-02.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "apple_quarantine": true
+    }
+  ]
+}

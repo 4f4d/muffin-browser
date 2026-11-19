@@ -1,0 +1,43 @@
+source_commit=07bbacee55da4b65f086e382cf13874d663070fe
+backend=x11
+cached_image=muffin-m0a-x11:8c8d36f50895
+f14c731ab027a61fb9fe91ff6e58e9f8bf4138e206e3058233f70be9ad75cc0b  /tmp/muffin-s4-engine
+cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Linux 6.8.0-147-generic x86_64
+2.52.6
+launcher_exit=0
+----- control.log
+engine=2.52.6
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+images_finished elapsed_ms=734.904
+----- filtered.log
+engine=2.52.6
+rule_compiled=true elapsed_ms=0.667
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+images_finished elapsed_ms=615.971
+pdf_mime_supported=true
+pdf_snapshot=true
+----- requests.json
+[
+  {
+    "mode": "control",
+    "exit_code": 0,
+    "requests": [
+      "/images",
+      "/blocked.svg",
+      "/control.svg"
+    ]
+  },
+  {
+    "mode": "filtered",
+    "exit_code": 0,
+    "requests": [
+      "/images",
+      "/control.svg",
+      "/sample.pdf"
+    ],
+    "png_sha256": "fa4b98d02c2981c79b8b9806b745e3e320d8a80eac1fb7a49f76797df486043b"
+  }
+]

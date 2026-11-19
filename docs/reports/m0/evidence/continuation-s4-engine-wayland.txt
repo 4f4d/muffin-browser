@@ -1,0 +1,69 @@
+source_commit=07bbacee55da4b65f086e382cf13874d663070fe
+backend=wayland
+cached_image=muffin-m0a-wayland:59faf2f832a3
+f14c731ab027a61fb9fe91ff6e58e9f8bf4138e206e3058233f70be9ad75cc0b  /tmp/muffin-s4-engine
+cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Linux 6.8.0-147-generic x86_64
+2.52.6
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+launcher_exit=0
+----- control.log
+
+(muffin-s4-engine:35): Gdk-CRITICAL **: 17:03:03.274: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+engine=2.52.6
+libEGL warning: failed to get driver name for fd -1
+
+libEGL warning: MESA-LOADER: failed to retrieve device information
+
+libEGL warning: failed to get driver name for fd -1
+
+MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)
+libEGL warning: egl: failed to create dri2 screen
+
+(muffin-s4-engine:35): Gdk-CRITICAL **: 17:03:03.393: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+images_finished elapsed_ms=1133.306
+----- filtered.log
+
+(muffin-s4-engine:129): Gdk-CRITICAL **: 17:03:05.008: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+engine=2.52.6
+rule_compiled=true elapsed_ms=0.717
+libEGL warning: failed to get driver name for fd -1
+
+libEGL warning: MESA-LOADER: failed to retrieve device information
+
+libEGL warning: failed to get driver name for fd -1
+
+MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)
+libEGL warning: egl: failed to create dri2 screen
+
+(muffin-s4-engine:129): Gdk-CRITICAL **: 17:03:05.135: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+images_finished elapsed_ms=1034.031
+pdf_mime_supported=true
+pdf_snapshot=true
+----- requests.json
+[
+  {
+    "mode": "control",
+    "exit_code": 0,
+    "requests": [
+      "/images",
+      "/blocked.svg",
+      "/control.svg"
+    ]
+  },
+  {
+    "mode": "filtered",
+    "exit_code": 0,
+    "requests": [
+      "/images",
+      "/control.svg",
+      "/sample.pdf"
+    ],
+    "png_sha256": "46809f71feff0562d70c303d02004550cf88404b6b245ff700318f5efcbea873"
+  }
+]

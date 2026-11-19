@@ -1,0 +1,67 @@
+source_commit=cf8b359cbfd462378a0937393c1ddca8cac06253
+backend=x11
+cached_image=muffin-m0a-x11:8c8d36f50895
+rustc 1.95.0 (59807616e 2026-04-14)
+cargo 1.95.0 (f2d3ce0bd 2026-03-21)
+Linux 6.8.0-147-generic x86_64
+2.52.6
+   Compiling muffin-s1-wry v0.1.0 (/fixture/spikes/s1/wry-tao)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.63s
+4741031485d25f5da6215e57c26f06db3252b4823702dbacfa5b49db82bdbe3c  /fixture-target/debug/muffin-s4-features
+{"base_url": "http://127.0.0.1:38345", "content_log": "/tmp/s4-output/content-events.jsonl", "downloads": "/tmp/s4-output/downloads", "native_log": "/tmp/s4-output/native.log"}
+{"core_observed": true, "download_results": [{"bytes": 786432, "matches_expected": true, "name": "download-01.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}, {"bytes": 786432, "matches_expected": true, "name": "download-02.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}], "exit_code": 0, "pdf_navigation_finished": true, "timeout": false}
+----- native.log
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+source_fixture=s4-native pid=281 webview=2.52.6
+normal_profile=default_or_scratch_context private_profile=with_incognito_true
+progress_api=not_exposed_by_generic_WRY_download_callbacks pause_resume=not_tested
+normal_storage_seeded="{\"localStorage\":true,\"cookie\":true}"
+private_storage_observed="{\"localStorage\":false,\"cookie\":false}" private_storage_isolated=true
+download_start allowed=true sequence=1 unique_destination=true url=http://127.0.0.1:38345/download?copy=1
+download_complete success=true url=http://127.0.0.1:38345/download?copy=1
+download_result index=1 success=true url=http://127.0.0.1:38345/download?copy=1
+download_start allowed=true sequence=2 unique_destination=true url=http://127.0.0.1:38345/download?copy=2
+page_finished url=http://127.0.0.1:38345/download?copy=private
+download_complete success=true url=http://127.0.0.1:38345/download?copy=2
+download_result index=2 success=true url=http://127.0.0.1:38345/download?copy=2
+download_start allowed=false reason=fixture-denied
+download_complete success=false url=http://127.0.0.1:38345/denied?copy=blocked
+download_result index=3 success=false url=http://127.0.0.1:38345/denied?copy=blocked
+pdf_navigation_requested=true visual_render=unverified
+pdf_page_load_finished=true visual_render=unverified
+fixture_finished outcome=completed storage_checked=true downloads_started=2 downloads_completed=3 private_auth_denied_requested=true denied_attachment_requested=true pdf_requested=true
+----- content-events.jsonl
+{"environment": "loopback synthetic only", "payload_bytes": 786432, "expected_sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e"}
+{"at":1795107569.539,"event":{"kind":"storage_observation","data":{"profile":"normal","bridge":"undefined","localStoragePresent":false,"cookiePresent":false}}}
+{"at":1795107569.546,"event":{"kind":"storage_observation","data":{"profile":"private","bridge":"undefined","localStoragePresent":false,"cookiePresent":false}}}
+{"at":1795107569.557,"event":{"kind":"storage_observation","data":{"profile":"private","localStoragePresent":false,"cookiePresent":false}}}
+{"at":1795107569.557,"event":{"kind":"download_request","copy":"1","authorized":true,"bytes":786432}}
+{"at":1795107569.906,"event":{"kind":"download_request","copy":"2","authorized":true,"bytes":786432}}
+{"at":1795107569.909,"event":{"kind":"download_request","copy":"private","authorized":false,"bytes":0}}
+{"at": 1795107570.912, "event": {"kind": "denied_attachment_response"}}
+{"at": 1795107571.912, "event": {"kind": "pdf_response", "bytes": 595}}
+----- launcher-summary.json
+{
+  "exit_code": 0,
+  "timeout": false,
+  "core_observed": true,
+  "pdf_navigation_finished": true,
+  "download_results": [
+    {
+      "name": "download-01.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "xdg_origin_url": true
+    },
+    {
+      "name": "download-02.bin",
+      "bytes": 786432,
+      "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e",
+      "matches_expected": true,
+      "xdg_origin_url": true
+    }
+  ]
+}
+fixture_runner_exit=0

@@ -42,6 +42,7 @@ LEVEL_ARTIFACT_DIRS = ("docs/reports/ci", "docs/reports/platform")
 SPIKE_CAPS = {
     "engine_floor": (45, 180),
     "S1": (90, 720),
+    "S1-follow-up": (90, 195),
     "S2a": (60, 60),
     "S3": (60, 60),
     "S4": (90, 360),
@@ -50,6 +51,7 @@ SPIKE_CAPS = {
     "S8": (45, 240),
     "CI": (60, 120),
 }
+S1_FOLLOWUP_CAPS = {"macos": 90, "windows": 45, "linux_x11": 30, "linux_wayland": 30}
 SPIKE_OUTCOMES = {"pass", "fail", "inconclusive", "blocked", "not_run"}
 STOP_REASONS = {"completed", "deadline", "blocked"}
 SPIKE_START_REQUIRED = (
@@ -534,6 +536,12 @@ def spike_status():
         except ValueError as e:
             raise Invalid(f"{f}: budget_minutes must be an integer") from e
         per_cap, agg_cap = SPIKE_CAPS[spike]
+        if spike == "S1-follow-up":
+            if h["substrate"] != "wry-tao":
+                raise Invalid(f"{f}: S1 follow-up authorizes only WRY + TAO")
+            if h.get("extension_minutes"):
+                raise Invalid(f"{f}: this S1 follow-up authorization does not permit extensions")
+            per_cap = S1_FOLLOWUP_CAPS[h["platform"]]
         if not 1 <= budget <= per_cap:
             raise Invalid(f"{f}: budget_minutes {budget} exceeds the {per_cap}-minute cap for spike {spike}")
 
@@ -618,9 +626,16 @@ def spike_status():
             "budget_minutes": budget + extension,
         }
 
+    for platform in S1_FOLLOWUP_CAPS:
+        key = f"S1-follow-up:{platform}:wry-tao"
+        if key in reports:
+            original = reports.get(f"S1:{platform}:wry-tao")
+            if not original or original["outcome"] == "in_progress":
+                raise Invalid(f"{key}: requires a closed original S1 report")
+
     kill = sorted(
         k for k, v in reports.items()
-        if k.split(":")[0] == "S1" and k.split(":")[1] in ("macos", "windows")
+        if k.split(":")[0] in ("S1", "S1-follow-up") and k.split(":")[1] in ("macos", "windows")
         and v["outcome"] == "fail" and v["stopped_reason"] == "completed"
     )
     needs_human = sorted(k for k, v in reports.items() if v["outcome"] in ("inconclusive", "blocked"))

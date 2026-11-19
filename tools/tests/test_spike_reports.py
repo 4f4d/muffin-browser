@@ -110,6 +110,26 @@ class SpikeReportTests(unittest.TestCase):
         self.assertEqual(out["reports"]["S1:macos:wry-tao"]["outcome"], "pass")
         self.assertFalse(out["kill_rule"]["triggered"])
 
+    def test_authorized_followup_keeps_original_report_and_applies_kill_rule(self):
+        self.put(header(outcome="inconclusive", stopped_reason="blocked"))
+        self.put(header(spike="S1-follow-up", budget_minutes="90", outcome="fail"))
+        out = gen_status.spike_status()
+        self.assertEqual(out["reports"]["S1:macos:wry-tao"]["outcome"], "inconclusive")
+        self.assertEqual(out["kill_rule"]["triggering_reports"], ["S1-follow-up:macos:wry-tao"])
+
+    def test_followup_requires_matching_closed_baseline(self):
+        self.put(header(spike="S1-follow-up"))
+        self.bad("requires a closed original S1 report")
+
+    def test_followup_is_restricted_to_authorized_substrate(self):
+        self.put(header(spike="S1-follow-up", substrate="tauri"))
+        self.bad("only WRY + TAO")
+
+    def test_followup_has_its_own_platform_cap(self):
+        self.put(header(platform="windows"))
+        self.put(header(spike="S1-follow-up", platform="windows"))
+        self.bad("exceeds the 45-minute cap")
+
     def test_template_and_readme_are_ignored(self):
         (self.dir / "_TEMPLATE.md").write_text("not a report")
         (self.dir / "README.md").write_text("not a report")

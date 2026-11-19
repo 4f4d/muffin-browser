@@ -1,0 +1,12 @@
+# Raw private evidence (never commit; commit redacted copies instead)
+docs/reports/m0/evidence-private/
+
+# Build output and tooling
+target/
+node_modules/
+dist/
+.DS_Store
+
+# Python test/build output
+__pycache__/
+*.py[cod]

@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "note": "Human-recorded M0b results. Append result objects to a test's 'results' list. Blank = not_run. Every pass/fail/partial/inconclusive record needs exact build identity, an app_commit that exists in this repository's Git object database, tester/date, and a non-empty evidence file inside the repository outside evidence-private/. See docs/M0B_MANUAL_TESTS.md. Replace every REPLACE_WITH_* example value before recording a result; the validator rejects placeholders.",
+  "result_object_example": {
+    "platform": "windows",
+    "environment": "bare_metal",
+    "result": "pass",
+    "date": "REPLACE_WITH_TEST_DATE_YYYY_MM_DD",
+    "tester": "REPLACE_WITH_YOUR_HANDLE",
+    "app_commit": "REPLACE_WITH_FULL_40_CHARACTER_APP_COMMIT_SHA",
+    "binary_sha256": "REPLACE_WITH_64_CHARACTER_BINARY_SHA256",
+    "host_architecture": "x86_64",
+    "binary_architecture": "x86_64",
+    "os_version": "REPLACE_WITH_EXACT_OS_VERSION_AND_BUILD",
+    "engine_version": "REPLACE_WITH_EXACT_WEBVIEW_OR_ENGINE_VERSION",
+    "notes": "",
+    "evidence": "docs/reports/m0/evidence/REPLACE_WITH_REDACTED_EVIDENCE_FILE"
+  },
+  "tests": [
+    {
+      "id": "SI-01",
+      "title": "Direct Google login: sign in at accounts.google.com, then open Gmail",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "SI-02",
+      "title": "'Sign in with Google' on three third-party sites",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "SI-03",
+      "title": "Microsoft account login plus one SSO redirect",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "SI-04",
+      "title": "GitHub login including 2FA",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "SI-05",
+      "title": "Informational: UA-detection diagnostic (never shipped)",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "PK-01",
+      "title": "Passkey create and sign-in on a public WebAuthn demo",
+      "vm_valid": false,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "PK-02",
+      "title": "Hardware security key (USB) sign-in",
+      "vm_valid": false,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "ME-01",
+      "title": "Streaming video: HD playback, seek, fullscreen enter/exit",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "ME-02",
+      "title": "DRM playback on one real subscription service plus a public DRM test page",
+      "vm_valid": false,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "ME-03",
+      "title": "Codec fixtures: H.264/AAC, VP9, AV1, Opus audio",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "ME-04",
+      "title": "Tab audio indicator and mute",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "DL-01",
+      "title": "Downloads: large file, authenticated download, and quarantine / Mark-of-the-Web",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "UP-01",
+      "title": "File upload through the native dialog",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "PD-01",
+      "title": "PDF: open, scroll, print, download",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "PO-01",
+      "title": "Popups and window.opener flows on live providers",
+      "vm_valid": true,
+      "platforms": [
+        "macos",
+        "windows",
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "LX-01",
+      "title": "Wayland session: layout, resize, focus, keyboard shortcuts with multiple child views",
+      "vm_valid": true,
+      "platforms": [
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "LX-02",
+      "title": "Fractional scaling (125% and 150%) rendering and hit-testing",
+      "vm_valid": false,
+      "platforms": [
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "LX-03",
+      "title": "IME input (for example ibus or fcitx) in chrome and content",
+      "vm_valid": true,
+      "platforms": [
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "LX-04",
+      "title": "GPU path vs software rendering behaviour",
+      "vm_valid": false,
+      "platforms": [
+        "linux_x11",
+        "linux_wayland"
+      ],
+      "results": []
+    },
+    {
+      "id": "HD-01",
+      "title": "HiDPI and mixed-DPI monitors",
+      "vm_valid": false,
+      "platforms": [
+        "macos",
+        "windows"
+      ],
+      "results": []
+    }
+  ],
+  "not_run_example": {
+    "platform": "windows",
+    "environment": "bare_metal",
+    "result": "not_run"
+  }
+}

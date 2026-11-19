@@ -1,0 +1,26 @@
+#!/bin/sh
+# Enable with: git config core.hooksPath tools/hooks
+set -eu
+
+python3 -m unittest discover -s tools/tests -v || {
+  echo "pre-commit: status-generator regression tests failed (see above)." >&2
+  exit 1
+}
+
+# A spike report's validator checks committed Git history. During this hook,
+# the new initial/final report commit does not exist yet, so defer only the
+# generated-status check for that commit. Immediately afterwards, regenerate
+# and validate status, then commit docs/STATUS.json.
+staged_spike_reports=$(
+  git diff --cached --name-only -- 'docs/reports/m0/spikes/*.md' 2>/dev/null \
+    | grep -Ev '(^|/)(_.*|README.*)\.md$' || true
+)
+if [ -n "$staged_spike_reports" ]; then
+  echo "pre-commit: spike report change staged; deferring STATUS.json validation until after the report commit."
+  echo "Run: python3 tools/gen_status.py && python3 tools/gen_status.py --check"
+else
+  python3 tools/gen_status.py --check || {
+    echo "pre-commit: STATUS.json drift or invalid result/evidence records (see above)." >&2
+    exit 1
+  }
+fi

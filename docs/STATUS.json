@@ -1,0 +1,174 @@
+{
+  "current_milestone": "M0a",
+  "generated_by": "tools/gen_status.py (do not hand-edit this file)",
+  "m0a_spikes": {
+    "kill_rule": {
+      "triggered": false,
+      "triggering_reports": []
+    },
+    "needs_human_decision": [],
+    "reports": {}
+  },
+  "m0b_manual_tests": {
+    "DL-01": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "HD-01": {
+      "applicable_platforms": 2,
+      "counts": {},
+      "recorded": 0
+    },
+    "LX-01": {
+      "applicable_platforms": 1,
+      "counts": {},
+      "recorded": 0
+    },
+    "LX-02": {
+      "applicable_platforms": 2,
+      "counts": {},
+      "recorded": 0
+    },
+    "LX-03": {
+      "applicable_platforms": 2,
+      "counts": {},
+      "recorded": 0
+    },
+    "LX-04": {
+      "applicable_platforms": 2,
+      "counts": {},
+      "recorded": 0
+    },
+    "ME-01": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "ME-02": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "ME-03": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "ME-04": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "PD-01": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "PK-01": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "PK-02": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "PO-01": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "SI-01": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "SI-02": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "SI-03": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "SI-04": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "SI-05": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    },
+    "UP-01": {
+      "applicable_platforms": 4,
+      "counts": {},
+      "recorded": 0
+    }
+  },
+  "platforms": {
+    "linux_wayland": {
+      "build": {
+        "result": "not_run"
+      },
+      "functional": {
+        "result": "not_run"
+      },
+      "release": {
+        "result": "not_run"
+      },
+      "smoke": {
+        "result": "not_run"
+      }
+    },
+    "linux_x11": {
+      "build": {
+        "result": "not_run"
+      },
+      "functional": {
+        "result": "not_run"
+      },
+      "release": {
+        "result": "not_run"
+      },
+      "smoke": {
+        "result": "not_run"
+      }
+    },
+    "macos": {
+      "build": {
+        "result": "not_run"
+      },
+      "functional": {
+        "result": "not_run"
+      },
+      "release": {
+        "result": "not_run"
+      },
+      "smoke": {
+        "result": "not_run"
+      }
+    },
+    "windows": {
+      "build": {
+        "result": "not_run"
+      },
+      "functional": {
+        "result": "not_run"
+      },
+      "release": {
+        "result": "not_run"
+      },
+      "smoke": {
+        "result": "not_run"
+      }
+    }
+  },
+  "project": "Muffin Browser",
+  "schema_version": 2
+}

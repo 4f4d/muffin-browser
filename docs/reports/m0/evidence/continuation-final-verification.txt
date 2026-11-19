@@ -1,0 +1,157 @@
+verified_commit=0138695d980d9eb098db1bef7204cbfc7865f935
+ProductName:		macOS
+ProductVersion:		15.8.3
+BuildVersion:		24H241
+arm64
+python3 -m unittest discover -s tools/tests -v
+test_status_guard_uses_verified_checkout_release_commit (test_ci_pins.GitHubActionPinTests.test_status_guard_uses_verified_checkout_release_commit) ... ok
+test_all_evidence_bearing_outcomes_require_evidence (test_gen_status.M0BValidationTests.test_all_evidence_bearing_outcomes_require_evidence) ... ok
+test_all_valid_evidence_bearing_outcomes_are_accepted (test_gen_status.M0BValidationTests.test_all_valid_evidence_bearing_outcomes_are_accepted) ... ok
+test_application_commit_must_be_full_git_sha (test_gen_status.M0BValidationTests.test_application_commit_must_be_full_git_sha) ... ok
+test_bare_metal_only_pk01_rejects_vm_and_ci_for_every_outcome (test_gen_status.M0BValidationTests.test_bare_metal_only_pk01_rejects_vm_and_ci_for_every_outcome) ... ok
+test_binary_hash_must_be_full_sha256 (test_gen_status.M0BValidationTests.test_binary_hash_must_be_full_sha256) ... ok
+test_date_must_be_a_real_iso_date (test_gen_status.M0BValidationTests.test_date_must_be_a_real_iso_date) ... ok
+test_each_build_identity_and_execution_field_is_required (test_gen_status.M0BValidationTests.test_each_build_identity_and_execution_field_is_required) ... ok
+test_empty_evidence_file_is_rejected (test_gen_status.M0BValidationTests.test_empty_evidence_file_is_rejected) ... ok
+test_evidence_inside_private_directory_is_rejected (test_gen_status.M0BValidationTests.test_evidence_inside_private_directory_is_rejected) ... ok
+test_evidence_path_traversal_is_rejected (test_gen_status.M0BValidationTests.test_evidence_path_traversal_is_rejected) ... ok
+test_exact_ci_bypass_pk01_pass_without_evidence_is_rejected (test_gen_status.M0BValidationTests.test_exact_ci_bypass_pk01_pass_without_evidence_is_rejected) ... ok
+test_generic_engine_and_os_labels_are_not_exact_versions (test_gen_status.M0BValidationTests.test_generic_engine_and_os_labels_are_not_exact_versions) ... ok
+test_nonexistent_evidence_is_rejected (test_gen_status.M0BValidationTests.test_nonexistent_evidence_is_rejected) ... ok
+test_not_run_can_remain_unfilled_without_evidence (test_gen_status.M0BValidationTests.test_not_run_can_remain_unfilled_without_evidence) ... ok
+test_placeholder_versions_are_rejected (test_gen_status.M0BValidationTests.test_placeholder_versions_are_rejected) ... ok
+test_symlink_into_private_evidence_is_rejected (test_gen_status.M0BValidationTests.test_symlink_into_private_evidence_is_rejected) ... ok
+test_symlink_resolving_outside_repository_is_rejected (test_gen_status.M0BValidationTests.test_symlink_resolving_outside_repository_is_rejected) ... ok
+test_valid_application_commit_must_be_a_real_repository_commit (test_gen_status.M0BValidationTests.test_valid_application_commit_must_be_a_real_repository_commit) ... ok
+test_valid_manual_bare_metal_pass_is_accepted (test_gen_status.M0BValidationTests.test_valid_manual_bare_metal_pass_is_accepted) ... ok
+test_valid_vm_result_is_accepted_for_vm_valid_test (test_gen_status.M0BValidationTests.test_valid_vm_result_is_accepted_for_vm_valid_test) ... ok
+test_well_formed_but_nonexistent_application_commit_is_rejected (test_gen_status.M0BValidationTests.test_well_formed_but_nonexistent_application_commit_is_rejected) ... ok
+test_ci_record_without_run_url_is_rejected (test_level_records.LevelRecordTests.test_ci_record_without_run_url_is_rejected) ... ok
+test_directory_artifact_is_rejected (test_level_records.LevelRecordTests.test_directory_artifact_is_rejected) ... ok
+test_duplicate_ids_are_rejected (test_level_records.LevelRecordTests.test_duplicate_ids_are_rejected) ... ok
+test_empty_artifact_is_rejected (test_level_records.LevelRecordTests.test_empty_artifact_is_rejected) ... ok
+test_fail_records_need_the_same_evidence (test_level_records.LevelRecordTests.test_fail_records_need_the_same_evidence) ... ok
+test_hash_mismatch_is_rejected (test_level_records.LevelRecordTests.test_hash_mismatch_is_rejected) ... ok
+test_human_record_without_tester_is_rejected (test_level_records.LevelRecordTests.test_human_record_without_tester_is_rejected) ... ok
+test_invalid_date_is_rejected (test_level_records.LevelRecordTests.test_invalid_date_is_rejected) ... ok
+test_malformed_run_url_is_rejected (test_level_records.LevelRecordTests.test_malformed_run_url_is_rejected) ... ok
+test_missing_hash_is_rejected (test_level_records.LevelRecordTests.test_missing_hash_is_rejected) ... ok
+test_not_run_needs_no_evidence (test_level_records.LevelRecordTests.test_not_run_needs_no_evidence) ... ok
+test_path_traversal_artifact_is_rejected (test_level_records.LevelRecordTests.test_path_traversal_artifact_is_rejected) ... ok
+test_private_evidence_artifact_is_rejected (test_level_records.LevelRecordTests.test_private_evidence_artifact_is_rejected) ... ok
+test_readme_is_rejected_even_when_its_hash_is_correct (test_level_records.LevelRecordTests.test_readme_is_rejected_even_when_its_hash_is_correct) ... ok
+test_short_commit_is_rejected (test_level_records.LevelRecordTests.test_short_commit_is_rejected) ... ok
+test_symlink_artifact_escaping_repo_is_rejected (test_level_records.LevelRecordTests.test_symlink_artifact_escaping_repo_is_rejected) ... ok
+test_symlink_into_another_artifact_area_is_rejected (test_level_records.LevelRecordTests.test_symlink_into_another_artifact_area_is_rejected) ... ok
+test_unknown_commit_is_rejected (test_level_records.LevelRecordTests.test_unknown_commit_is_rejected) ... ok
+test_unrelated_repository_file_is_not_platform_artifact_evidence (test_level_records.LevelRecordTests.test_unrelated_repository_file_is_not_platform_artifact_evidence) ... ok
+test_valid_ci_record_is_accepted_and_hash_is_reported (test_level_records.LevelRecordTests.test_valid_ci_record_is_accepted_and_hash_is_reported) ... ok
+test_valid_human_artifact_in_platform_directory_is_accepted (test_level_records.LevelRecordTests.test_valid_human_artifact_in_platform_directory_is_accepted) ... ok
+test_valid_human_record_needs_tester_not_run_url (test_level_records.LevelRecordTests.test_valid_human_record_needs_tester_not_run_url) ... ok
+test_vm_cannot_satisfy_release (test_level_records.LevelRecordTests.test_vm_cannot_satisfy_release) ... ok
+test_consistent_two_commit_git_history_is_accepted (test_spike_reports.SpikeGitCrossCheckTests.test_consistent_two_commit_git_history_is_accepted) ... ok
+test_final_report_commit_must_be_after_and_close_to_stop (test_spike_reports.SpikeGitCrossCheckTests.test_final_report_commit_must_be_after_and_close_to_stop) ... ok
+test_final_report_commit_too_far_after_stop_is_rejected (test_spike_reports.SpikeGitCrossCheckTests.test_final_report_commit_too_far_after_stop_is_rejected) ... ok
+test_initial_commit_must_contain_the_matching_header (test_spike_reports.SpikeGitCrossCheckTests.test_initial_commit_must_contain_the_matching_header) ... ok
+test_initial_header_commit_after_start_is_rejected (test_spike_reports.SpikeGitCrossCheckTests.test_initial_header_commit_after_start_is_rejected) ... ok
+test_initial_header_commit_can_be_verified_as_in_progress (test_spike_reports.SpikeGitCrossCheckTests.test_initial_header_commit_can_be_verified_as_in_progress) ... ok
+test_initial_header_commit_must_be_before_and_close_to_start (test_spike_reports.SpikeGitCrossCheckTests.test_initial_header_commit_must_be_before_and_close_to_start) ... ok
+test_single_commit_at_end_is_rejected (test_spike_reports.SpikeGitCrossCheckTests.test_single_commit_at_end_is_rejected) ... ok
+test_uncommitted_final_report_changes_are_rejected (test_spike_reports.SpikeGitCrossCheckTests.test_uncommitted_final_report_changes_are_rejected) ... ok
+test_untracked_report_is_rejected (test_spike_reports.SpikeGitCrossCheckTests.test_untracked_report_is_rejected) ... ok
+test_aggregate_budget_cap_is_enforced (test_spike_reports.SpikeReportTests.test_aggregate_budget_cap_is_enforced) ... ok
+test_authorized_followup_keeps_original_report_and_applies_kill_rule (test_spike_reports.SpikeReportTests.test_authorized_followup_keeps_original_report_and_applies_kill_rule) ... ok
+test_blocked_outcome_requires_blocked_reason (test_spike_reports.SpikeReportTests.test_blocked_outcome_requires_blocked_reason) ... ok
+test_blocked_reason_only_accepts_blocked_or_inconclusive (test_spike_reports.SpikeReportTests.test_blocked_reason_only_accepts_blocked_or_inconclusive) ... ok
+test_blocked_s1_fail_cannot_evade_kill_rule (test_spike_reports.SpikeReportTests.test_blocked_s1_fail_cannot_evade_kill_rule) ... ok
+test_budget_over_per_spike_cap_is_rejected (test_spike_reports.SpikeReportTests.test_budget_over_per_spike_cap_is_rejected) ... ok
+test_deadline_must_match_budget (test_spike_reports.SpikeReportTests.test_deadline_must_match_budget) ... ok
+test_deadline_stop_claimed_but_stopped_early_is_rejected (test_spike_reports.SpikeReportTests.test_deadline_stop_claimed_but_stopped_early_is_rejected) ... ok
+test_deadline_stop_inconclusive_is_accepted_and_flags_human_decision (test_spike_reports.SpikeReportTests.test_deadline_stop_inconclusive_is_accepted_and_flags_human_decision) ... ok
+test_deadline_stop_must_be_inconclusive (test_spike_reports.SpikeReportTests.test_deadline_stop_must_be_inconclusive) ... ok
+test_duplicate_restart_is_rejected (test_spike_reports.SpikeReportTests.test_duplicate_restart_is_rejected) ... ok
+test_each_required_field_is_enforced (test_spike_reports.SpikeReportTests.test_each_required_field_is_enforced) ... ok
+test_extension_requires_human_approval_and_reason (test_spike_reports.SpikeReportTests.test_extension_requires_human_approval_and_reason) ... ok
+test_fail_requires_completed_stop_reason (test_spike_reports.SpikeReportTests.test_fail_requires_completed_stop_reason) ... ok
+test_followup_has_its_own_platform_cap (test_spike_reports.SpikeReportTests.test_followup_has_its_own_platform_cap) ... ok
+test_followup_is_restricted_to_authorized_substrate (test_spike_reports.SpikeReportTests.test_followup_is_restricted_to_authorized_substrate) ... ok
+test_followup_requires_matching_closed_baseline (test_spike_reports.SpikeReportTests.test_followup_requires_matching_closed_baseline) ... ok
+test_kill_rule_triggers_only_on_completed_fail_on_macos_or_windows (test_spike_reports.SpikeReportTests.test_kill_rule_triggers_only_on_completed_fail_on_macos_or_windows) ... ok
+test_missing_front_matter_is_rejected (test_spike_reports.SpikeReportTests.test_missing_front_matter_is_rejected) ... ok
+test_small_grace_after_deadline_is_tolerated (test_spike_reports.SpikeReportTests.test_small_grace_after_deadline_is_tolerated) ... ok
+test_stopping_after_deadline_is_rejected (test_spike_reports.SpikeReportTests.test_stopping_after_deadline_is_rejected) ... ok
+test_template_and_readme_are_ignored (test_spike_reports.SpikeReportTests.test_template_and_readme_are_ignored) ... ok
+test_timestamp_needs_timezone (test_spike_reports.SpikeReportTests.test_timestamp_needs_timezone) ... ok
+test_unknown_spike_is_rejected (test_spike_reports.SpikeReportTests.test_unknown_spike_is_rejected) ... ok
+test_valid_blocked_stop_is_accepted_and_flags_human_decision (test_spike_reports.SpikeReportTests.test_valid_blocked_stop_is_accepted_and_flags_human_decision) ... ok
+test_valid_inconclusive_blocked_stop_is_accepted (test_spike_reports.SpikeReportTests.test_valid_inconclusive_blocked_stop_is_accepted) ... ok
+test_valid_report_is_accepted (test_spike_reports.SpikeReportTests.test_valid_report_is_accepted) ... ok
+
+----------------------------------------------------------------------
+Ran 82 tests in 4.445s
+
+OK
+python3 tools/gen_status.py && python3 tools/gen_status.py --check
+wrote docs/STATUS.json
+OK: docs/STATUS.json matches generated output
+python3 -m unittest discover -s spikes/s7 -v
+test_command_shape_and_origin (test_policy.PolicyCases.test_command_shape_and_origin) ... ok
+test_exact_assets (test_policy.PolicyCases.test_exact_assets) ... ok
+test_positive_chrome_main_frame (test_policy.PolicyCases.test_positive_chrome_main_frame) ... ok
+test_prior_document_epoch_declined_after_commit_and_recovery (test_policy.PolicyCases.test_prior_document_epoch_declined_after_commit_and_recovery) ... ok
+test_redirect_destinations_rechecked (test_policy.PolicyCases.test_redirect_destinations_rechecked) ... ok
+test_remote_view_and_subframe_declined (test_policy.PolicyCases.test_remote_view_and_subframe_declined) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.000s
+
+OK
+python3 spikes/s7/check_evidence.py
+S1 fixture boundary evidence matches the positive and negative checks.
+S1 fixture boundary evidence matches the positive and negative checks.
+popup_state=verified_fixture_subset
+downloads_storage_and_controlled_recovery=verified_fixture_subset
+workflow=m0-linux.yml immutable_actions=2
+workflow=m0-windows.yml immutable_actions=2
+workflow=status-guard.yml immutable_actions=1
+overlay_capture=s1-followup-macos-overlay.jpg dimensions=1760x1226 red_pixels=127702 bbox=(420, 144, 939, 395) crosses_y=200
+overlay_capture=s1-wry-linux-server-x11.png dimensions=1000x700 red_pixels=37943 bbox=(190, 42, 459, 185) crosses_y=72
+overlay_capture=s1-windows-wry-tao.png dimensions=986x690 red_pixels=37987 bbox=(190, 72, 459, 215) crosses_y=102
+overlay_capture=s1-x11-tauri.png red_pixels=0 negative_control=true
+S7 evidence subset verified
+Corrected benchmark derivation matches committed medians
+Locked Cargo fixture targets
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/bin/muffin-s1-desktop.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s1_desktop-4fda80f15e492d57)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s1_wry-a0e7f78eecfe133a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/muffin-s2a-popup.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s2a_popup-cb2ca7b3aa9aa61f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/muffin-s4-features.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s4_features-c52617bc824f273b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/muffin-s5-bench.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s5_bench-ab8cad72640fc0bc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+Complete baseline diff whitespace and preserved M0a archive checks
+34 spike reports. Continuation dispositions: {'inconclusive': 9, 'pass': 4, 'blocked': 3}
+S1 kill rule did not trigger. No product verification levels or M0b cells were recorded.

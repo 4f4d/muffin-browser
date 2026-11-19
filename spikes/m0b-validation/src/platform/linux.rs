@@ -133,6 +133,10 @@ pub fn hooks(
             native.connect_close(move |_| {
                 let _ = close.send_event(Signal::PopupClose(id));
             });
+            let destroyed = proxy.clone();
+            native.connect_destroy(move |_| {
+                let _ = destroyed.send_event(Signal::PopupClose(id));
+            });
             Some(install_keys(window, proxy.clone(), Some(id)))
         }
         Role::Tab(_) => None,
@@ -172,13 +176,13 @@ pub fn hooks(
                 operation.cancel();
                 return;
             };
-            let Ok(uri) = url::Url::from_file_path(&path) else {
+            let Some(absolute_path) = path.to_str() else {
                 downloads.borrow_mut().complete(number, false);
                 operation.cancel();
                 return;
             };
             operation.set_allow_overwrite(false);
-            operation.set_destination(uri.as_str());
+            operation.set_destination(absolute_path);
             let weak = operation.downgrade();
             downloads.borrow_mut().track(
                 number,
@@ -203,7 +207,13 @@ pub fn hooks(
             operation.connect_failed({
                 let downloads = downloads.clone();
                 let id = id.clone();
-                move |_, _| {
+                move |_, error| {
+                    if diagnostics {
+                        println!(
+                            "download_engine_failure class={:?}",
+                            error.kind::<webkit2gtk::DownloadError>()
+                        );
+                    }
                     if let Some(id) = id.take() {
                         downloads.borrow_mut().complete(id, false);
                     }

@@ -363,6 +363,7 @@ impl Browser {
             .with_drag_drop_handler(|_| true)
             .with_back_forward_navigation_gestures(false)
             .with_hotkeys_zoom(false);
+        let builder = platform::chrome_builder(builder);
         #[cfg(not(target_os = "linux"))]
         let builder =
             builder.with_bounds(platform::bounds(&window, 0, Some(platform::CHROME_HEIGHT)));
@@ -1199,6 +1200,9 @@ fn main() {
     };
     let mut next_tick = Instant::now();
     events.run(move |event, target, control| {
+        if matches!(event, Event::LoopDestroyed) {
+            return;
+        }
         *control = ControlFlow::WaitUntil(next_tick);
         match event {
             Event::UserEvent(Signal::Probe(id, raw)) => {

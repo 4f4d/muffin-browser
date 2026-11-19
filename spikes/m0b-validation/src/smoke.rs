@@ -95,6 +95,7 @@ pub struct Smoke {
     failed: bool,
     x11_gesture: bool,
     core_only: bool,
+    cancel_baseline: Option<u32>,
     pending_desktop: usize,
     _canary: Canary,
 }
@@ -176,7 +177,7 @@ impl Smoke {
                 window.fixtureFileBlocked = false;
                 window.fixtureChromeResourceBlocked = false;
                 fetch(file).then(() => {{}}, () => window.fixtureFileBlocked = true);
-                fetch('muffin-chrome://validation/controls').then(() => {{}}, () => window.fixtureChromeResourceBlocked = true);
+                fetch('muffin-chrome://m0b.invalid/index.html').then(() => {{}}, () => window.fixtureChromeResourceBlocked = true);
                 window.postMessage(mark, location.origin);
                 try {{ globalThis.ipc?.postMessage(JSON.stringify(mark)); }} catch (_) {{}}
                 try {{ globalThis.chrome?.webview?.postMessage(JSON.stringify(mark)); }} catch (_) {{}}
@@ -411,6 +412,7 @@ impl Smoke {
             failed: false,
             x11_gesture,
             core_only,
+            cancel_baseline: None,
             pending_desktop: 0,
             _canary: canary,
         }
@@ -444,7 +446,14 @@ impl Smoke {
             self.value = None;
             self.awaited = None;
             match &step.action {
-                Action::Command(command) => browser.command(command.clone()),
+                Action::Command(command) => {
+                    if *command == Command::CancelDownloads {
+                        let downloads = browser.views.downloads.borrow();
+                        self.cancel_baseline =
+                            downloads.cancelable().then(|| downloads.interrupted());
+                    }
+                    browser.command(command.clone());
+                }
                 Action::Script(target, script) => {
                     self.with_view(browser, target, |view| {
                         let _ = view.evaluate_script(script);
@@ -490,8 +499,11 @@ impl Smoke {
                 let downloads = browser.views.downloads.borrow();
                 downloads.cancelable() && downloads.native_bytes() > 0
             }
-            Check::InterruptedDownload => browser.views.downloads.borrow().interrupted() > 0
-                && !browser.views.downloads.borrow().cancelable(),
+            Check::InterruptedDownload => {
+                let downloads = browser.views.downloads.borrow();
+                self.cancel_baseline.is_some_and(|baseline| downloads.interrupted() > baseline)
+                    && !downloads.cancelable()
+            }
             Check::Boundary(count, url) => elapsed >= Duration::from_millis(700)
                 && browser.tabs.len() == *count && at(browser, url)
                 && browser.views.popups.borrow().visible.is_empty()
@@ -505,7 +517,11 @@ impl Smoke {
             Check::PopupClosed => elapsed >= Duration::from_millis(500)
                 && browser.views.popups.borrow().next > 0 && browser.views.popups.borrow().visible.is_empty(),
         };
-        let budget = Duration::from_secs(if step.required { 7 } else { 3 });
+        let budget = match step.name {
+            "large_download_completion" => Duration::from_secs(25),
+            _ if step.required => Duration::from_secs(7),
+            _ => Duration::from_secs(3),
+        };
         if ready {
             println!("smoke_case={} result=pass", step.name);
         } else if elapsed >= budget {

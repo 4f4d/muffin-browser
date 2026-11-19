@@ -29,6 +29,9 @@ impl Policy {
         let Some(url) = web_url(input) else {
             return false;
         };
+        if url.host_str() == Some("muffin-chrome.m0b.invalid") {
+            return false;
+        }
         self.origins
             .as_ref()
             .is_none_or(|origins| origins.contains(&url.origin().ascii_serialization()))

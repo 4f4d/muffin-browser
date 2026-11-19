@@ -288,14 +288,36 @@ fn hooks_result(
 }
 
 pub fn chrome_uri() -> &'static str {
-    use base64::{engine::general_purpose::STANDARD, Engine};
-    static URI: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-    URI.get_or_init(|| {
-        format!(
-            "data:text/html;charset=utf-8;base64,{}",
-            STANDARD.encode(crate::CHROME)
-        )
-    })
+    "https://muffin-chrome.m0b.invalid/index.html"
+}
+
+pub fn chrome_builder(builder: WebViewBuilder<'_>) -> WebViewBuilder<'_> {
+    use wry::http::{header::CONTENT_TYPE, Method, Response, StatusCode};
+    builder.with_https_scheme(true).with_custom_protocol(
+        "muffin-chrome".into(),
+        |view_id, request| {
+            let uri = request.uri();
+            let valid = view_id == "muffin-chrome"
+                && request.method() == Method::GET
+                && uri.scheme_str() == Some("muffin-chrome")
+                && uri
+                    .authority()
+                    .is_some_and(|authority| authority.as_str() == "m0b.invalid")
+                && uri
+                    .path_and_query()
+                    .is_some_and(|path| path.as_str() == "/index.html");
+            let (status, body) = if valid {
+                (StatusCode::OK, crate::CHROME.as_bytes())
+            } else {
+                (StatusCode::NOT_FOUND, &[][..])
+            };
+            Response::builder()
+                .status(status)
+                .header(CONTENT_TYPE, "text/html; charset=utf-8")
+                .body(std::borrow::Cow::Borrowed(body))
+                .expect("static chrome response")
+        },
+    )
 }
 
 pub fn load_chrome(view: &WebView) -> wry::Result<()> {

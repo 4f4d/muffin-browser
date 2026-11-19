@@ -41,13 +41,28 @@ def platform_mark(path: Path) -> bool | None:
 
 def verify_downloads(data: Path) -> dict:
     expected = hashlib.sha256(server.AUTH_DOWNLOAD).hexdigest()
+    large_payload = server.LARGE_BLOCK * server.LARGE_BLOCKS
+    large_hash = hashlib.sha256(large_payload).hexdigest()
     sizes = []
     marks = []
+    large = []
     for path in (data / "downloads").glob("muffin-*/*"):
-        if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == expected:
-            sizes.append(path.stat().st_size)
+        if not path.is_file():
+            continue
+        length = path.stat().st_size
+        if length not in (len(server.AUTH_DOWNLOAD), len(large_payload)):
+            continue
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest == expected:
+            sizes.append(length)
             marks.append(platform_mark(path))
-    return {"count": len(sizes), "expected_sha256": expected, "bytes": sizes, "platform_marks_present": marks}
+        elif digest == large_hash:
+            large.append(length)
+    return {
+        "count": len(sizes), "expected_sha256": expected, "bytes": sizes,
+        "platform_marks_present": marks, "large_download_bytes": large,
+        "large_download_expected_sha256": large_hash,
+    }
 
 
 def post_x11_click(pid: int, x: str, y: str) -> bool:
@@ -152,6 +167,8 @@ def main() -> int:
             okay = first["exit"] == relaunch["exit"] == 0 and first["required_cases_ok"] and relaunch["required_cases_ok"]
             okay = okay and downloads["count"] == 2 and first["identity"] == relaunch["identity"]
             okay = okay and first["popup"] != "fail"
+            if first["identity"]["os"] == "macos":
+                okay = okay and downloads["large_download_bytes"] == [len(server.LARGE_BLOCK) * server.LARGE_BLOCKS]
             if profile == "x11":
                 okay = okay and first["native_x11_gesture_posted"] is True
             print(f"required native smoke {'passed' if okay else 'failed'}; desktop popup {first['popup']}")

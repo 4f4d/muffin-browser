@@ -23,7 +23,9 @@ MAX_EVENTS = 64
 MAX_REQUESTS = 256
 LOCAL_STORAGE_KEY = "muffin-m0b-synthetic-marker"
 LOCAL_STORAGE_VALUE = "synthetic"
-AUTH_DOWNLOAD = (b"MUFFIN-M0B-SYNTHETIC-AUTHORIZED-DOWNLOAD\n" * 512)
+AUTH_DOWNLOAD = b"MUFFIN-M0B-SYNTHETIC-AUTHORIZED-DOWNLOAD\n" * 512
+LARGE_BLOCK = b"Muffin validation slow download block.".ljust(65536, b".")
+LARGE_BLOCKS = 128
 MEDIA_FILES = {
     "h264-aac.mp4": "video/mp4",
     "vp9.webm": "video/webm",
@@ -248,9 +250,8 @@ def make_handler(origin: str, peer: str, parent: str, state: FixtureState, is_pe
                 return self.streamed("navigation-slow", [(start, 4), (finish, 0)],
                                      "text/html; charset=utf-8", len(start) + len(finish))
             if route == "/download/large":
-                block = b"Muffin validation slow download block.".ljust(65536, b".")
-                return self.streamed("large-download", ((block, 0.045) for _ in range(128)),
-                                     "application/octet-stream", len(block) * 128,
+                return self.streamed("large-download", ((LARGE_BLOCK, 0.045) for _ in range(LARGE_BLOCKS)),
+                                     "application/octet-stream", len(LARGE_BLOCK) * LARGE_BLOCKS,
                                      'attachment; filename="muffin-large.bin"')
             if route == "/nav/final":
                 return self.respond(200, html_response('<!doctype html><title>Navigation target</title><h1 id="result">navigation target reached</h1>'), "text/html; charset=utf-8", route="navigation-target")

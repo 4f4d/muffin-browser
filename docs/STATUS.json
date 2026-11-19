@@ -100,8 +100,8 @@
       },
       "S3:macos:wry-tao": {
         "budget_minutes": 60,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "pass",
+        "stopped_reason": "completed"
       },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,

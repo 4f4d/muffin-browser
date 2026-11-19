@@ -16,22 +16,18 @@ jobs:
   engine-floor:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        backend: [x11, wayland]
-    env:
-      BACKEND: ${{ matrix.backend }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Install native dependencies
+        id: deps
         run: |
           mkdir -p m0-artifacts
-          set -o pipefail
-          sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev xvfb xauth weston
-      - name: Compile and launch the native floor host
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 update
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libwebkit2gtk-4.1-dev xvfb xauth weston
+      - name: Compile the native floor host
+        id: build
         run: |
           set -euo pipefail
           {
@@ -42,11 +38,19 @@ jobs:
             cc -O2 -Wall -Wextra -Werror spikes/engine-floor/linux/main.c -o m0-artifacts/muffin-floor $(pkg-config --cflags --libs webkit2gtk-4.1)
             sha256sum m0-artifacts/muffin-floor
             stat -c 'binary_bytes=%s' m0-artifacts/muffin-floor
-            timeout 35s bash spikes/engine-floor/linux/run.sh "$BACKEND" "$PWD/m0-artifacts/muffin-floor"
-          } 2>&1 | tee m0-artifacts/engine-floor.txt
+          } 2>&1 | tee m0-artifacts/engine-floor-build.txt
+      - name: Launch using GDK X11
+        run: |
+          set -o pipefail
+          timeout 35s bash spikes/engine-floor/linux/run.sh x11 "$PWD/m0-artifacts/muffin-floor" 2>&1 | tee m0-artifacts/engine-floor-x11.txt
+      - name: Launch using GDK Wayland
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          timeout 35s bash spikes/engine-floor/linux/run.sh wayland "$PWD/m0-artifacts/muffin-floor" 2>&1 | tee m0-artifacts/engine-floor-wayland.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: linux-${{ matrix.backend }}-m0
+          name: linux-m0
           path: m0-artifacts/
           retention-days: 7

@@ -1,0 +1,14 @@
+2026-11-19T13:41Z | Muffin M0a preflight
+Initial source: 016c915909b9a48d2fb223084f73088b11bd0650 (main, clean, tracked origin/main)
+Configured Git hook: tools/hooks (repository config); Git 2.56.1
+macOS 15.8.3 (24H241), arm64; Apple M4, Mac16,12, 10 CPUs, 24 GiB RAM
+WebKit system framework CFBundleVersion: 20621.3.11.11.3
+Rust rustc/cargo 1.95.0, host aarch64-apple-darwin
+Node 26.13.1, npm 11.20.0; pnpm absent
+Xcode 26.3 (17C529), SDK 26.2, Apple clang 17.0.0
+Host power source at elevated probe: battery; power configuration showed Low Power Mode values 1 (battery) and 0 (AC).
+Default shell process-list and 1x1 screencapture probes failed under the sandbox; both passed outside it. Disposable image discarded.
+GitHub CLI 2.104.0. Sandboxed auth status exit 1; elevated 'gh repo view' reported PUBLIC and ADMIN permissions.
+Linux GTK/WebKitGTK and Windows WebView2: remote runner probes, pending.
+Codex model routing: existing docs_researcher GPT-6 Luna low, reviewer GPT-6 Luna medium, global default child GPT-6 Luna low; existing explorer role exposed.
+Initial checks: generator --check exited 0; unittest discover ran 78 tests, OK.

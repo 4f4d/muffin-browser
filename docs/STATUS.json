@@ -17,6 +17,7 @@
       "S1:macos:wry-tao",
       "S1:windows:tauri",
       "S1:windows:wry-tao",
+      "S2a:macos:wry-tao",
       "engine_floor:linux_wayland:webkitgtk",
       "engine_floor:linux_x11:webkitgtk",
       "engine_floor:windows:webview2"
@@ -94,8 +95,8 @@
       },
       "S2a:macos:wry-tao": {
         "budget_minutes": 60,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "blocked"
       },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,

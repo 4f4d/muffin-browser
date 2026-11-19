@@ -151,6 +151,11 @@
         "outcome": "blocked",
         "stopped_reason": "blocked"
       },
+      "S7:macos:wry-tao": {
+        "budget_minutes": 60,
+        "outcome": "in_progress",
+        "stopped_reason": "in_progress"
+      },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,
         "outcome": "inconclusive",

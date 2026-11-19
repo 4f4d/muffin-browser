@@ -23,7 +23,12 @@ worker=$!
 for _ in {1..650}; do
   if rg -qx 'screenshot_ready=true' "$log"; then
     pid=$(sed -n 's/^native_app_pid=//p' "$log" | head -1)
-    "$helper" capture "$pid" "$out/spike.png" || printf 'capture_failed=true\n' >&2
+    number=$(sed -n 's/^native_window_number=//p' "$log" | head -1)
+    if [[ "$number" =~ ^[1-9][0-9]*$ ]]; then
+      /usr/sbin/screencapture -x -o -l "$number" "$out/spike.png" || printf 'capture_failed=true\n' >&2
+    else
+      "$helper" capture "$pid" "$out/spike.png" || printf 'capture_failed=true\n' >&2
+    fi
     break
   fi
   kill -0 "$worker" 2>/dev/null || break

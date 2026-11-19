@@ -1104,6 +1104,7 @@ name = "muffin-s1-wry"
 version = "0.1.0"
 dependencies = [
  "gtk",
+ "objc2",
  "serde_json",
  "tao",
  "wry",

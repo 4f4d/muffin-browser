@@ -87,6 +87,27 @@ impl Parent {
     }
 }
 
+#[cfg(target_os = "macos")]
+fn describe_key_window(window: &Window) {
+    use objc2::runtime::{AnyObject, Bool};
+    use tao::platform::macos::WindowExtMacOS;
+
+    let native = window.ns_window().cast::<AnyObject>();
+    // TAO owns the live AppKit window throughout this event callback.
+    unsafe {
+        let _: () = objc2::msg_send![native, makeKeyAndOrderFront: std::ptr::null::<AnyObject>()];
+        let number: isize = objc2::msg_send![native, windowNumber];
+        let visible: Bool = objc2::msg_send![native, isVisible];
+        let key: Bool = objc2::msg_send![native, isKeyWindow];
+        println!("native_window_number={number}");
+        println!(
+            "native_window_visible={} native_window_key={}",
+            visible.as_bool(),
+            key.as_bool()
+        );
+    }
+}
+
 fn rect(x: i32, y: i32, width: i32, height: i32) -> Rect {
     Rect {
         position: LogicalPosition::new(x, y).into(),
@@ -301,6 +322,8 @@ fn main() -> wry::Result<()> {
                     }
                     4 if group == COUNTS.len() => {
                         stage = 7;
+                        #[cfg(target_os = "macos")]
+                        describe_key_window(&parent.window);
                         content.focus().and_then(|_| inspect(&content, "focused-content", proxy.clone()))
                     }
                     7 => {

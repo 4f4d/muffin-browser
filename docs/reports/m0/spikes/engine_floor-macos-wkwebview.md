@@ -18,7 +18,7 @@ Built the bare, single-window AppKit/WKWebView host from source commit `fe451df4
 
 ## Results
 
-`docs/reports/m0/evidence/engine-floor-macos.json` contains the tested binary SHA-256, exact WebKit bundle version, hardware and power configuration, every sample, and reproduction methodology. Navigation readiness was 337–1,809 ms (median 376 ms). The app process used 18.1–18.7 MiB physical footprint. The sum including the three newly observed WebKit helpers was approximately 55.9–56.6 MiB. The helpers were parented by launchd and attributed by their appearance after each launch. All five trials listed the same three helper roles. The test bundle was 83,743 bytes by file sizes, 88 KiB by allocated blocks, and 15,978 bytes as a ZIP. The runtime is supplied by macOS and excluded from those bundle sizes.
+`docs/reports/m0/evidence/engine-floor-macos.json` contains the tested binary SHA-256, exact WebKit bundle version, hardware and power configuration, every sample, and reproduction methodology. Navigation readiness was 337–1,809 ms (median 376 ms). The app process used 18.1–18.7 MiB physical footprint. The sum including the three newly observed WebKit helpers was approximately 55.6–56.6 MiB. The helpers were parented by launchd and attributed by their appearance after each launch. All five trials listed the same three helper roles. The test bundle was 83,743 bytes by file sizes, 88 KiB by allocated blocks, and 15,978 bytes as a ZIP. The runtime is supplied by macOS and excluded from those bundle sizes.
 
 ## Findings and implications
 

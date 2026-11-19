@@ -10,8 +10,8 @@
     "reports": {
       "engine_floor:macos:wkwebview": {
         "budget_minutes": 45,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "pass",
+        "stopped_reason": "completed"
       }
     }
   },

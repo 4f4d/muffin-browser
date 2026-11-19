@@ -1,0 +1,132 @@
+execution=Ubuntu 24.04 container on physical x86_64 host, GDK X11 via Xvfb
+host_cpu=Intel Core i5-8265U; logical_cpus=8; memtotal_kib=16251248
+docker_engine=29.9.0; image_manifest=sha256:61dc0667f68b5e2ccf42dba99a524a0e87cf118db27cd0730fe4648c952c28ea
+base_ubuntu_digest=sha256:73b999393d07f2bf65a40373778a44dc9a6d54ad7718d29247d8ff9413c4d6a8
+base_rust_digest=sha256:d7482085ff5b415f84dba5647ae71606650bdef00db7aeb69f4b3d170c3e4082
+source_commit=8c8d36f508958c76f7d3f2c7c3c6e607bbd505c0
+Linux 6.8.0-147-generic x86_64
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.5 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+libgtk-3-0t64:amd64	3.24.41-4ubuntu1.3
+libwebkit2gtk-4.1-0:amd64	2.52.6-0ubuntu0.24.04.2
+xvfb	2:21.1.12-1ubuntu1.9
+f80a85c3d778a30760493dc6088a792768ee1b15e29e4e7326e27258fd4c9786  /fixture-target/debug/muffin-s1-wry
+rustc 1.95.0 (59807616e 2026-04-14)
+binary: rustc
+commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860
+commit-date: 2026-04-14
+host: x86_64-unknown-linux-gnu
+release: 1.95.0
+LLVM version: 22.1.2
+fixture_app_pid=41
+native_app_pid=41
+gdk_backend=GdkX11Display
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+engine=2.52.6
+scale=1
+resize_parent=(900, 620)
+loaded=chrome about:blank
+fixture_http="GET /start HTTP/1.1" 200 -
+loaded=overlay about:blank
+loaded=content http://127.0.0.1:43389/start
+inspection=overlay {"focused":false,"tauri":"undefined","width":270,"url":"about:blank","title":"M0 overlay","ipc":"undefined","height":144}
+inspection=initial-content {"focused":true,"height":548,"title":"M0 content","ipc":"undefined","width":900,"tauri":"undefined","url":"http://127.0.0.1:43389/start"}
+inspection=initial-chrome {"height":72,"ipc":"undefined","width":900,"url":"about:blank","focused":false,"title":"M0 chrome","tauri":"undefined"}
+resize_parent=(1000, 700)
+inspection=resized-content {"tauri":"undefined","ipc":"undefined","title":"M0 content","width":1000,"height":628,"url":"http://127.0.0.1:43389/start","focused":true}
+inspection=resized-chrome {"focused":false,"ipc":"undefined","title":"M0 chrome","width":1000,"tauri":"undefined","url":"about:blank","height":72}
+fixture_http="GET /next HTTP/1.1" 200 -
+loaded=content http://127.0.0.1:43389/next
+inspection=navigated {"focused":true,"height":628,"width":1000,"ipc":"undefined","url":"http://127.0.0.1:43389/next","title":"M0 next","tauri":"undefined"}
+fixture_http="GET /start?tab=0-0 HTTP/1.1" 200 -
+loaded=tab-0-0 http://127.0.0.1:43389/start?tab=0-0
+cycle_complete=1
+fixture_http="GET /start?tab=1-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-2 HTTP/1.1" 200 -
+loaded=tab-1-0 http://127.0.0.1:43389/start?tab=1-0
+fixture_http="GET /start?tab=1-4 HTTP/1.1" 200 -
+loaded=tab-1-2 http://127.0.0.1:43389/start?tab=1-2
+loaded=tab-1-4 http://127.0.0.1:43389/start?tab=1-4
+fixture_http="GET /start?tab=1-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-3 HTTP/1.1" 200 -
+loaded=tab-1-1 http://127.0.0.1:43389/start?tab=1-1
+loaded=tab-1-3 http://127.0.0.1:43389/start?tab=1-3
+cycle_complete=5
+fixture_http="GET /start?tab=2-4 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-3 HTTP/1.1" 200 -
+loaded=tab-2-4 http://127.0.0.1:43389/start?tab=2-4
+fixture_http="GET /start?tab=2-6 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-8 HTTP/1.1" 200 -
+loaded=tab-2-6 http://127.0.0.1:43389/start?tab=2-6
+loaded=tab-2-1 http://127.0.0.1:43389/start?tab=2-1
+loaded=tab-2-3 http://127.0.0.1:43389/start?tab=2-3
+fixture_http="GET /start?tab=2-2 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-5 HTTP/1.1" 200 -
+loaded=tab-2-8 http://127.0.0.1:43389/start?tab=2-8
+loaded=tab-2-0 http://127.0.0.1:43389/start?tab=2-0
+loaded=tab-2-2 http://127.0.0.1:43389/start?tab=2-2
+fixture_http="GET /start?tab=2-9 HTTP/1.1" 200 -
+loaded=tab-2-5 http://127.0.0.1:43389/start?tab=2-5
+fixture_http="GET /start?tab=2-7 HTTP/1.1" 200 -
+loaded=tab-2-9 http://127.0.0.1:43389/start?tab=2-9
+loaded=tab-2-7 http://127.0.0.1:43389/start?tab=2-7
+cycle_complete=10
+fixture_http="GET /start?tab=3-11 HTTP/1.1" 200 -
+loaded=tab-3-11 http://127.0.0.1:43389/start?tab=3-11
+fixture_http="GET /start?tab=3-8 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-12 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-15 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-16 HTTP/1.1" 200 -
+loaded=tab-3-8 http://127.0.0.1:43389/start?tab=3-8
+fixture_http="GET /start?tab=3-17 HTTP/1.1" 200 -
+loaded=tab-3-15 http://127.0.0.1:43389/start?tab=3-15
+loaded=tab-3-16 http://127.0.0.1:43389/start?tab=3-16
+fixture_http="GET /start?tab=3-3 HTTP/1.1" 200 -
+loaded=tab-3-12 http://127.0.0.1:43389/start?tab=3-12
+loaded=tab-3-17 http://127.0.0.1:43389/start?tab=3-17
+fixture_http="GET /start?tab=3-2 HTTP/1.1" 200 -
+loaded=tab-3-3 http://127.0.0.1:43389/start?tab=3-3
+fixture_http="GET /start?tab=3-7 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-10 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-19 HTTP/1.1" 200 -
+loaded=tab-3-2 http://127.0.0.1:43389/start?tab=3-2
+loaded=tab-3-0 http://127.0.0.1:43389/start?tab=3-0
+fixture_http="GET /start?tab=3-13 HTTP/1.1" 200 -
+loaded=tab-3-7 http://127.0.0.1:43389/start?tab=3-7
+loaded=tab-3-19 http://127.0.0.1:43389/start?tab=3-19
+loaded=tab-3-10 http://127.0.0.1:43389/start?tab=3-10
+fixture_http="GET /start?tab=3-5 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-14 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-4 HTTP/1.1" 200 -
+loaded=tab-3-13 http://127.0.0.1:43389/start?tab=3-13
+fixture_http="GET /start?tab=3-9 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-18 HTTP/1.1" 200 -
+loaded=tab-3-5 http://127.0.0.1:43389/start?tab=3-5
+fixture_http="GET /start?tab=3-6 HTTP/1.1" 200 -
+loaded=tab-3-14 http://127.0.0.1:43389/start?tab=3-14
+loaded=tab-3-1 http://127.0.0.1:43389/start?tab=3-1
+loaded=tab-3-9 http://127.0.0.1:43389/start?tab=3-9
+loaded=tab-3-4 http://127.0.0.1:43389/start?tab=3-4
+loaded=tab-3-6 http://127.0.0.1:43389/start?tab=3-6
+loaded=tab-3-18 http://127.0.0.1:43389/start?tab=3-18
+cycle_complete=20
+inspection=focused-content {"focused":true,"url":"http://127.0.0.1:43389/next","tauri":"undefined","width":1000,"title":"M0 next","ipc":"undefined","height":628}
+inspection=focused-chrome {"url":"about:blank","height":72,"focused":false,"ipc":"undefined","tauri":"undefined","title":"M0 chrome","width":1000}
+screenshot_ready=true
+fixture_result=pass

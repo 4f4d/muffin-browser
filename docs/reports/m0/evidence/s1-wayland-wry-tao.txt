@@ -1,0 +1,214 @@
+source_commit=8c8d36f508958c76f7d3f2c7c3c6e607bbd505c0
+runner_image=ubuntu24/20261111.370.1
+rustc 1.99.1 (58cf8f9c3 2026-10-13)
+binary: rustc
+commit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67
+commit-date: 2026-10-13
+host: x86_64-unknown-linux-gnu
+release: 1.99.1
+LLVM version: 23.1.1
+Linux 7.0.0-1017-azure x86_64
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+libgtk-3-0t64:amd64	3.24.41-4ubuntu1.3
+libwebkit2gtk-4.1-0:amd64	2.52.6-0ubuntu0.24.04.2
+weston	13.0.0-4build3
+xvfb	2:21.1.12-1ubuntu1.9
+binary_sha256=b66607f946e3e2de4337256445c0748f5bc806b24a9fa65b281a1f4a62fa1179
+workflow=https://github.com/4f4d/muffin-browser/actions/runs/44544220053
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+fixture_app_pid=9334
+native_app_pid=9334
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:02.053: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+gdk_backend=GdkWaylandDisplay
+libEGL warning: failed to get driver name for fd -1
+
+libEGL warning: MESA-LOADER: failed to retrieve device information
+
+libEGL warning: failed to get driver name for fd -1
+
+MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)
+libEGL warning: egl: failed to create dri2 screen
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:02.186: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:02.189: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:02.201: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+engine=2.52.6
+scale=1
+resize_parent=(952, 709)
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:02.230: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+fixture_http="GET /start HTTP/1.1" 200 -
+loaded=chrome about:blank
+loaded=overlay about:blank
+loaded=content http://127.0.0.1:33675/start
+inspection=initial-chrome {"focused":false,"height":72,"title":"M0 chrome","ipc":"undefined","width":900,"tauri":"undefined","url":"about:blank"}
+fixture_mismatch=initial-chrome parent=952x709 expected_title=M0 chrome actual={"focused":false,"height":72,"ipc":"undefined","tauri":"undefined","title":"M0 chrome","url":"about:blank","width":900}
+inspection=overlay {"focused":false,"tauri":"undefined","title":"M0 overlay","url":"about:blank","width":270,"ipc":"undefined","height":144}
+inspection=initial-content {"width":900,"tauri":"undefined","focused":false,"height":548,"title":"M0 content","url":"http://127.0.0.1:33675/start","ipc":"undefined"}
+fixture_mismatch=initial-content parent=952x709 expected_title=M0 content actual={"focused":false,"height":548,"ipc":"undefined","tauri":"undefined","title":"M0 content","url":"http://127.0.0.1:33675/start","width":900}
+resize_parent=(1052, 789)
+inspection=resized-chrome {"tauri":"undefined","ipc":"undefined","title":"M0 chrome","width":1052,"height":72,"url":"about:blank","focused":false}
+inspection=resized-content {"width":1052,"url":"http://127.0.0.1:33675/start","title":"M0 content","ipc":"undefined","focused":false,"height":717,"tauri":"undefined"}
+fixture_http="GET /next HTTP/1.1" 200 -
+loaded=content http://127.0.0.1:33675/next
+inspection=navigated {"ipc":"undefined","tauri":"undefined","title":"M0 next","url":"http://127.0.0.1:33675/next","height":717,"width":1052,"focused":false}
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:03.455: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+fixture_http="GET /start?tab=0-0 HTTP/1.1" 200 -
+loaded=tab-0-0 http://127.0.0.1:33675/start?tab=0-0
+cycle_complete=1
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:03.955: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:03.957: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:03.968: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:03.984: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.001: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+fixture_http="GET /start?tab=1-2 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-3 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-1 HTTP/1.1" 200 -
+loaded=tab-1-2 http://127.0.0.1:33675/start?tab=1-2
+loaded=tab-1-3 http://127.0.0.1:33675/start?tab=1-3
+loaded=tab-1-0 http://127.0.0.1:33675/start?tab=1-0
+fixture_http="GET /start?tab=1-4 HTTP/1.1" 200 -
+loaded=tab-1-1 http://127.0.0.1:33675/start?tab=1-1
+loaded=tab-1-4 http://127.0.0.1:33675/start?tab=1-4
+cycle_complete=5
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.709: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.712: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.719: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.730: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.746: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.755: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.774: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.794: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.810: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:04.834: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+fixture_http="GET /start?tab=2-7 HTTP/1.1" 200 -
+loaded=tab-2-7 http://127.0.0.1:33675/start?tab=2-7
+fixture_http="GET /start?tab=2-8 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-3 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-9 HTTP/1.1" 200 -
+loaded=tab-2-8 http://127.0.0.1:33675/start?tab=2-8
+loaded=tab-2-9 http://127.0.0.1:33675/start?tab=2-9
+fixture_http="GET /start?tab=2-5 HTTP/1.1" 200 -
+loaded=tab-2-3 http://127.0.0.1:33675/start?tab=2-3
+loaded=tab-2-5 http://127.0.0.1:33675/start?tab=2-5
+fixture_http="GET /start?tab=2-2 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-0 HTTP/1.1" 200 -
+loaded=tab-2-2 http://127.0.0.1:33675/start?tab=2-2
+fixture_http="GET /start?tab=2-6 HTTP/1.1" 200 -
+loaded=tab-2-0 http://127.0.0.1:33675/start?tab=2-0
+fixture_http="GET /start?tab=2-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-4 HTTP/1.1" 200 -
+loaded=tab-2-6 http://127.0.0.1:33675/start?tab=2-6
+loaded=tab-2-1 http://127.0.0.1:33675/start?tab=2-1
+loaded=tab-2-4 http://127.0.0.1:33675/start?tab=2-4
+cycle_complete=10
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.714: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.716: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.725: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.735: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.753: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.778: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.788: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.797: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.808: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.827: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.846: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.870: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.905: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.940: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.952: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.963: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:05.994: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:06.001: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:06.013: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(muffin-s1-wry:9334): Gdk-CRITICAL **: 14:31:06.032: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+fixture_http="GET /start?tab=3-2 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-8 HTTP/1.1" 200 -
+loaded=tab-3-2 http://127.0.0.1:33675/start?tab=3-2
+fixture_http="GET /start?tab=3-14 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-7 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-9 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-10 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-12 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-15 HTTP/1.1" 200 -
+loaded=tab-3-14 http://127.0.0.1:33675/start?tab=3-14
+fixture_http="GET /start?tab=3-3 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-11 HTTP/1.1" 200 -
+loaded=tab-3-7 http://127.0.0.1:33675/start?tab=3-7
+loaded=tab-3-10 http://127.0.0.1:33675/start?tab=3-10
+fixture_http="GET /start?tab=3-4 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-1 HTTP/1.1" 200 -
+loaded=tab-3-8 http://127.0.0.1:33675/start?tab=3-8
+fixture_http="GET /start?tab=3-5 HTTP/1.1" 200 -
+loaded=tab-3-9 http://127.0.0.1:33675/start?tab=3-9
+fixture_http="GET /start?tab=3-16 HTTP/1.1" 200 -
+loaded=tab-3-1 http://127.0.0.1:33675/start?tab=3-1
+fixture_http="GET /start?tab=3-18 HTTP/1.1" 200 -
+loaded=tab-3-12 http://127.0.0.1:33675/start?tab=3-12
+fixture_http="GET /start?tab=3-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-19 HTTP/1.1" 200 -
+loaded=tab-3-15 http://127.0.0.1:33675/start?tab=3-15
+loaded=tab-3-11 http://127.0.0.1:33675/start?tab=3-11
+fixture_http="GET /start?tab=3-13 HTTP/1.1" 200 -
+loaded=tab-3-16 http://127.0.0.1:33675/start?tab=3-16
+loaded=tab-3-18 http://127.0.0.1:33675/start?tab=3-18
+loaded=tab-3-4 http://127.0.0.1:33675/start?tab=3-4
+loaded=tab-3-19 http://127.0.0.1:33675/start?tab=3-19
+loaded=tab-3-0 http://127.0.0.1:33675/start?tab=3-0
+fixture_http="GET /start?tab=3-6 HTTP/1.1" 200 -
+loaded=tab-3-3 http://127.0.0.1:33675/start?tab=3-3
+loaded=tab-3-5 http://127.0.0.1:33675/start?tab=3-5
+loaded=tab-3-13 http://127.0.0.1:33675/start?tab=3-13
+fixture_http="GET /start?tab=3-17 HTTP/1.1" 200 -
+loaded=tab-3-6 http://127.0.0.1:33675/start?tab=3-6
+loaded=tab-3-17 http://127.0.0.1:33675/start?tab=3-17
+cycle_complete=20
+inspection=focused-content {"tauri":"undefined","focused":false,"ipc":"undefined","height":717,"url":"http://127.0.0.1:33675/next","width":1052,"title":"M0 next"}
+inspection=focused-chrome {"focused":false,"ipc":"undefined","url":"about:blank","tauri":"undefined","width":1052,"height":72,"title":"M0 chrome"}
+screenshot_ready=true
+fixture_result=fail

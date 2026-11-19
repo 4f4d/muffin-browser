@@ -1,0 +1,120 @@
+source_commit=8c8d36f508958c76f7d3f2c7c3c6e607bbd505c0
+runner_image=ubuntu24/20261111.370.1
+rustc 1.99.1 (58cf8f9c3 2026-10-13)
+binary: rustc
+commit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67
+commit-date: 2026-10-13
+host: x86_64-unknown-linux-gnu
+release: 1.99.1
+LLVM version: 23.1.1
+Linux 7.0.0-1017-azure x86_64
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+libgtk-3-0t64:amd64	3.24.41-4ubuntu1.3
+libwebkit2gtk-4.1-0:amd64	2.52.6-0ubuntu0.24.04.2
+weston	13.0.0-4build3
+xvfb	2:21.1.12-1ubuntu1.9
+binary_sha256=b66607f946e3e2de4337256445c0748f5bc806b24a9fa65b281a1f4a62fa1179
+workflow=https://github.com/4f4d/muffin-browser/actions/runs/44544220053
+fixture_app_pid=7606
+native_app_pid=7606
+
+(muffin-s1-wry:7606): dbind-WARNING **: 14:30:43.501: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+gdk_backend=GdkX11Display
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+engine=2.52.6
+scale=1
+resize_parent=(900, 620)
+fixture_http="GET /start HTTP/1.1" 200 -
+loaded=chrome about:blank
+loaded=content http://127.0.0.1:42111/start
+loaded=overlay about:blank
+inspection=initial-content {"focused":true,"height":548,"title":"M0 content","ipc":"undefined","width":900,"tauri":"undefined","url":"http://127.0.0.1:42111/start"}
+inspection=initial-chrome {"height":72,"ipc":"undefined","width":900,"url":"about:blank","focused":false,"title":"M0 chrome","tauri":"undefined"}
+inspection=overlay {"focused":false,"tauri":"undefined","title":"M0 overlay","url":"about:blank","width":270,"ipc":"undefined","height":144}
+resize_parent=(1000, 700)
+inspection=resized-chrome {"focused":false,"ipc":"undefined","title":"M0 chrome","width":1000,"tauri":"undefined","height":72,"url":"about:blank"}
+inspection=resized-content {"tauri":"undefined","ipc":"undefined","title":"M0 content","width":1000,"height":628,"url":"http://127.0.0.1:42111/start","focused":true}
+fixture_http="GET /next HTTP/1.1" 200 -
+loaded=content http://127.0.0.1:42111/next
+inspection=navigated {"focused":true,"height":628,"width":1000,"ipc":"undefined","title":"M0 next","tauri":"undefined","url":"http://127.0.0.1:42111/next"}
+fixture_http="GET /start?tab=0-0 HTTP/1.1" 200 -
+loaded=tab-0-0 http://127.0.0.1:42111/start?tab=0-0
+cycle_complete=1
+fixture_http="GET /start?tab=1-3 HTTP/1.1" 200 -
+loaded=tab-1-3 http://127.0.0.1:42111/start?tab=1-3
+fixture_http="GET /start?tab=1-4 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-0 HTTP/1.1" 200 -
+loaded=tab-1-0 http://127.0.0.1:42111/start?tab=1-0
+loaded=tab-1-4 http://127.0.0.1:42111/start?tab=1-4
+fixture_http="GET /start?tab=1-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=1-2 HTTP/1.1" 200 -
+loaded=tab-1-1 http://127.0.0.1:42111/start?tab=1-1
+loaded=tab-1-2 http://127.0.0.1:42111/start?tab=1-2
+cycle_complete=5
+fixture_http="GET /start?tab=2-1 HTTP/1.1" 200 -
+loaded=tab-2-1 http://127.0.0.1:42111/start?tab=2-1
+fixture_http="GET /start?tab=2-2 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-4 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-9 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-5 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-7 HTTP/1.1" 200 -
+loaded=tab-2-5 http://127.0.0.1:42111/start?tab=2-5
+loaded=tab-2-2 http://127.0.0.1:42111/start?tab=2-2
+fixture_http="GET /start?tab=2-6 HTTP/1.1" 200 -
+loaded=tab-2-9 http://127.0.0.1:42111/start?tab=2-9
+loaded=tab-2-4 http://127.0.0.1:42111/start?tab=2-4
+fixture_http="GET /start?tab=2-0 HTTP/1.1" 200 -
+loaded=tab-2-6 http://127.0.0.1:42111/start?tab=2-6
+loaded=tab-2-7 http://127.0.0.1:42111/start?tab=2-7
+loaded=tab-2-0 http://127.0.0.1:42111/start?tab=2-0
+fixture_http="GET /start?tab=2-8 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=2-3 HTTP/1.1" 200 -
+loaded=tab-2-3 http://127.0.0.1:42111/start?tab=2-3
+loaded=tab-2-8 http://127.0.0.1:42111/start?tab=2-8
+cycle_complete=10
+fixture_http="GET /start?tab=3-12 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-14 HTTP/1.1" 200 -
+loaded=tab-3-12 http://127.0.0.1:42111/start?tab=3-12
+fixture_http="GET /start?tab=3-5 HTTP/1.1" 200 -
+loaded=tab-3-14 http://127.0.0.1:42111/start?tab=3-14
+fixture_http="GET /start?tab=3-7 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-6 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-15 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-0 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-18 HTTP/1.1" 200 -
+loaded=tab-3-5 http://127.0.0.1:42111/start?tab=3-5
+loaded=tab-3-0 http://127.0.0.1:42111/start?tab=3-0
+fixture_http="GET /start?tab=3-13 HTTP/1.1" 200 -
+loaded=tab-3-18 http://127.0.0.1:42111/start?tab=3-18
+loaded=tab-3-7 http://127.0.0.1:42111/start?tab=3-7
+loaded=tab-3-6 http://127.0.0.1:42111/start?tab=3-6
+loaded=tab-3-15 http://127.0.0.1:42111/start?tab=3-15
+loaded=tab-3-13 http://127.0.0.1:42111/start?tab=3-13
+fixture_http="GET /start?tab=3-9 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-19 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-1 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-11 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-3 HTTP/1.1" 200 -
+loaded=tab-3-19 http://127.0.0.1:42111/start?tab=3-19
+loaded=tab-3-9 http://127.0.0.1:42111/start?tab=3-9
+fixture_http="GET /start?tab=3-2 HTTP/1.1" 200 -
+loaded=tab-3-1 http://127.0.0.1:42111/start?tab=3-1
+fixture_http="GET /start?tab=3-8 HTTP/1.1" 200 -
+loaded=tab-3-11 http://127.0.0.1:42111/start?tab=3-11
+fixture_http="GET /start?tab=3-16 HTTP/1.1" 200 -
+loaded=tab-3-3 http://127.0.0.1:42111/start?tab=3-3
+fixture_http="GET /start?tab=3-10 HTTP/1.1" 200 -
+fixture_http="GET /start?tab=3-4 HTTP/1.1" 200 -
+loaded=tab-3-2 http://127.0.0.1:42111/start?tab=3-2
+fixture_http="GET /start?tab=3-17 HTTP/1.1" 200 -
+loaded=tab-3-8 http://127.0.0.1:42111/start?tab=3-8
+loaded=tab-3-4 http://127.0.0.1:42111/start?tab=3-4
+loaded=tab-3-10 http://127.0.0.1:42111/start?tab=3-10
+loaded=tab-3-16 http://127.0.0.1:42111/start?tab=3-16
+loaded=tab-3-17 http://127.0.0.1:42111/start?tab=3-17
+cycle_complete=20
+inspection=focused-content {"focused":true,"url":"http://127.0.0.1:42111/next","tauri":"undefined","width":1000,"title":"M0 next","ipc":"undefined","height":628}
+inspection=focused-chrome {"url":"about:blank","ipc":"undefined","focused":false,"height":72,"tauri":"undefined","title":"M0 chrome","width":1000}
+screenshot_ready=true
+fixture_result=pass

@@ -23,3 +23,5 @@ The second [runner execution](https://github.com/4f4d/muffin-browser/actions/run
 ## Findings and implications
 
 Win32 build, WebView2 navigation and artifact transport are feasible on this runner. This checkpoint covers the minimum workflow. Candidate binary integration and desktop coverage are tracked by S1.
+
+The final report was committed again after a same-second Git timestamp check. See docs/reports/m0/evidence/report-clock-check.txt.

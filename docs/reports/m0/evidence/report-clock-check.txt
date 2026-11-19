@@ -1,0 +1,4 @@
+2026-11-19T13:55:54Z
+Commit c56e791fc9264389ca8dcd9eaf7edb094b9c99f2 recorded the report in the same one-second tick as the observed stop.
+Generator error: CI-windows-github-actions.md: final report commit must be after stopped_at
+The final reports are recorded in a fresh commit on the actual later clock tick. Start/stop fields and clock settings are preserved.

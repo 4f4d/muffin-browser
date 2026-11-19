@@ -23,3 +23,5 @@ Ubuntu 24.04.5 x86_64, GTK 3.24.41 and WebKitGTK 2.52.6 loaded `about:blank` wit
 ## Findings and implications
 
 The runner log establishes an X11 engine launch and records DRI3 and accessibility-bus warnings. Native GPU rendering, representative startup/memory and installed runtime footprint remain unavailable on this VM. The executable size excludes system packages or an installer.
+
+The final report was committed again after a same-second Git timestamp check. See docs/reports/m0/evidence/report-clock-check.txt.

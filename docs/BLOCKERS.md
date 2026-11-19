@@ -9,5 +9,6 @@ For each blocker record: date, milestone, acceptance criterion, affected platfor
 | # | Hypothesis (one line, written before running) | What was run | Outcome | Artifact |
 |---|---|---|---|---|
 | 1 | M0a Windows engine floor: linking Advapi32 will resolve the static WebView2 loader ETW and registry symbols. | Add Advapi32.lib to the native link. | Resolved. WebView2 loaded about:blank. | docs/reports/m0/evidence/engine-floor-windows-link-attempt.txt; docs/reports/m0/evidence/engine-floor-windows.txt |
+| 1 | Report timestamp: recording the reviewed final files in a fresh commit yields a real committer time strictly after the observed stop. | Recommit final report bodies and regenerate status. | Pending | docs/reports/m0/evidence/report-clock-check.txt |
 
 An attempt counts as different only if its hypothesis differs from the earlier ones. After three logged attempts with distinct hypotheses, stop retrying that criterion. Do not fabricate a pass or weaken the criterion to hide it.

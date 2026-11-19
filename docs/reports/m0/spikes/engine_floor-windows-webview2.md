@@ -23,3 +23,5 @@ WebView2 Runtime 156.0.4314.58 reported a successful `about:blank` load. Binary 
 ## Findings and implications
 
 A runner-observed engine launch is available. This is a Windows Server VM, so representative startup, process memory and installed runtime footprint remain unavailable. The executable size excludes Evergreen dependencies or an installer.
+
+The final report was committed again after a same-second Git timestamp check. See docs/reports/m0/evidence/report-clock-check.txt.

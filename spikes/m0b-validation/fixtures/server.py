@@ -225,7 +225,7 @@ def make_handler(origin: str, peer: str, parent: str, state: FixtureState, is_pe
                     sent += len(part)
                     if delay:
                         time.sleep(delay)
-            except (BrokenPipeError, ConnectionResetError):
+            except (BrokenPipeError, ConnectionError):
                 pass
             state.record(route, 200, sent)
 

@@ -38,6 +38,8 @@ enum Role {
 
 enum Signal {
     ChromeInput(u32, String),
+    #[cfg(target_os = "linux")]
+    Tick,
     Loaded(Role, bool, String),
     #[cfg(not(target_os = "macos"))]
     LoadError(Role),
@@ -117,7 +119,7 @@ impl Views {
             .with_general_autofill_enabled(false)
             .with_navigation_handler(move |url| {
                 let allowed = if role == Role::Chrome {
-                    url == HOME
+                    url == platform::chrome_uri() || url == HOME
                 } else {
                     nav.accepts(&url)
                 };
@@ -380,9 +382,7 @@ impl Browser {
         if !platform::is_private(&chrome_view) {
             return Err("engine could not confirm ephemeral chrome store");
         }
-        chrome_view
-            .load_html(CHROME)
-            .map_err(|_| "chrome document load failed")?;
+        platform::load_chrome(&chrome_view).map_err(|_| "chrome document load failed")?;
         let chrome = View {
             view: chrome_view,
             role: Role::Chrome,
@@ -828,7 +828,7 @@ impl Browser {
                     }
                 }
             }
-            Signal::Loaded(Role::Chrome, true, url) if url == HOME => {
+            Signal::Loaded(Role::Chrome, true, url) if url == platform::chrome_uri() => {
                 self.chrome_ready = true;
                 self.last_render = None;
                 self.focus_address();
@@ -903,7 +903,7 @@ impl Browser {
                     self.chrome_ready = false;
                     self.chrome_poll = None;
                     if let Some(chrome) = self.chrome.as_ref() {
-                        let _ = chrome.view.load_html(CHROME);
+                        let _ = platform::load_chrome(&chrome.view);
                     }
                 } else if let Some(tab) = self.tab_for(role) {
                     tab.loading = false;
@@ -947,6 +947,8 @@ impl Browser {
                     }
                 }
             }
+            #[cfg(target_os = "linux")]
+            Signal::Tick => {}
             Signal::NewPopup | Signal::Probe(_, _) => {}
         }
     }
@@ -961,7 +963,7 @@ impl Browser {
         let Some(chrome) = self.chrome.as_ref() else {
             return;
         };
-        if !self.chrome_ready || chrome.view.url().ok().as_deref() != Some(HOME) {
+        if !self.chrome_ready || chrome.view.url().ok().as_deref() != Some(platform::chrome_uri()) {
             return;
         }
         if self
@@ -1114,6 +1116,17 @@ fn data_root() -> Result<PathBuf, &'static str> {
         .ok_or("set --data-dir for this environment")
 }
 
+fn canonical_data_dir(path: &Path) -> std::io::Result<PathBuf> {
+    #[cfg(target_os = "windows")]
+    {
+        dunce::canonicalize(path)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        path.canonicalize()
+    }
+}
+
 fn fail(message: &str) -> ! {
     eprintln!("validation stopped: {message}");
     std::process::exit(1);
@@ -1136,9 +1149,8 @@ fn main() {
         .root
         .unwrap_or_else(|| data_root().unwrap_or_else(|message| fail(message)));
     std::fs::create_dir_all(&root).unwrap_or_else(|_| fail("could not create app data directory"));
-    let root = root
-        .canonicalize()
-        .unwrap_or_else(|_| fail("could not resolve app data directory"));
+    let root =
+        canonical_data_dir(&root).unwrap_or_else(|_| fail("could not resolve app data directory"));
     let canary = if options.smoke.is_some() {
         Some(smoke::private_canary(&root).unwrap_or_else(|message| fail(message)))
     } else {
@@ -1172,6 +1184,19 @@ fn main() {
             options.smoke_core_only,
         )
     });
+    #[cfg(target_os = "linux")]
+    let _wake_source = {
+        let proxy = events.create_proxy();
+        // TAO's GTK wait mode blocks in GLib iteration. The periodic
+        // GLib source keeps the page state and smoke deadlines advancing.
+        gtk::glib::timeout_add_local(TICK, move || {
+            if proxy.send_event(Signal::Tick).is_ok() {
+                gtk::glib::ControlFlow::Continue
+            } else {
+                gtk::glib::ControlFlow::Break
+            }
+        })
+    };
     let mut next_tick = Instant::now();
     events.run(move |event, target, control| {
         *control = ControlFlow::WaitUntil(next_tick);

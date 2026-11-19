@@ -87,6 +87,11 @@ impl Downloads {
         Some((id, path))
     }
 
+    #[cfg(target_os = "linux")]
+    pub fn diagnostics_enabled(&self) -> bool {
+        self.notices
+    }
+
     pub fn set_folder(&mut self, folder: PathBuf) {
         self.folder = folder;
     }

@@ -267,7 +267,7 @@ impl Smoke {
                         script(Target::Active, "document.getElementById('auth-download-link')?.click()"),
                         Check::Download(1)),
                     Step::new("duplicate_download_destination",
-                        script(Target::Active, "document.getElementById('auth-download-link')?.click()"),
+                        navigate(&format!("{home}download/authenticated?copy=2")),
                         Check::Download(2)),
                     Step::new("pdf_native_route", navigate(&pdf), Check::Pdf(pdf, 2)).optional(),
                     go("media_fixture_navigation", &format!("{home}media")),
@@ -371,10 +371,24 @@ impl Smoke {
                 ]);
             }
             Mode::Relaunch => pending.extend([
-                storage(
-                    "normal_store_persists_after_relaunch",
-                    navigate(&privacy),
-                    true,
+                go("normal_store_relaunch_navigation", &privacy),
+                Step::new(
+                    "normal_local_storage_persists_after_relaunch",
+                    Action::None,
+                    Check::Js(
+                        Target::Active,
+                        "localStorage.getItem('muffin-m0b-synthetic-marker') === 'synthetic'",
+                        json!(true),
+                    ),
+                ),
+                Step::new(
+                    "normal_cookie_persists_after_relaunch",
+                    Action::None,
+                    Check::Js(
+                        Target::Active,
+                        "document.cookie.includes('muffin_m0b_privacy=synthetic')",
+                        json!(true),
+                    ),
                 ),
                 Step::new(
                     "relaunch_private_is_lazy",

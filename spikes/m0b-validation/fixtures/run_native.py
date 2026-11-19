@@ -142,6 +142,10 @@ def main() -> int:
             origins = json.loads(ready.read_text(encoding="utf-8"))
             first = run(binary, out, root / "app-data", origins, "first", profile)
             downloads = verify_downloads(root / "app-data")
+            if sys.platform == "win32":
+                # Give WebView2's browser process a bounded flush interval
+                # after the first host process and its controllers have closed.
+                time.sleep(2)
             relaunch = run(binary, out, root / "app-data", origins, "relaunch", profile)
             result = {"first": first, "downloads": downloads, "relaunch": relaunch}
             (out / "summary.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")

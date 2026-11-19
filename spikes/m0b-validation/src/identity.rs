@@ -15,7 +15,7 @@ pub fn report(engine: &str) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(target_os = "macos")]
     let host = command("uname", &["-m"]);
     #[cfg(target_os = "linux")]
-    let (os, host) = (command("lsb_release", &["-ds"]), command("uname", &["-m"]));
+    let (os, host) = (linux_release(), command("uname", &["-m"]));
     #[cfg(target_os = "windows")]
     let (os, host) = (
         command("cmd", &["/d", "/c", "ver"]),
@@ -53,6 +53,20 @@ pub fn report(engine: &str) -> Result<(), Box<dyn std::error::Error>> {
         })
     );
     Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn linux_release() -> String {
+    std::fs::read_to_string("/etc/os-release")
+        .ok()
+        .and_then(|contents| {
+            contents.lines().find_map(|line| {
+                line.strip_prefix("PRETTY_NAME=")
+                    .map(|name| name.trim_matches('"').to_owned())
+            })
+        })
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| "unknown".into())
 }
 
 #[cfg(target_os = "linux")]

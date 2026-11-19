@@ -25,6 +25,7 @@ objc2-foundation = { version = "=0.3.2", default-features = false, features = ["
 objc2-web-kit = { version = "=0.3.2", default-features = false, features = ["std", "WKUIDelegate", "WKWebView", "objc2-app-kit"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
+base64 = "=0.22.1"
 dunce = "=1.0.5"
 webview2-com = "=0.39.1"
 windows = { version = "=0.62.2", features = ["Win32_Foundation", "Win32_UI_Input_KeyboardAndMouse"] }

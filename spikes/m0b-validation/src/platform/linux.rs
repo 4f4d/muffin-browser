@@ -145,49 +145,50 @@ pub fn hooks(
         unsafe { context.set_qdata(key, ()) };
         let downloads = downloads.clone();
         let policy = policy.clone();
+        let diagnostics = downloads.borrow().diagnostics_enabled();
         context.connect_download_started(move |_, operation| {
+            if diagnostics {
+                println!("download_engine_signal role={role:?}");
+            }
             if role == Role::Chrome {
                 operation.cancel();
                 return;
             }
-            let id = std::rc::Rc::new(std::cell::Cell::new(None));
-            operation.connect_decide_destination({
-                let downloads = downloads.clone();
-                let policy = policy.clone();
-                let id = id.clone();
-                move |operation, filename| {
-                    let started = operation
-                        .request()
-                        .and_then(|request| request.uri())
-                        .and_then(|uri| {
-                            downloads
-                                .borrow_mut()
-                                .begin(&policy, &uri, Path::new(filename))
-                        });
-                    if let Some((number, path)) = started {
-                        if let Ok(uri) = url::Url::from_file_path(&path) {
-                            id.set(Some(number));
-                            operation.set_allow_overwrite(false);
-                            operation.set_destination(uri.as_str());
-                            let weak = operation.downgrade();
-                            downloads.borrow_mut().track(
-                                number,
-                                Box::new(move || {
-                                    if let Some(operation) = weak.upgrade() {
-                                        operation.cancel();
-                                    }
-                                }),
-                            );
-                        } else {
-                            downloads.borrow_mut().complete(number, false);
-                            operation.cancel();
-                        }
-                    } else {
+            let Some(address) = operation.request().and_then(|request| request.uri()) else {
+                operation.cancel();
+                return;
+            };
+            let base = url::Url::parse(&address)
+                .ok()
+                .and_then(|url| url.path_segments()?.next_back().map(str::to_owned));
+            let suggested = base.as_deref().unwrap_or("file");
+            let started = downloads
+                .borrow_mut()
+                .begin(&policy, &address, Path::new(suggested));
+            let Some((number, path)) = started else {
+                if diagnostics {
+                    println!("download_destination_denied");
+                }
+                operation.cancel();
+                return;
+            };
+            let Ok(uri) = url::Url::from_file_path(&path) else {
+                downloads.borrow_mut().complete(number, false);
+                operation.cancel();
+                return;
+            };
+            operation.set_allow_overwrite(false);
+            operation.set_destination(uri.as_str());
+            let weak = operation.downgrade();
+            downloads.borrow_mut().track(
+                number,
+                Box::new(move || {
+                    if let Some(operation) = weak.upgrade() {
                         operation.cancel();
                     }
-                    true
-                }
-            });
+                }),
+            );
+            let id = std::rc::Rc::new(std::cell::Cell::new(Some(number)));
             operation.connect_received_data({
                 let downloads = downloads.clone();
                 let id = id.clone();

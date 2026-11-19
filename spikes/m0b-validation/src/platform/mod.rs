@@ -130,3 +130,13 @@ pub fn new_window_response(view: &WebView) -> NewWindowResponse {
         }
     }
 }
+
+#[cfg(not(target_os = "windows"))]
+pub fn chrome_uri() -> &'static str {
+    crate::policy::HOME
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn load_chrome(view: &WebView) -> wry::Result<()> {
+    view.load_html(crate::CHROME)
+}

@@ -5,6 +5,7 @@ import tempfile
 import unittest
 import urllib.error
 import urllib.request
+import http.client
 import http.server
 from pathlib import Path
 
@@ -54,7 +55,8 @@ class FixtureTests(unittest.TestCase):
         self.assertIn("navigation target reached", target)
         with self.assertRaises(urllib.error.HTTPError) as failure:
             self.get(self.origin + "/", headers={"Host": "127.0.0.1:1"})
-        self.assertEqual(failure.exception.code, 421)
+        with failure.exception as rejected:
+            self.assertEqual(rejected.code, 421)
 
     def test_popup_is_cross_origin_and_message_origin_is_exact(self):
         page = self.get(self.peer + "/popup").read().decode()
@@ -75,12 +77,14 @@ class FixtureTests(unittest.TestCase):
         )
         with self.assertRaises(urllib.error.HTTPError) as failure:
             urllib.request.urlopen(request, timeout=3)
-        self.assertEqual(failure.exception.code, 403)
+        with failure.exception as rejected:
+            self.assertEqual(rejected.code, 403)
 
     def test_synthetic_auth_cookie_gates_download(self):
         with self.assertRaises(urllib.error.HTTPError) as failure:
             self.get(self.origin + "/download/authenticated")
-        self.assertEqual(failure.exception.code, 403)
+        with failure.exception as rejected:
+            self.assertEqual(rejected.code, 403)
         jar = http.cookiejar.CookieJar()
         opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
         request = urllib.request.Request(self.origin + "/auth/session", data=b"", method="POST")
@@ -110,13 +114,18 @@ class FixtureTests(unittest.TestCase):
         self.assertIn(b"Upload received", body)
         self.assertIn(str(len(source)).encode(), body)
         self.assertNotIn(source, body)
-        oversized = urllib.request.Request(
-            self.origin + "/upload", data=b"x" * (server.MAX_UPLOAD_BYTES + 5000),
-            headers={"Content-Type": "multipart/form-data; boundary=synthetic"}, method="POST",
-        )
-        with self.assertRaises(urllib.error.HTTPError) as failure:
-            urllib.request.urlopen(oversized, timeout=3)
-        self.assertEqual(failure.exception.code, 413)
+        # Send only the request headers. The fixture deliberately refuses
+        # oversized requests without buffering their body.
+        connection = http.client.HTTPConnection(self.origin.removeprefix("http://"), timeout=3)
+        try:
+            connection.putrequest("POST", "/upload")
+            connection.putheader("Content-Type", "multipart/form-data; boundary=synthetic")
+            connection.putheader("Content-Length", str(server.MAX_UPLOAD_BYTES + 5000))
+            connection.endheaders()
+            with connection.getresponse() as response:
+                self.assertEqual(response.status, 413)
+        finally:
+            connection.close()
         evidence = self.log.read_text()
         self.assertNotIn(source.decode(), evidence)
         self.assertNotIn("PRIVATE-SYNTHETIC", evidence)

@@ -157,7 +157,7 @@ def package(
         else:
             root = stage / "muffin-m0b-validation"
             root.mkdir()
-            executable_name = "Muffin.exe" if spec["kind"] == "windows" else "Muffin"
+            executable_name = "muffin-validation.exe" if spec["kind"] == "windows" else "muffin-validation"
             executable = root / executable_name
             copy_executable(binary, executable)
             top = Path("muffin-m0b-validation")

@@ -286,3 +286,18 @@ fn hooks_result(
     }
     Ok(NativeHooks)
 }
+
+pub fn chrome_uri() -> &'static str {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    static URI: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    URI.get_or_init(|| {
+        format!(
+            "data:text/html;charset=utf-8;base64,{}",
+            STANDARD.encode(crate::CHROME)
+        )
+    })
+}
+
+pub fn load_chrome(view: &WebView) -> wry::Result<()> {
+    view.load_url(chrome_uri())
+}

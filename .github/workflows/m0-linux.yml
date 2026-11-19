@@ -73,6 +73,7 @@ jobs:
             binary="$RUNNER_TEMP/muffin-$candidate/debug/$name"
             cp "$binary" m0-artifacts/
             sha256sum "$binary" | awk '{print $1}' > "m0-artifacts/s1-$candidate-binary.sha256"
+            if [[ "$candidate" == wry-tao ]]; then export MUFFIN_S1_TERMINATE=1; else unset MUFFIN_S1_TERMINATE; fi
             bash spikes/engine-floor/linux/run.sh x11 bash spikes/s1/capture-x11.sh "$binary" "$title" "m0-artifacts/s1-x11-$candidate.txt" "m0-artifacts/s1-x11-$candidate.png" || failed=1
             bash spikes/engine-floor/linux/run.sh wayland python3 spikes/s1/run_fixture.py "$binary" > "m0-artifacts/s1-wayland-$candidate.txt" 2>&1 || failed=1
           done

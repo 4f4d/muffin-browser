@@ -33,6 +33,8 @@ const COUNTS: &[usize] = &[1, 5, 10, 20];
 enum Signal {
     Loaded(String, String),
     Inspect(&'static str, String),
+    #[cfg(target_os = "linux")]
+    ProcessTerminated(String),
     Tick,
 }
 
@@ -154,6 +156,10 @@ fn main() -> wry::Result<()> {
     let origin = format!("http://127.0.0.1:{port}");
     let original = format!("{origin}/start");
     let next = format!("{origin}/next");
+    #[cfg(target_os = "linux")]
+    let recovery = format!("{origin}/next?recovery=1");
+    #[cfg(target_os = "linux")]
+    let exercise_termination = env::var_os("MUFFIN_S1_TERMINATE").is_some();
     let hold_seconds = env::var("MUFFIN_S1_HOLD")
         .ok()
         .and_then(|s| s.parse().ok())
@@ -198,6 +204,7 @@ fn main() -> wry::Result<()> {
     let mut inspections_pending = 0;
     let mut failed = false;
     let mut previous_size = parent.dimensions();
+    let mut layout_moved_at = Instant::now();
 
     event_loop.run(move |event, _, control| {
         *control = ControlFlow::Wait;
@@ -212,6 +219,7 @@ fn main() -> wry::Result<()> {
                     *control = ControlFlow::ExitWithCode(1);
                     return;
                 }
+                layout_moved_at = Instant::now();
                 println!("resize_parent={:?}", parent.dimensions());
             }
             Event::WindowEvent { event: WindowEvent::KeyboardInput { event, .. }, .. } => {
@@ -220,12 +228,29 @@ fn main() -> wry::Result<()> {
             Event::UserEvent(Signal::Loaded(id, url)) => {
                 println!("loaded={id} {url}");
                 loaded.insert(id.clone());
+                #[cfg(target_os = "linux")]
+                if stage == 12 && id == "content" && url == recovery {
+                    stage = 13;
+                    if let Err(error) = inspect(&content, "recovered", proxy.clone()) {
+                        eprintln!("inspect after renderer termination: {error}");
+                        *control = ControlFlow::ExitWithCode(1);
+                    }
+                }
                 if stage == 2 && id == "content" && url == next {
                     stage = 3;
                     if let Err(error) = inspect(&content, "navigated", proxy.clone()) {
                         eprintln!("inspect after navigation: {error}");
                         *control = ControlFlow::ExitWithCode(1);
                     }
+                }
+            }
+            #[cfg(target_os = "linux")]
+            Event::UserEvent(Signal::ProcessTerminated(reason)) if stage == 11 => {
+                println!("content_process_terminated={reason}");
+                stage = 12;
+                if let Err(error) = content.load_url(&recovery) {
+                    eprintln!("reload after renderer termination: {error}");
+                    *control = ControlFlow::ExitWithCode(1);
                 }
             }
             Event::UserEvent(Signal::Inspect(label, data)) => {
@@ -254,6 +279,15 @@ fn main() -> wry::Result<()> {
                         }
                         inspections_pending -= 1;
                     }
+                    #[cfg(target_os = "linux")]
+                    "recovered" => {
+                        let value: serde_json::Value = serde_json::from_str(&data).unwrap_or_default();
+                        if value["url"] != recovery || value["title"] != "M0 next" {
+                            eprintln!("recovery_mismatch={value}");
+                            failed = true;
+                        }
+                        stage = 14;
+                    }
                     "navigated" => {
                         let value: serde_json::Value = serde_json::from_str(&data).unwrap_or_default();
                         if value["title"] != "M0 next" || value["url"] != next {
@@ -279,7 +313,8 @@ fn main() -> wry::Result<()> {
                     return;
                 }
                 let result = match stage {
-                    0 if ["chrome", "content", "overlay"].iter().all(|id| loaded.contains(*id)) => {
+                    0 if layout_moved_at.elapsed() >= Duration::from_millis(500)
+                        && ["chrome", "content", "overlay"].iter().all(|id| loaded.contains(*id)) => {
                         stage = 1;
                         inspections_pending = 3;
                         inspect(&chrome, "initial-chrome", proxy.clone())
@@ -292,7 +327,8 @@ fn main() -> wry::Result<()> {
                         parent.window.set_inner_size(LogicalSize::new(1000, 700));
                         Ok(())
                     }
-                    5 if parent.dimensions() != previous_size => {
+                    5 if parent.dimensions() != previous_size
+                        && layout_moved_at.elapsed() >= Duration::from_millis(500) => {
                         stage = 6;
                         inspections_pending = 2;
                         inspect(&chrome, "resized-chrome", proxy.clone())
@@ -320,17 +356,42 @@ fn main() -> wry::Result<()> {
                         group += 1;
                         Ok(())
                     }
+                    #[cfg(target_os = "linux")]
+                    4 if group == COUNTS.len() && exercise_termination => {
+                        use webkit2gtk::prelude::WebViewExt as _;
+                        use wry::WebViewExtUnix;
+                        let native = content.webview();
+                        let events = proxy.clone();
+                        native.connect_web_process_terminated(move |_, reason| {
+                            let _ = events.send_event(Signal::ProcessTerminated(format!("{reason:?}")));
+                        });
+                        stage = 11;
+                        native.terminate_web_process();
+                        Ok(())
+                    }
                     4 if group == COUNTS.len() => {
+                        stage = 14;
+                        Ok(())
+                    }
+                    14 => {
                         stage = 7;
                         #[cfg(target_os = "macos")]
                         describe_key_window(&parent.window);
-                        content.focus().and_then(|_| inspect(&content, "focused-content", proxy.clone()))
+                        content.focus()
                     }
                     7 => {
                         stage = 8;
-                        chrome.focus().and_then(|_| inspect(&chrome, "focused-chrome", proxy.clone()))
+                        inspect(&content, "focused-content", proxy.clone())
                     }
                     8 => {
+                        stage = 9;
+                        chrome.focus()
+                    }
+                    9 => {
+                        stage = 10;
+                        inspect(&chrome, "focused-chrome", proxy.clone())
+                    }
+                    10 => {
                         println!("screenshot_ready=true");
                         ready_exit = Some(Instant::now() + Duration::from_secs(hold_seconds.max(1)));
                         Ok(())

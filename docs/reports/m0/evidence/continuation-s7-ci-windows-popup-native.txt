@@ -1,0 +1,52 @@
+engine_version=156.0.4314.58
+fixture_ready auto=true
+window_focus pane=parent
+navigation pane=parent allowed=true url=http://127.0.0.1:52433/?mode=auto
+page_finished pane=parent url=http://127.0.0.1:52433/?mode=auto
+popup_request url=http://127.0.0.1:52433/popup/window-open size=None position=None
+window_focus pane=popup_or_slot
+popup_decision=create native_window_count=1
+navigation pane=popup allowed=true url=http://127.0.0.1:52433/popup/window-open
+page_finished pane=popup url=http://127.0.0.1:52433/popup/window-open
+popup_download_started sequence=1
+popup_download_completed success=true
+popup_request url=http://127.0.0.1:52433/popup/target-blank size=None position=None
+window_focus pane=popup_or_slot
+popup_decision=create native_window_count=2
+navigation pane=popup allowed=true url=http://127.0.0.1:52433/popup/target-blank
+page_finished pane=popup url=http://127.0.0.1:52433/popup/target-blank
+popup_request url=http://127.0.0.1:52433/popup/noopener size=None position=None
+window_focus pane=popup_or_slot
+popup_decision=create native_window_count=3
+navigation pane=popup allowed=true url=http://127.0.0.1:52433/popup/noopener
+page_finished pane=popup url=http://127.0.0.1:52433/popup/noopener
+popup_request url=http://127.0.0.1:52434/popup/cross-origin size=None position=None
+window_focus pane=popup_or_slot
+popup_decision=create native_window_count=4
+navigation pane=popup allowed=true url=http://127.0.0.1:52434/popup/cross-origin
+page_finished pane=popup url=http://127.0.0.1:52434/popup/cross-origin
+popup_request url=http://127.0.0.1:52433/redirect?same size=None position=None
+window_focus pane=popup_or_slot
+popup_decision=create native_window_count=5
+navigation pane=popup allowed=true url=http://127.0.0.1:52433/redirect?same
+navigation pane=popup allowed=true url=http://127.0.0.1:52433/popup/redirect-final
+page_finished pane=popup url=http://127.0.0.1:52433/popup/redirect-final
+popup_request url=http://127.0.0.1:52433/redirect?cross size=None position=None
+window_focus pane=popup_or_slot
+popup_decision=create native_window_count=6
+navigation pane=popup allowed=true url=http://127.0.0.1:52433/redirect?cross
+navigation pane=popup allowed=true url=http://127.0.0.1:52434/popup/redirect-final
+page_finished pane=popup url=http://127.0.0.1:52434/popup/redirect-final
+popup_request url=http://127.0.0.1:52433/auth/start size=None position=None
+window_focus pane=popup_or_slot
+popup_decision=create native_window_count=7
+navigation pane=popup allowed=true url=http://127.0.0.1:52433/auth/start
+navigation pane=popup allowed=true url=http://127.0.0.1:52434/auth/consent
+navigation pane=popup allowed=true url=http://127.0.0.1:52433/auth/callback?code=SYNTHETIC-CODE
+page_finished pane=popup url=http://127.0.0.1:52433/auth/callback?code=SYNTHETIC-CODE
+popup_request url=muffin-s2a-denied:request size=None position=None
+popup_decision=deny reason=origin
+fixture_closed reason=bounded_auto_window popups=7
+fixture_closed reason=bounded_auto_window popups=7
+fixture_closed reason=bounded_auto_window popups=7
+fixture_closed reason=bounded_auto_window popups=7

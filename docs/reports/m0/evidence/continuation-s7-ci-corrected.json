@@ -1,0 +1,96 @@
+[
+  {
+    "commit": "cf8b359cbfd462378a0937393c1ddca8cac06253",
+    "url": "https://github.com/4f4d/muffin-browser/actions/runs/44572239786",
+    "conclusion": "failure",
+    "artifact": {
+      "id": "14556291053",
+      "bytes": 57065508,
+      "sha256": "e49d80766aa5734a3505aa4b95cf8a4976e6309b6c141544a3e7d1ba049e84bb",
+      "expiry_utc_minute": "2026-11-26T17:11Z"
+    },
+    "steps": [
+      {
+        "name": "Set up job",
+        "result": "success"
+      },
+      {
+        "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "result": "success"
+      },
+      {
+        "name": "Install native dependencies",
+        "result": "success"
+      },
+      {
+        "name": "Compile the native floor host",
+        "result": "success"
+      },
+      {
+        "name": "Launch using GDK X11",
+        "result": "success"
+      },
+      {
+        "name": "Launch using GDK Wayland",
+        "result": "success"
+      },
+      {
+        "name": "Build and exercise the S1 candidates in scope",
+        "result": "failure"
+      },
+      {
+        "name": "Exercise loopback popup fixture on headless X11 and Wayland",
+        "result": "success"
+      },
+      {
+        "name": "Exercise everyday features on headless X11 and Wayland",
+        "result": "success"
+      },
+      {
+        "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        "result": "success"
+      }
+    ]
+  },
+  {
+    "commit": "cf8b359cbfd462378a0937393c1ddca8cac06253",
+    "url": "https://github.com/4f4d/muffin-browser/actions/runs/44572239827",
+    "conclusion": "success",
+    "artifact": {
+      "id": "14555561054",
+      "bytes": 2660569,
+      "sha256": "0ea29879f5c34be1afe4e66c77cfc9eb4955392a90a5659065f16dbad92327a0",
+      "expiry_utc_minute": "2026-11-26T17:03Z"
+    },
+    "steps": [
+      {
+        "name": "Set up job",
+        "result": "success"
+      },
+      {
+        "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "result": "success"
+      },
+      {
+        "name": "Compile and launch the native floor host",
+        "result": "success"
+      },
+      {
+        "name": "Build and exercise the S1 candidates in scope",
+        "result": "success"
+      },
+      {
+        "name": "Exercise loopback popup fixture on Windows Server",
+        "result": "success"
+      },
+      {
+        "name": "Exercise everyday features on Windows Server",
+        "result": "success"
+      },
+      {
+        "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        "result": "success"
+      }
+    ]
+  }
+]

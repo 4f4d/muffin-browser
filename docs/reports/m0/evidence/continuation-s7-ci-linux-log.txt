@@ -1,0 +1,63 @@
+Selected verbatim records from https://github.com/4f4d/muffin-browser/actions/runs/44572239786/job/135730177959
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4187188Z source_commit=cf8b359cbfd462378a0937393c1ddca8cac06253
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4187553Z runner_image=ubuntu24/20261111.127.1
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4188104Z Linux 7.0.0-1014-aws x86_64
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4196139Z PRETTY_NAME="Ubuntu 24.04.5 LTS"
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4196523Z NAME="Ubuntu"
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4196758Z VERSION_ID="24.04"
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4197013Z VERSION="24.04.5 LTS (Noble Numbat)"
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4197291Z VERSION_CODENAME=noble
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4197514Z ID=ubuntu
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4197704Z ID_LIKE=debian
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4197976Z HOME_URL="https://www.ubuntu.com/"
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4198276Z SUPPORT_URL="https://help.ubuntu.com/"
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4198861Z BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4199294Z PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+engine-floor	Compile the native floor host	2026-11-19T17:08:31.4199652Z UBUNTU_CODENAME=noble
+engine-floor	Build and exercise the S1 candidates in scope	2026-11-19T17:10:04.1974970Z ##[error]Process completed with exit code 1.
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2545751Z source_commit=cf8b359cbfd462378a0937393c1ddca8cac06253
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2546057Z runner_image=ubuntu24/20261111.127.1
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2546273Z Linux 7.0.0-1014-aws x86_64
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2635359Z rustc 1.99.1 (58cf8f9c3 2026-10-13)
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2635724Z binary: rustc
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2635999Z commit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2636328Z commit-date: 2026-10-13
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2636547Z host: x86_64-unknown-linux-gnu
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2636770Z release: 1.99.1
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2636958Z LLVM version: 23.1.1
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2725345Z cargo 1.99.1 (5f94df478 2026-08-27)
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2737020Z Python 3.12.3
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.2749291Z 2.52.6
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.3449057Z    Compiling muffin-s1-wry v0.1.0 (/home/runner/work/muffin-browser/muffin-browser/spikes/s1/wry-tao)
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.7785117Z     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.49s
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.8469319Z 5446b9b3cf975f6e84403d6684a1435f3d319acfd797b04c721fcb54f63491eb  /home/runner/work/_temp/muffin-wry-tao/debug/muffin-s2a-popup
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:04.9561150Z {"content_log": "/home/runner/work/muffin-browser/muffin-browser/m0-artifacts/s2a-x11/content-events.jsonl", "cross_origin": "http://127.0.0.1:34161", "native_log": "/home/runner/work/muffin-browser/muffin-browser/m0-artifacts/s2a-x11/native.log", "source": "loopback-only synthetic fixture", "start_url": "http://127.0.0.1:46565/?mode=auto"}
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:35.6981431Z fixture_finished exit_code=0
+engine-floor	Exercise loopback popup fixture on headless X11 and Wayland	2026-11-19T17:10:36.0205893Z could not load cursor 'dnd-move'
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8498306Z source_commit=cf8b359cbfd462378a0937393c1ddca8cac06253
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8498842Z runner_image=ubuntu24/20261111.127.1
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8499134Z Linux 7.0.0-1014-aws x86_64
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8592945Z rustc 1.99.1 (58cf8f9c3 2026-10-13)
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8593246Z binary: rustc
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8593501Z commit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8593741Z commit-date: 2026-10-13
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8593921Z host: x86_64-unknown-linux-gnu
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8594163Z release: 1.99.1
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8594356Z LLVM version: 23.1.1
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8667604Z cargo 1.99.1 (5f94df478 2026-08-27)
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8679826Z Python 3.12.3
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.8692602Z 2.52.6
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:06.9393206Z    Compiling muffin-s1-wry v0.1.0 (/home/runner/work/muffin-browser/muffin-browser/spikes/s1/wry-tao)
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:07.5276813Z     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.65s
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:07.5986126Z ef2f8da405489bb04af441af80b9a78ade673dd482ef55e36f322b9c5c2becb4  /home/runner/work/_temp/muffin-wry-tao/debug/muffin-s4-features
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:07.7125251Z {"base_url": "http://127.0.0.1:34005", "content_log": "/home/runner/work/_temp/s4-x11/content-events.jsonl", "downloads": "/home/runner/work/_temp/s4-x11/downloads", "native_log": "/home/runner/work/_temp/s4-x11/native.log"}
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:10.7096900Z {"core_observed": true, "download_results": [{"bytes": 786432, "matches_expected": true, "name": "download-01.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}, {"bytes": 786432, "matches_expected": true, "name": "download-02.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}], "exit_code": 0, "pdf_navigation_finished": true, "timeout": false}
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:10.7448545Z could not load cursor 'dnd-move'
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:10.7459214Z could not load cursor 'dnd-copy'
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:10.7459878Z could not load cursor 'dnd-none'
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:10.7470203Z could not load cursor 'dnd-move'
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:10.7470570Z could not load cursor 'dnd-copy'
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:10.7470950Z could not load cursor 'dnd-none'
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:10.9728926Z {"base_url": "http://127.0.0.1:38207", "content_log": "/home/runner/work/_temp/s4-wayland/content-events.jsonl", "downloads": "/home/runner/work/_temp/s4-wayland/downloads", "native_log": "/home/runner/work/_temp/s4-wayland/native.log"}
+engine-floor	Exercise everyday features on headless X11 and Wayland	2026-11-19T17:11:13.8520594Z {"core_observed": true, "download_results": [{"bytes": 786432, "matches_expected": true, "name": "download-01.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}, {"bytes": 786432, "matches_expected": true, "name": "download-02.bin", "sha256": "a8deaa7c2b1cce38a5f60f54be38296619ab4e04a11e749786c2ffdb86e7b77e", "xdg_origin_url": true}], "exit_code": 0, "pdf_navigation_finished": true, "timeout": false}
+engine-floor	Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9	﻿2026-11-19T17:11:13.8720200Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

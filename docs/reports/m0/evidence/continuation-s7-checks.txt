@@ -1,0 +1,65 @@
+source_commit=498bf321169fd662eeb2b6da9d834960460528e5
+ProductName:		macOS
+ProductVersion:		15.8.3
+BuildVersion:		24H241
+arm64
+Version: ImageMagick 7.1.2-35 Q16-HDRI aarch64 acaf7e418:20261031 https://imagemagick.org
+Copyright: (C) 1999 ImageMagick Studio LLC
+License: https://imagemagick.org/license/
+Command: python3 -m unittest discover -s spikes/s7 -v
+test_command_shape_and_origin (test_policy.PolicyCases.test_command_shape_and_origin) ... ok
+test_exact_assets (test_policy.PolicyCases.test_exact_assets) ... ok
+test_positive_chrome_main_frame (test_policy.PolicyCases.test_positive_chrome_main_frame) ... ok
+test_prior_document_epoch_declined_after_commit_and_recovery (test_policy.PolicyCases.test_prior_document_epoch_declined_after_commit_and_recovery) ... ok
+test_redirect_destinations_rechecked (test_policy.PolicyCases.test_redirect_destinations_rechecked) ... ok
+test_remote_view_and_subframe_declined (test_policy.PolicyCases.test_remote_view_and_subframe_declined) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.000s
+
+OK
+Command: python3 spikes/s7/check_evidence.py
+S1 fixture boundary evidence matches the positive and negative checks.
+S1 fixture boundary evidence matches the positive and negative checks.
+popup_state=verified_fixture_subset
+downloads_storage_and_controlled_recovery=verified_fixture_subset
+workflow=m0-linux.yml immutable_actions=2
+workflow=m0-windows.yml immutable_actions=2
+workflow=status-guard.yml immutable_actions=1
+overlay_capture=s1-followup-macos-overlay.jpg dimensions=1760x1226 red_pixels=127702 bbox=(420, 144, 939, 395) crosses_y=200
+overlay_capture=s1-wry-linux-server-x11.png dimensions=1000x700 red_pixels=37943 bbox=(190, 42, 459, 185) crosses_y=72
+overlay_capture=s1-windows-wry-tao.png dimensions=986x690 red_pixels=37987 bbox=(190, 72, 459, 215) crosses_y=102
+overlay_capture=s1-x11-tauri.png red_pixels=0 negative_control=true
+S7 evidence subset verified
+Command: cargo test --offline --locked --manifest-path spikes/s1/wry-tao/Cargo.toml
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/bin/muffin-s1-desktop.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s1_desktop-4fda80f15e492d57)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s1_wry-a0e7f78eecfe133a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/muffin-s2a-popup.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s2a_popup-cb2ca7b3aa9aa61f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/muffin-s4-features.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s4_features-c52617bc824f273b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/muffin-s5-bench.rs (spikes/s1/wry-tao/target/debug/deps/muffin_s5_bench-ab8cad72640fc0bc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

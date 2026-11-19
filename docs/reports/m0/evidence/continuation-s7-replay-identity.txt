@@ -1,0 +1,13 @@
+source_commit=de8662cc2de0645bce09cd9cc8d05352a519ffbd
+binary_sha256=12c9931fb4cecee0738bb4a08085ec2a17c40cc1bd0f876e7b5339e7242a3d3a
+ProductName:		macOS
+ProductVersion:		15.8.3
+BuildVersion:		24H241
+arm64
+rustc 1.95.0 (59807616e 2026-04-14)
+binary: rustc
+commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860
+commit-date: 2026-04-14
+host: aarch64-apple-darwin
+release: 1.95.0
+LLVM version: 22.1.2

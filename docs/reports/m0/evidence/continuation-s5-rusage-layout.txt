@@ -1,0 +1,5 @@
+Darwin SDK installed C layout for rusage_info_v0
+26.2
+size=96 user=16 system=24 resident=64 physical=72 start=80
+Python ctypes layout reused from committed engine-floor fixture
+size=96 user=16 system=24 resident=64 physical=72 start=80

@@ -1,0 +1,97 @@
+{
+  "scope": "local diagnostics and generated stimuli, no M0b result asserted",
+  "fixture_recipe": "spikes/m0b-prep/make_media.sh",
+  "media_tool": "ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers",
+  "packages": [
+    {
+      "relative_to_local_kit": "diagnostics/MuffinS4-macos-arm64.zip",
+      "bytes": 672701,
+      "sha256": "819957d4302eaab78c1515fc99ef2128a915339755d5605e280f90c0471433e1",
+      "source_commit": "60c5216d48cc7f8de16a03e12aace863ebf02234",
+      "binary_arch": "arm64",
+      "binary_sha256": "299df778ebb8832b60e21b33e1c5269dbae54949fadb0437a1a5117d008f6a39"
+    },
+    {
+      "relative_to_local_kit": "diagnostics/MuffinS4-macos-x64.zip",
+      "bytes": 695150,
+      "sha256": "191ec7703f1e7396c38c9989b9f9979498d87f5fbde8562127072f9525360896",
+      "source_commit": "60c5216d48cc7f8de16a03e12aace863ebf02234",
+      "binary_arch": "x86_64",
+      "binary_sha256": "93e1e4285f7e14539326dc3b9b1e1d14ef7fe513ebca6d3c7b410e091192e6df"
+    },
+    {
+      "relative_to_local_kit": "diagnostics/MuffinS4-macos-universal.zip",
+      "bytes": 1366894,
+      "sha256": "547c2ceb1bb256792bd8216501816f912130887d917288af9acebfb81ebe94dd",
+      "source_commit": "60c5216d48cc7f8de16a03e12aace863ebf02234",
+      "binary_arch": "arm64+x86_64",
+      "binary_sha256": "29508fedfd4bd640bdef5e67db209d7368846d5edbcf5d02c9601710b0a9050b"
+    },
+    {
+      "relative_to_local_kit": "diagnostics/MuffinS4-windows-x64.zip",
+      "bytes": 850683,
+      "sha256": "8c3aaae0c096f1a10401f7952a8110959b9f13b0941cbd0b730c6e98404cde0c",
+      "source_commit": "cf8b359cbfd462378a0937393c1ddca8cac06253",
+      "binary_arch": "x86_64",
+      "binary_sha256": "79b12e328b9027e0edd43edec2d461ab9036d2c969edd6ecdfb9782450f1f653"
+    },
+    {
+      "relative_to_local_kit": "diagnostics/muffin-s4-fixture-amd64.deb",
+      "bytes": 547910,
+      "sha256": "b9df1daa552cdf4462a8dbcf8124551228abef5ee47eab7b7fadc4b59ed4baf9",
+      "source_commit": "60c5216d48cc7f8de16a03e12aace863ebf02234",
+      "binary_arch": "x86_64",
+      "binary_sha256": "a2f93bebb644e9c60e27676792660f2ea9be7b5919ced7ea888f56d898a4ae2d"
+    }
+  ],
+  "assets": [
+    {
+      "relative_to_local_kit": "media/av1.webm",
+      "bytes": 88150,
+      "sha256": "9417277e205aa1fefbdfd202329a35965df5a9539210b40a8a20b5dba121a783",
+      "codec_names": [
+        "av1"
+      ]
+    },
+    {
+      "relative_to_local_kit": "media/h264-aac.mp4",
+      "bytes": 76993,
+      "sha256": "0e6e2ce3e26a16d574fd16954b96c37b9d078b25a16154d0d1939b04589f6d6e",
+      "codec_names": [
+        "h264",
+        "aac"
+      ]
+    },
+    {
+      "relative_to_local_kit": "media/index.html",
+      "bytes": 485,
+      "sha256": "49d8c7c9b8f0a8e412ad6ab59b7738a748db1ec30ef32b12ed733ddb8a4bc142"
+    },
+    {
+      "relative_to_local_kit": "media/opus.ogg",
+      "bytes": 18430,
+      "sha256": "330517fccc93038663c8607711ef61b85a451c53f568d9b9e1a6aad4b776ccd8",
+      "codec_names": [
+        "opus"
+      ]
+    },
+    {
+      "relative_to_local_kit": "media/sample.pdf",
+      "bytes": 595,
+      "sha256": "41cfa9c2b88d2a0d685a04128fe40058ffdf3f9e33509a686f4310cc057f5b54"
+    },
+    {
+      "relative_to_local_kit": "media/upload-sample.txt",
+      "bytes": 38,
+      "sha256": "a998dd394aa75aca0048c2dc52c3dd87c86623aba87c1a8e7427c5f0778a992d"
+    },
+    {
+      "relative_to_local_kit": "media/vp9.webm",
+      "bytes": 58395,
+      "sha256": "e1b9371251fc8712e06a58deeefca71c34c62310e9c4961fc6b425809ddb8636",
+      "codec_names": [
+        "vp9"
+      ]
+    }
+  ]
+}

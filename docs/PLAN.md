@@ -212,6 +212,8 @@ Create a `/spikes` area, not production architecture. Every spike report lives i
 
 **2026-11-19 authorized S1 follow-up.** The [separate scope and timing record](reports/m0/S1_FOLLOW_UP_SCOPE.md) bounds four WRY + TAO desktop investigations. The [updated capability matrix](reports/m0/M0A_S1_FOLLOW_UP.md) records interactive Mac input and composition evidence, the Mac fixture trust boundary, and blocked Windows 11 and GNOME desktop investigations. The S1 gate remains open for human review.
 
+**2026-11-19 authorized M0a continuation.** The owner provisionally authorized WRY + TAO for the remaining feasibility investigations. S2a, S3, S4, S5, S7 and S8 are recorded with their separate budgets and evidence. The S1 desktop and unexpected-recovery gaps remain open. The [continuation handoff](reports/m0/M0A_CONTINUATION_SUMMARY.md) and [prepared manual diagnostics](reports/m0/M0B_PREPARATION.md) are ready for human review. Architecture, platform support and M0b results remain open. The repository stays at M0a pending the human-operated stage.
+
 ### M0b — Human-in-the-loop validation (human)
 
 M0b is human-operated, not an autonomous Codex milestone. Codex may prepare test pages/binaries and validate or summarize records when asked, but it must not execute tests requiring the human, fabricate results, or fill blank cells.

@@ -9,6 +9,8 @@
     "needs_human_decision": [
       "S1:macos:tauri",
       "S1:macos:wry-tao",
+      "S1:windows:tauri",
+      "S1:windows:wry-tao",
       "engine_floor:linux_wayland:webkitgtk",
       "engine_floor:linux_x11:webkitgtk",
       "engine_floor:windows:webview2"
@@ -26,8 +28,8 @@
       },
       "S1:linux_wayland:tauri": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "fail",
+        "stopped_reason": "completed"
       },
       "S1:linux_wayland:wry-tao": {
         "budget_minutes": 90,
@@ -36,8 +38,8 @@
       },
       "S1:linux_x11:tauri": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "fail",
+        "stopped_reason": "completed"
       },
       "S1:linux_x11:wry-tao": {
         "budget_minutes": 90,
@@ -56,13 +58,13 @@
       },
       "S1:windows:tauri": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "blocked"
       },
       "S1:windows:wry-tao": {
         "budget_minutes": 90,
-        "outcome": "in_progress",
-        "stopped_reason": "in_progress"
+        "outcome": "inconclusive",
+        "stopped_reason": "blocked"
       },
       "engine_floor:linux_wayland:webkitgtk": {
         "budget_minutes": 45,

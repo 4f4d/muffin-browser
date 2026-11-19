@@ -1,0 +1,53 @@
+S2a native API source review, 2026-11-19
+Pinned WRY 0.57.2 installed registry source and official native API documentation
+lib.rs
+8aedf7a6044639ad8ad4d446829d3928c8cb037bd6fdb5e7fe5c6b72ddf1ee70  -
+458:/// See [`WebViewBuilder::with_new_window_req_handler`].
+459:pub enum NewWindowResponse {
+466:  /// **Linux**: The webview must be related to the caller webview. See [`WebViewBuilderExtUnix::with_related_view`].
+493:  /// This must be set as the related view of the new webview. See [`WebViewBuilderExtUnix::with_related_view`].
+517:  pub target_configuration: Retained<objc2_web_kit::WKWebViewConfiguration>,
+523:pub struct NewWindowFeatures {
+705:  pub new_window_req_handler: Option<Box<dyn Fn(String, NewWindowFeatures) -> NewWindowResponse>>,
+870:      new_window_req_handler: None,
+1407:  pub fn with_new_window_req_handler(
+1411:    self.attrs.new_window_req_handler = Some(Box::new(callback));
+1861:  /// Useful if you need to share the same environment, for instance when using the [`WebViewBuilder::with_new_window_req_handler`].
+2049:  /// Useful if you need to link a webview to another, for instance when using the [`WebViewBuilder::with_new_window_req_handler`].
+2050:  fn with_related_view(self, webview: webkit2gtk::WebView) -> Self;
+2076:  fn with_related_view(mut self, webview: webkit2gtk::WebView) -> Self {
+wkwebview/class/wry_web_view_ui_delegate.rs
+763a973bee9d1f0004eb1d096556acc9e8ee1114975620f5d0660724c70fb7e1  -
+84:  new_window_req_handler: Option<Box<dyn Fn(String, NewWindowFeatures) -> NewWindowResponse>>,
+180:    #[unsafe(method_id(webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:))]
+188:      if let Some(new_window_req_handler) = &self.ivars().new_window_req_handler {
+196:        match new_window_req_handler(
+218:              target_configuration: configuration.into(),
+308:    new_window_req_handler: Option<Box<dyn Fn(String, NewWindowFeatures) -> NewWindowResponse>>,
+312:    let _new_window_req_handler = new_window_req_handler;
+318:        new_window_req_handler,
+webview2/mod.rs
+349c93924dd696b1204b468377814315e63336450dfa6b94f83a675cbbb68aa3  -
+777:      let new_window_req_handler = attributes
+778:        .new_window_req_handler
+789:          if let Some(new_window_req_handler) = &new_window_req_handler {
+842:            let new_window_req_handler = new_window_req_handler.clone();
+845:            // this is needed for `new_window_req_handler` to create new webviews for `NewWindowResponse::Create`
+847:            Self::dispatch_handler(hwnd, move || match new_window_req_handler(uri, features) {
+849:                let _ = args.SetHandled(false);
+853:                let _ = args.SetHandled(true);
+854:                let _ = args.SetNewWindow(&webview);
+858:                let _ = args.SetHandled(true);
+863:            args.SetHandled(true)?;
+942:                args.SetHandled(true)?;
+webkitgtk/mod.rs
+54d47f15deefddeeefa4ba0a9b6f47873ca85d3ab0dfbfe1586d29532ba60314  -
+501:    if let Some(new_window_req_handler) = attributes.new_window_req_handler.take() {
+503:      webview.connect_create(move |webview, action| {
+508:        match new_window_req_handler(
+Primary API references
+https://docs.rs/crate/wry/0.57.2/source/src/lib.rs
+https://developer.apple.com/documentation/webkit/wkuidelegate/webview%28_%3Acreatewebviewwith%3Afor%3Awindowfeatures%3A%29
+https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs?view=webview2-1.0.3800.47
+https://webkitgtk.org/reference/webkit2gtk/2.42.5/signal.WebView.create.html
+https://html.spec.whatwg.org/multipage/links.html

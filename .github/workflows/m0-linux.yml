@@ -48,14 +48,17 @@ jobs:
         run: |
           set -o pipefail
           timeout 35s bash spikes/engine-floor/linux/run.sh wayland "$PWD/m0-artifacts/muffin-floor" 2>&1 | tee m0-artifacts/engine-floor-wayland.txt
-      - name: Build and exercise each S1 candidate
+      - name: Build and exercise the S1 candidates in scope
         if: ${{ !cancelled() && steps.deps.outcome == 'success' && hashFiles('spikes/s1/wry-tao/Cargo.toml') != '' }}
         run: |
           set -euo pipefail
           printf 'source_commit=%s\nrunner_image=%s/%s\n' "$GITHUB_SHA" "$ImageOS" "$ImageVersion" > m0-artifacts/s1-build.txt
           rustc -Vv >> m0-artifacts/s1-build.txt
           failed=0
-          for candidate in wry-tao tauri; do
+          candidates=(wry-tao)
+          # The continuation authorizes WRY only. The original comparison is retained in Git and its run artifacts.
+          if [[ ! -f spikes/s1/wry-tao/src/bin/muffin-s2a-popup.rs ]]; then candidates+=(tauri); fi
+          for candidate in "${candidates[@]}"; do
             manifest="spikes/s1/$candidate/Cargo.toml"
             if [[ "$candidate" == tauri ]]; then manifest=spikes/s1/tauri/src-tauri/Cargo.toml; fi
             [[ -f "$manifest" ]] || continue
@@ -66,7 +69,7 @@ jobs:
               name=muffin-s1-tauri
               title='Muffin S1 Tauri'
             fi
-            if ! cargo build --locked --manifest-path "$manifest" --target-dir "$RUNNER_TEMP/muffin-$candidate" 2>&1 | tee "m0-artifacts/s1-$candidate-build.txt"; then
+            if ! cargo build --locked --manifest-path "$manifest" --bin "$name" --target-dir "$RUNNER_TEMP/muffin-$candidate" 2>&1 | tee "m0-artifacts/s1-$candidate-build.txt"; then
               failed=1
               continue
             fi
@@ -76,6 +79,28 @@ jobs:
             if [[ "$candidate" == wry-tao ]]; then export MUFFIN_S1_TERMINATE=1; else unset MUFFIN_S1_TERMINATE; fi
             bash spikes/engine-floor/linux/run.sh x11 bash spikes/s1/capture-x11.sh "$binary" "$title" "m0-artifacts/s1-x11-$candidate.txt" "m0-artifacts/s1-x11-$candidate.png" || failed=1
             bash spikes/engine-floor/linux/run.sh wayland python3 spikes/s1/run_fixture.py "$binary" > "m0-artifacts/s1-wayland-$candidate.txt" 2>&1 || failed=1
+          done
+          exit "$failed"
+      - name: Exercise loopback popup fixture on headless X11 and Wayland
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' && hashFiles('spikes/s1/followup/s2a_fixture.py') != '' }}
+        run: |
+          set -euo pipefail
+          target="$RUNNER_TEMP/muffin-wry-tao"
+          {
+            printf 'source_commit=%s\nrunner_image=%s/%s\n' "$GITHUB_SHA" "$ImageOS" "$ImageVersion"
+            uname -smr
+            rustc -Vv
+            cargo -V
+            python3 --version
+            pkg-config --modversion webkit2gtk-4.1
+            cargo build --locked --manifest-path spikes/s1/wry-tao/Cargo.toml --bin muffin-s2a-popup --target-dir "$target"
+            sha256sum "$target/debug/muffin-s2a-popup"
+          } 2>&1 | tee m0-artifacts/s2a-build.txt
+          cp "$target/debug/muffin-s2a-popup" m0-artifacts/
+          failed=0
+          for backend in x11 wayland; do
+            bash spikes/engine-floor/linux/run.sh "$backend" python3 spikes/s1/followup/s2a_fixture.py \
+              --binary "$target/debug/muffin-s2a-popup" --work-dir "m0-artifacts/s2a-$backend" --timeout-seconds 90 --auto || failed=1
           done
           exit "$failed"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

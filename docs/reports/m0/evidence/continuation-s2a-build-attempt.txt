@@ -1,0 +1,9 @@
+First integrated popup fixture build, 2026-11-19, macOS 15.8.3 arm64.
+Command: cargo build --offline --locked --manifest-path spikes/s1/wry-tao/Cargo.toml --bin muffin-s2a-popup
+Initial exit 101 (integrated working copy before source commit).
+error[E0106]: missing lifetime specifier
+  --> src/bin/muffin-s2a-popup.rs:61:21
+61 | ) -> WebViewBuilder<'_> {
+   |                     ^^ expected named lifetime parameter
+The compiler proposed a single named lifetime for both input and output WebViewBuilder.
+Retry hypothesis recorded in docs/BLOCKERS.md before retry. The retry compiled successfully after applying the suggested typing in the named source commit.

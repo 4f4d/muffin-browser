@@ -22,14 +22,16 @@ jobs:
           persist-credentials: false
       - name: Compile and launch the native floor host
         run: ./spikes/engine-floor/windows/run.ps1
-      - name: Build and exercise each S1 candidate
+      - name: Build and exercise the S1 candidates in scope
         if: ${{ !cancelled() && hashFiles('spikes/s1/wry-tao/Cargo.toml') != '' }}
         run: |
           New-Item -ItemType Directory -Path 'm0-artifacts' -Force | Out-Null
           @("source_commit=$env:GITHUB_SHA", "runner_image=$env:ImageOS/$env:ImageVersion") | Set-Content 'm0-artifacts/s1-build.txt'
           rustc -Vv | Add-Content 'm0-artifacts/s1-build.txt'
           $failed = $false
-          foreach ($candidate in 'wry-tao', 'tauri') {
+          $candidates = @('wry-tao')
+          if (!(Test-Path 'spikes/s1/wry-tao/src/bin/muffin-s2a-popup.rs')) { $candidates += 'tauri' }
+          foreach ($candidate in $candidates) {
             $manifest = "spikes/s1/$candidate/Cargo.toml"
             if ($candidate -eq 'tauri') { $manifest = 'spikes/s1/tauri/src-tauri/Cargo.toml' }
             if (!(Test-Path $manifest)) { continue }
@@ -40,7 +42,7 @@ jobs:
               $name = 'muffin-s1-tauri'
               $title = 'Muffin S1 Tauri'
             }
-            cargo build --locked --manifest-path $manifest --target-dir "$env:RUNNER_TEMP/muffin-$candidate" 2>&1 | Tee-Object "m0-artifacts/s1-$candidate-build.txt"
+            cargo build --locked --manifest-path $manifest --bin $name --target-dir "$env:RUNNER_TEMP/muffin-$candidate" 2>&1 | Tee-Object "m0-artifacts/s1-$candidate-build.txt"
             if ($LASTEXITCODE -ne 0) { $failed = $true; continue }
             $binary = Join-Path "$env:RUNNER_TEMP/muffin-$candidate" "debug/$name.exe"
             Copy-Item $binary m0-artifacts/
@@ -49,6 +51,25 @@ jobs:
             if ($LASTEXITCODE -ne 0) { $failed = $true }
           }
           if ($failed) { exit 1 }
+      - name: Exercise loopback popup fixture on Windows Server
+        if: ${{ !cancelled() && hashFiles('spikes/s1/followup/s2a_fixture.py') != '' }}
+        run: |
+          $target = "$env:RUNNER_TEMP/muffin-wry-tao"
+          New-Item -ItemType Directory -Path 'm0-artifacts' -Force | Out-Null
+          @("source_commit=$env:GITHUB_SHA", "runner_image=$env:ImageOS/$env:ImageVersion",
+            "os=$([System.Environment]::OSVersion.Version)", "architecture=$env:PROCESSOR_ARCHITECTURE") |
+            Set-Content 'm0-artifacts/s2a-build.txt'
+          rustc -Vv | Add-Content 'm0-artifacts/s2a-build.txt'
+          cargo -V | Add-Content 'm0-artifacts/s2a-build.txt'
+          python --version | Add-Content 'm0-artifacts/s2a-build.txt'
+          cargo build --locked --manifest-path spikes/s1/wry-tao/Cargo.toml --bin muffin-s2a-popup --target-dir $target 2>&1 |
+            Tee-Object -FilePath 'm0-artifacts/s2a-build.txt' -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $binary = Join-Path $target 'debug/muffin-s2a-popup.exe'
+          (Get-FileHash -Algorithm SHA256 $binary).Hash.ToLower() | Add-Content 'm0-artifacts/s2a-build.txt'
+          Copy-Item $binary m0-artifacts/
+          python spikes/s1/followup/s2a_fixture.py --binary $binary --work-dir 'm0-artifacts/s2a-windows' --timeout-seconds 90 --auto
+          exit $LASTEXITCODE
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

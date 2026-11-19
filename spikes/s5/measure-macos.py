@@ -32,6 +32,17 @@ PROC = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
 PROC.proc_pid_rusage.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_void_p)
 
 
+class Timebase(ctypes.Structure):
+    _fields_ = [("numer", ctypes.c_uint32), ("denom", ctypes.c_uint32)]
+
+
+TIMEBASE = Timebase()
+SYSTEM = ctypes.CDLL(None)
+SYSTEM.mach_timebase_info.argtypes = (ctypes.POINTER(Timebase),)
+if SYSTEM.mach_timebase_info(ctypes.byref(TIMEBASE)) != 0 or not TIMEBASE.denom:
+    raise RuntimeError("could not obtain Mach timebase")
+
+
 class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
@@ -73,7 +84,9 @@ def read_usage(pid):
     if PROC.proc_pid_rusage(pid, 0, ctypes.byref(info)):
         return {"usage_error": os.strerror(ctypes.get_errno())}
     return {"resident_bytes": info.resident_size, "physical_bytes": info.phys_footprint,
-            "user_ns": info.user_time, "system_ns": info.system_time,
+            "user_ticks": info.user_time, "system_ticks": info.system_time,
+            "user_ns": info.user_time * TIMEBASE.numer // TIMEBASE.denom,
+            "system_ns": info.system_time * TIMEBASE.numer // TIMEBASE.denom,
             "start_abstime": info.proc_start_abstime}
 
 
@@ -126,7 +139,8 @@ def command(suite, binary, profile, origin, tabs):
     if suite == "chrome":
         return [binary, f"--user-data-dir={profile}", "--no-first-run", "--no-default-browser-check",
                 "--disable-background-networking", "--disable-sync", "--new-window", *urls]
-    return [binary, "-no-remote", "-profile", profile, "-new-window", urls[0],
+    return ["/usr/bin/open", "-n", "-W", "-a", binary.parents[2], "--args",
+            "-no-remote", "-profile", profile, "-new-window", urls[0],
             *(arg for url in urls[1:] for arg in ("-new-tab", url))]
 
 
@@ -146,6 +160,27 @@ def shutdown(app):
         app.wait(timeout=3)
 
 
+def firefox_process(binary, profile):
+    for line in FLOOR.output("ps", "-A", "-o", "pid=,args=").splitlines():
+        fields = line.split(maxsplit=1)
+        if len(fields) == 2 and fields[1].startswith(str(binary) + " ") and str(profile) in fields[1]:
+            return int(fields[0])
+    return None
+
+
+def finish_firefox(binary, profile):
+    pid = firefox_process(binary, profile)
+    if pid is None:
+        return
+    os.kill(pid, signal.SIGTERM)
+    for _ in range(25):
+        if firefox_process(binary, profile) != pid:
+            return
+        time.sleep(0.1)
+    if firefox_process(binary, profile) == pid:
+        os.kill(pid, signal.SIGKILL)
+
+
 def benchmark(server, suite, binary, profile, tabs, log_dir, repetition, cohort):
     with server.lock:
         server.ready.clear()
@@ -159,22 +194,27 @@ def benchmark(server, suite, binary, profile, tabs, log_dir, repetition, cohort)
         try:
             deadline = time.monotonic() + 17
             ready = {}
-            while app.poll() is None and time.monotonic() < deadline:
+            root = app.pid if suite != "firefox" else None
+            while (suite == "firefox" or app.poll() is None) and time.monotonic() < deadline:
                 with server.lock:
                     ready = dict(server.ready)
                 if tabs == 0 and "shell_created_elapsed_ms=" in log_path.read_text(errors="replace"):
                     ready = {"shell": time.monotonic_ns()}
                     break
                 if tabs and {str(i) for i in range(tabs)} <= ready.keys():
-                    break
+                    if suite == "firefox":
+                        root = firefox_process(binary, profile)
+                    if root is not None:
+                        break
                 time.sleep(0.025)
-            successful = len(ready) >= max(1, tabs) and app.poll() is None
+            successful = (len(ready) >= max(1, tabs) and root is not None
+                          and (suite == "firefox" or app.poll() is None))
             samples = []
             if successful:
                 time.sleep(1.5)
-                samples.append(snapshot(app.pid, baseline, suite == "wry"))
+                samples.append(snapshot(root, baseline, suite == "wry"))
                 time.sleep(1.0)
-                samples.append(snapshot(app.pid, baseline, suite == "wry"))
+                samples.append(snapshot(root, baseline, suite == "wry"))
             elapsed = {slot: (stamp - launch) / 1e6 for slot, stamp in sorted(ready.items())}
             return {
                 "suite": suite, "tabs": tabs, "pair": repetition, "cohort": cohort,
@@ -182,6 +222,8 @@ def benchmark(server, suite, binary, profile, tabs, log_dir, repetition, cohort)
                 "process_exit_before_cleanup": app.poll(), "samples": samples, "source_log": key,
             }
         finally:
+            if suite == "firefox":
+                finish_firefox(binary, profile)
             shutdown(app)
 
 
@@ -219,15 +261,16 @@ def main():
         "cpu": FLOOR.output("sysctl", "-n", "machdep.cpu.brand_string"),
         "power_source": FLOOR.output("pmset", "-g", "batt").splitlines()[0],
         "webkit": FLOOR.output("defaults", "read", "/System/Library/Frameworks/WebKit.framework/Versions/A/Resources/Info", "CFBundleVersion"),
+        "mach_timebase": {"numer": TIMEBASE.numer, "denom": TIMEBASE.denom},
         "binaries": {name: metadata(binary) for name, binary in binaries.items()},
         "method": {
             "ready": "elapsed from new process launch to last local page load beacon; shell-only poll when no webview; not first paint",
             "profiles": "fresh disposable comparator profile, followed by process relaunch with reused profile; WRY dedicated persistent fixture store shared across its launches",
             "temperature": "OS caches not flushed; first and repeat denote process order only, not cold disk boots",
             "memory": "Darwin RUSAGE_INFO_V0 physical footprint and RSS, separate host tree and estimated launch-associated WebKit helpers",
-            "idle": "one pair of samples, first 1.5 s after readiness; measure CPU counters for process identities present in both",
+            "idle": "one pair of samples from 1.5 s after readiness; convert Darwin CPU ticks to ns with the observed Mach timebase; matched process identities only",
             "chrome_flags": "--no-first-run --no-default-browser-check --disable-background-networking --disable-sync; temporary separate user-data-dir",
-            "firefox_prefs": "temporary profile; startup page pinned, default browser check/suggestions/telemetry disabled",
+            "firefox_prefs": "LaunchServices new instance with explicit disposable profile and native PID identified by profile argument; startup/check/telemetry prefs scoped to that profile",
             "workload": "same small loopback page, no-store, no page scripts except the load beacon; all requested tabs must report",
         },
         "runs": [],

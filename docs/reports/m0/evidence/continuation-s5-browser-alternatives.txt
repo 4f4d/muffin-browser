@@ -1,0 +1,4 @@
+process_time_ns=65017000 rusage_cpu_ns=1560383 (single local CPU counter check)
+firefox_launchservices exit=0 isolated_native_processes=1 page_beacons=1
+safari_driver_http=500 error=session not created message=Could not create a session: You must enable 'Allow remote automation' in the Developer section of Safari Settings to control Safari via WebDriver.
+corrected_timebase=125/3 process_time_ns=65037000 converted_rusage_cpu_ns=65025375

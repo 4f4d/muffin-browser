@@ -49,3 +49,13 @@
 - GitHub issues are implementation evidence and may describe a specific version or bug; record the affected version and status.
 - Reddit and community posts are qualitative user sentiment. Record sample size and do not claim statistical popularity.
 - Mark any unverified assumption as `needs-verification` in the research log and do not turn it into a product promise.
+
+## M0a source recheck (2026-11-19)
+
+The dated source log at `docs/reports/m0/evidence/source-checks.tsv` records primary sources, confidence, and what each establishes. Version-specific source supersedes the seed notes where they differ.
+
+- **Tauri Linux.** The Tauri 2.12.7 tag confirms the stock child path uses the TAO default GTK vertical box. Its use of WRY's GTK constructor is confirmed at source level. Runtime bounds and overlay behavior require S1 evidence. Issue #10420 reports stacking in older builds and supplies historical context.
+- **WRY Linux.** WRY's documented `gtk::Fixed` route and TAO's exposed GTK container support a distinct S1 setup. The ordinary child-window API covers Linux X11 only. Test GTK separately under both backends.
+- **Tauri isolation.** The tagged runtime registers an IPC handler as it constructs views. Safe treatment of remote Tauri children depends on which capabilities and commands are reachable. Record the result of an explicit remote-content boundary test before treating this path as safe for browsing.
+- **Provider gates.** Google's embedded OAuth restriction and Apple's browser entitlement documentation are current policy evidence. Actual provider behavior, entitlement eligibility and sign-in outcomes remain needs-verification in the human runbook.
+- **Runtime distribution.** Treat WebView2 Evergreen as the runner observation and a candidate deployment policy. A published system/runtime minimum remains open.

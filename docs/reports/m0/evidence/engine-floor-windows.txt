@@ -1,0 +1,16 @@
+source_commit=93cf1abee9e1a27e87952eb5bc4e7ce9428bdf45
+runner_image=win25-vs2026/20261103.298.1
+os=10.0.26100.0
+architecture=AMD64
+webview2_sdk=1.0.4314.35
+**********************************************************************
+** Visual Studio 2026 Developer Command Prompt v18.11.3
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+[vcvarsall.bat] Environment initialized for: 'x64'
+main.cpp
+binary_bytes=189952
+binary_sha256=b0a536bf863078e7f3da791d96e674b51cc2b3464147cf8ff986f0a47bd54d39
+webview2=156.0.4314.58
+navigation_success=1
+uri=about:blank

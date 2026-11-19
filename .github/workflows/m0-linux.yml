@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p m0-artifacts
           sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 update
-          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y libwebkit2gtk-4.1-dev xvfb xauth weston x11-utils imagemagick
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 install -y --no-install-recommends libwebkit2gtk-4.1-dev xvfb xauth weston x11-utils imagemagick
       - name: Compile the native floor host
         id: build
         run: |

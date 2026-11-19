@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 from threading import Thread
+import time
 from urllib.parse import urlsplit
 
 
@@ -33,6 +34,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("binary", type=Path)
     parser.add_argument("--hold", type=int, default=0)
+    parser.add_argument("--mac-helper", type=Path)
     args = parser.parse_args()
     with ThreadingHTTPServer(("127.0.0.1", 0), Fixture) as server:
         thread = Thread(target=server.serve_forever, daemon=True)
@@ -41,11 +43,23 @@ def main():
         env["MUFFIN_FIXTURE_PORT"] = str(server.server_port)
         env["MUFFIN_S1_HOLD"] = str(args.hold)
         try:
-            result = subprocess.run([args.binary.resolve()], env=env, timeout=175 + args.hold)
+            with subprocess.Popen([args.binary.resolve()], env=env) as app:
+                print(f"fixture_app_pid={app.pid}", flush=True)
+                try:
+                    if args.mac_helper:
+                        time.sleep(1)
+                        activation = subprocess.run(
+                            [args.mac_helper.resolve(), "activate", str(app.pid)], timeout=5,
+                        )
+                        print(f"fixture_activation_exit={activation.returncode}", flush=True)
+                    result = app.wait(timeout=175 + args.hold)
+                except subprocess.TimeoutExpired:
+                    app.kill()
+                    raise
         finally:
             server.shutdown()
             thread.join()
-    raise SystemExit(result.returncode)
+    raise SystemExit(result)
 
 
 if __name__ == "__main__":

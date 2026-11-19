@@ -1,0 +1,35 @@
+   Compiling muffin-s1-tauri v0.1.0 ([Tauri worktree]/spikes/s1/tauri/src-tauri)
+error[E0308]: mismatched types
+    --> src/main.rs:72:63
+     |
+  72 | ...me.set_bounds(tauri::LogicalRect { position: tauri::LogicalPosition::new(0.0, 0.0), size: tauri::LogicalSize::new(width, CHROME_HEIGHT) });
+     |       ---------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Rect`, found `LogicalRect<{float}, f64>`
+     |       |
+     |       arguments to this method are incorrect
+     |
+     = note: expected struct `Rect`
+                found struct `LogicalRect<{float}, f64>`
+note: method defined here
+    --> [user home]/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.12.7/src/webview/mod.rs:1650:10
+     |
+1650 |   pub fn set_bounds(&self, bounds: tauri_runtime::dpi::Rect) -> crate::Result<()> {
+     |          ^^^^^^^^^^
+
+error[E0308]: mismatched types
+    --> src/main.rs:75:64
+     |
+  75 | ...nt.set_bounds(tauri::LogicalRect { position: tauri::LogicalPosition::new(0.0, CHROME_HEIGHT), size: tauri::LogicalSize::new(width, (height - CHROME_HEIGHT).max(1.0)) });
+     |       ---------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Rect`, found `LogicalRect<f64, f64>`
+     |       |
+     |       arguments to this method are incorrect
+     |
+     = note: expected struct `Rect`
+                found struct `LogicalRect<f64, f64>`
+note: method defined here
+    --> [user home]/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.12.7/src/webview/mod.rs:1650:10
+     |
+1650 |   pub fn set_bounds(&self, bounds: tauri_runtime::dpi::Rect) -> crate::Result<()> {
+     |          ^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `muffin-s1-tauri` (bin "muffin-s1-tauri") due to 2 previous errors

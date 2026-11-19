@@ -1,0 +1,5 @@
+Run: https://github.com/4f4d/muffin-browser/actions/runs/44539079446/job/135612277283
+Source commit: 5b4be8bc79bd1f44b770080267dab24f8103fed1
+The Install native dependencies step timed out before compiling either host.
+2026-11-19T14:12:42.5502866Z Get:256 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble/universe amd64 pocketsphinx-en-us all 0.8.0+real5prealpha+1-15ubuntu5 [27.4 MB]
+2026-11-19T14:15:27.5993873Z ##[error]The operation was canceled.

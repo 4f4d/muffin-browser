@@ -2,6 +2,56 @@
 
 use std::{io::Write, path::PathBuf, ptr::NonNull};
 
+/// Exercise WebKit's AppKit print operation without presenting a panel or
+/// sending anything to a printer. Only the disposable test controller calls it.
+#[cfg(debug_assertions)]
+pub fn print_fixture(view: &wry::WebView, destination: &std::path::Path) -> bool {
+    use objc2::runtime::ProtocolObject;
+    use objc2_app_kit::{NSPrintInfo, NSPrintJobSavingURL, NSPrintSaveJob};
+    use objc2_foundation::{NSObjectProtocol, NSSize, NSString, NSURL};
+    use wry::WebViewExtMacOS;
+
+    let Some(path) = destination.to_str() else {
+        return false;
+    };
+    let native = view.webview();
+    if !native.respondsToSelector(objc2::sel!(printOperationWithPrintInfo:)) {
+        return false;
+    }
+    let url = NSURL::fileURLWithPath_isDirectory(&NSString::from_str(path), false);
+    let info = NSPrintInfo::new();
+    info.setPaperSize(NSSize::new(612.0, 792.0));
+    info.setTopMargin(36.0);
+    info.setBottomMargin(36.0);
+    info.setLeftMargin(36.0);
+    info.setRightMargin(36.0);
+    let save_job = unsafe { NSPrintSaveJob };
+    unsafe {
+        info.setJobDisposition(save_job);
+        info.dictionary()
+            .setObject_forKey(&url, ProtocolObject::from_ref(NSPrintJobSavingURL));
+    }
+    let operation = unsafe { native.printOperationWithPrintInfo(&info) };
+    let Some(window) = native.window() else {
+        return false;
+    };
+    if &*operation.printInfo().jobDisposition() != save_job {
+        return false;
+    }
+    operation.setShowsPrintPanel(false);
+    operation.setShowsProgressPanel(false);
+    operation.setCanSpawnSeparateThread(true);
+    unsafe {
+        operation.runOperationModalForWindow_delegate_didRunSelector_contextInfo(
+            &window,
+            None,
+            None,
+            std::ptr::null_mut(),
+        );
+    }
+    true
+}
+
 const MAX_PDF_BYTES: usize = 128 * 1024 * 1024;
 
 /// Render the current WKWebView page to PDF and atomically create `destination`.

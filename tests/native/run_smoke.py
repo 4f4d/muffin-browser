@@ -413,6 +413,23 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
     if pdf_output is not None:
         shutil.copyfile(pdf_file, pdf_output)
 
+    command("print_fixture_pdf")
+    print_path = control / "fixture-print.pdf"
+
+    def completed_print():
+        if print_path.is_file():
+            data = print_path.read_bytes()
+            if len(data) >= 256 and data.startswith(b"%PDF-") and data.rstrip().endswith(b"%%EOF"):
+                return data
+        return None
+
+    print_data = until(process, "AppKit print operation wrote a complete local PDF", completed_print)
+    steps.append({"native_appkit_print_to_file": {
+        "bytes": len(print_data), "sha256": sha256(print_data).hexdigest(),
+    }})
+    if pdf_output is not None:
+        pdf_output.with_name("native-print.pdf").write_bytes(print_data)
+
     command("navigate", value=first.origin + "/attempt-download")
     until(process, "remote page attempted an automatic download", lambda: (
         ("GET", UNREQUESTED_DOWNLOAD) in first.requests

@@ -1,0 +1,21 @@
+{
+  "source_commit": "2038bff536c1342a724329b6281dacf7eb52ef5b",
+  "source_worktree_clean": true,
+  "command": "just verify",
+  "exit_code": 0,
+  "macos_version": "15.8.3",
+  "host_arch": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "tool_tests": 83,
+  "loopback_fixture_unit_tests": 1,
+  "ui_tests": 17,
+  "rust_tests": 32,
+  "release_rejected_debug_test_control": true,
+  "rustsec_allowed_warnings": [
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2024-0429"
+  ],
+  "verification_log_sha256": "119ffbbf98e48f2a7b44e76b8a099944d59df156960cdbf0e2de18b54c4e5905",
+  "local_native_receipt_sha256": "57a806feef4ea958d75ec7a21a24229a0a7e1c283b75ad4f944b952b18e767eb",
+  "local_appkit_receipt_sha256": "ddad9c45f5c505b9c35058374ff80639f60b0234dde82fa9e8a8b2f327a1f3b7"
+}

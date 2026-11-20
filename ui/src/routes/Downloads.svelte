@@ -14,7 +14,7 @@
 
 <section class="surface-page downloads-page" aria-labelledby="downloads-heading">
   <div class="page-width downloads-width">
-    <header class="page-title-row"><div><h1 id="downloads-heading">Downloads</h1><p class="downloads-caption">Enter a direct download link in the address bar to save the file.</p></div></header>
+    <header class="page-title-row"><div><h1 id="downloads-heading">Downloads</h1><p class="downloads-caption">Review requested files before saving them.</p></div></header>
     {#if snapshot.notice}<p class="surface-notice" role="status" aria-live="polite">{snapshot.notice}</p>{/if}
     {#if snapshot.downloads.length}
       <ul class="download-list" aria-label="Downloaded files">
@@ -33,7 +33,7 @@
               </div>
             {:else if item.status === 'downloading'}<span class="download-state" aria-label="Download in progress"><span class="tab-loading"></span></span>
             {:else if item.status === 'finished'}<button class="quiet-button" type="button" aria-label={`Show ${item.name} in folder`} onclick={() => send({ version: 1, action: 'reveal_download', id: item.id })}>Show in folder</button>
-            {:else}<span class="download-failed">Couldn’t finish</span>{/if}
+            {:else if item.status === 'failed'}<span class="download-failed">Couldn’t finish</span>{/if}
           </li>
         {/each}
       </ul>

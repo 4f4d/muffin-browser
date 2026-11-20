@@ -236,6 +236,8 @@ mod browser {
         ClickFixtureLink { version: u8 },
         #[serde(rename = "capture_fixture_content")]
         CaptureFixtureContent { version: u8 },
+        #[serde(rename = "print_fixture_pdf")]
+        PrintFixturePdf { version: u8 },
     }
 
     #[cfg(debug_assertions)]
@@ -257,7 +259,8 @@ mod browser {
                 | ChromeTestAction::Inspect { version: 1 }
                 | ChromeTestAction::CapturePdf { version: 1 }
                 | ChromeTestAction::ClickFixtureLink { version: 1 }
-                | ChromeTestAction::CaptureFixtureContent { version: 1 },
+                | ChromeTestAction::CaptureFixtureContent { version: 1 }
+                | ChromeTestAction::PrintFixturePdf { version: 1 },
             ) => Some(command),
             TestCommand::Native(action) if action.version() == 1 => Some(command),
             TestCommand::Quit { version: 1, action } if action == "quit_test" => Some(command),
@@ -1970,6 +1973,19 @@ mod browser {
                     if let (Some(window), Some(path)) = (self.window_mut(active), path) {
                         if let Some(view) = fixture_content(window) {
                             capture_webview(view, &path);
+                        }
+                    }
+                }
+                TestCommand::Chrome(ChromeTestAction::PrintFixturePdf { .. }) => {
+                    let path = self
+                        .test_control
+                        .as_ref()
+                        .map(|control| control.directory.join("fixture-print.pdf"));
+                    if let (Some(window), Some(path)) = (self.window_mut(active), path) {
+                        if let Some(view) = fixture_content(window) {
+                            if !super::pdf::print_fixture(view, &path) {
+                                eprintln!("fixture_print_failed");
+                            }
                         }
                     }
                 }

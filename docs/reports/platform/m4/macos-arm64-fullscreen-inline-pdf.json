@@ -1,0 +1,26 @@
+{
+  "source_commit": "2038bff536c1342a724329b6281dacf7eb52ef5b",
+  "source_worktree_clean": true,
+  "binary_sha256": "4d9833f1163bc991b934dd4bca4150e26769cca9df36e0dd4fb89ae9e42e2d29",
+  "macos_version": "15.8.3",
+  "host_arch": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "upload_expected": {
+    "bytes": 35,
+    "sha256": "5f9c410a623100abafe744086873b9be0c473be2eb186de1a8357843380a6ad3"
+  },
+  "native_fullscreen": [
+    false,
+    true,
+    false
+  ],
+  "inline_pdf": {
+    "committed_url": "http://127.0.0.1:56633/inline-document",
+    "http_get_seen": true,
+    "response_content_type": "application/pdf",
+    "response_content_disposition": "inline",
+    "capture_sha256": "ac8435f6f9a30e3cf59043a0ad21ff8eb086308c91fa32d65bc59b4fe4d23e1e"
+  },
+  "upload_fixture_url": "http://127.0.0.1:56633/upload",
+  "uploads": []
+}

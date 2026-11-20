@@ -1,17 +1,18 @@
 """Exercise the Apple Silicon shell against a disposable loopback fixture."""
 
 import argparse
-from hashlib import file_digest
+from hashlib import file_digest, sha256
 import json
 from pathlib import Path
 import platform
 import plistlib
+import shutil
 import subprocess
 from tempfile import TemporaryDirectory
 import time
 import tomllib
 
-from fixture import browser_fixture
+from fixture import DOWNLOAD_PAYLOADS, UNREQUESTED_DOWNLOAD, browser_fixture
 
 
 def until(process, description, read, timeout=18):
@@ -367,6 +368,84 @@ def verify_profile_restart(process, control, steps):
     steps.append({"case": "profile restart retained settings, shortcuts and bookmarks and cleared history"})
 
 
+def exercise_page_tools(process, control, first, second, steps, capture, pdf_output):
+    def command(action, **fields):
+        send_command(control, action, **fields)
+
+    def expect(case, predicate):
+        def read():
+            state = observation(control)
+            return state if predicate(state) else None
+
+        return until(process, case, read)
+
+    second_url = second.origin + "/second?tools=1"
+    command("navigate", value=second_url)
+    expect("page-tools fixture committed the new document", lambda s: (
+        s.get("url") == second_url and s.get("status") == "ready" and s.get("surface") == "browse"
+    ))
+    command("find_page", value="amber muffin fixture", backwards=False)
+    expect("WebKit find reported the visible fixture phrase", lambda s: (
+        s.get("page_tools", {}).get("find_found") is True
+    ))
+    command("find_page", value="q3x-absent-find-token-p9", backwards=True)
+    expect("WebKit find rejected the absent phrase", lambda s: (
+        s.get("page_tools", {}).get("find_found") is False
+    ))
+    steps.append({"native_webkit_find": {"visible_phrase": True, "missing_phrase": False}})
+    command("zoom_page", value="in")
+    expect("WebKit native pageZoom setter read back at 110 percent", lambda s: (
+        s.get("page_tools", {}).get("zoom_percent") == 110
+    ))
+    command("zoom_page", value="reset")
+    expect("WebKit native pageZoom read back at 100 percent after reset", lambda s: (
+        s.get("page_tools", {}).get("zoom_percent") == 100
+    ))
+    steps.append({"native_webkit_zoom_percent": [110, 100]})
+
+    command("capture_pdf")
+    pdf_file = control / "fixture-export.pdf"
+    until(process, "WKWebView wrote its PDF output", pdf_file.is_file)
+    pdf_data = pdf_file.read_bytes()
+    if len(pdf_data) < 256 or not pdf_data.startswith(b"%PDF-") or not pdf_data.rstrip().endswith(b"%%EOF"):
+        raise AssertionError("WKWebView did not export a complete PDF")
+    steps.append({"native_pdf_export": {"bytes": len(pdf_data), "sha256": sha256(pdf_data).hexdigest()}})
+    if pdf_output is not None:
+        shutil.copyfile(pdf_file, pdf_output)
+
+    command("navigate", value=first.origin + "/attempt-download")
+    until(process, "remote page attempted an automatic download", lambda: (
+        ("GET", UNREQUESTED_DOWNLOAD) in first.requests
+    ))
+
+    for index, (server, path) in enumerate(zip((first, second), DOWNLOAD_PAYLOADS, strict=True), 1):
+        command("chrome_navigate", value=server.origin + path)
+        until(process, f"fixture received download {index}", lambda: ("GET", path) in server.requests)
+        command("show_surface", value="downloads")
+        expect(f"native download {index} finished", lambda s: (
+            s.get("surface") == "downloads"
+            and len(s.get("downloads", [])) == index
+            and all(item["status"] == "finished" for item in s["downloads"])
+        ))
+
+    directory = control / "downloads"
+    payloads = []
+    for file in directory.iterdir():
+        if file.is_file() and not file.is_symlink():
+            with file.open("rb") as stream:
+                payloads.append((file.stat().st_size, file_digest(stream, "sha256").hexdigest()))
+    payloads.sort()
+    expected = sorted((len(data), sha256(data).hexdigest()) for data in DOWNLOAD_PAYLOADS.values())
+    if payloads != expected:
+        raise AssertionError(f"native downloads did not match both fixture payloads: {payloads}")
+    steps.append({
+        "native_downloads": [{"bytes": size, "sha256": digest} for size, digest in payloads],
+        "remote_unrequested_download_published": False,
+    })
+    if capture is not None:
+        capture(process, control, command, "native-downloads")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, default=Path("target/debug/muffin"))
@@ -374,6 +453,7 @@ def main():
     parser.add_argument("--tabs", action="store_true", help="include M2 tab and native window lifecycle checks")
     parser.add_argument("--restart", action="store_true", help="also exercise disposable session restore")
     parser.add_argument("--profile", action="store_true", help="exercise the disposable local profile")
+    parser.add_argument("--page-tools", action="store_true", help="verify native find, zoom and downloads")
     visual = parser.add_mutually_exclusive_group()
     visual.add_argument("--capture-window", action="store_true", help="attempt a capture of the fixture window")
     visual.add_argument("--capture-chrome", action="store_true", help="capture the native trusted chrome view")
@@ -471,6 +551,11 @@ def main():
                         (control / "state.json").unlink()
                         process = subprocess.Popen(launch, stdout=log, stderr=log)
                         verify_profile_restart(process, control, result["steps"])
+                    if args.page_tools:
+                        exercise_page_tools(
+                            process, control, *servers, result["steps"], capture,
+                            args.out / "native-fixture.pdf" if args.capture_chrome else None,
+                        )
                 except Exception:
                     state_path = control / "state.json"
                     if state_path.is_file():

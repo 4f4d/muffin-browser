@@ -15,6 +15,7 @@ PAGE_ONE = """<!doctype html>
 PAGE_TWO = """<!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Muffin fixture | Second page</title>
 <h1>Second page</h1><label>Fixture text<input autocomplete="off"></label>
+<p>amber muffin fixture</p>
 <script>
   // These functions are page-owned lookalikes. The native host must never
   // consume a remote page's queue or give it access to trusted chrome.
@@ -35,6 +36,12 @@ PAGE_TWO = """<!doctype html>
 </script>
 </html>
 """
+
+DOWNLOAD_PAYLOADS = {
+    "/download/alpha": b"Muffin fixture alpha\x00\x87\xee" * 64,
+    "/download/beta": b"Muffin fixture beta\x01\x19\xff" * 48,
+}
+UNREQUESTED_DOWNLOAD = "/download/unrequested"
 
 
 class FixtureServer(ThreadingHTTPServer):
@@ -65,7 +72,24 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
-        pages = {"/first": PAGE_ONE, "/second": PAGE_TWO}
+        if self.path in DOWNLOAD_PAYLOADS or self.path == UNREQUESTED_DOWNLOAD:
+            body = DOWNLOAD_PAYLOADS.get(self.path, b"unrequested fixture transfer")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Disposition", 'attachment; filename="shared.bin"')
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        pages = {
+            "/first": PAGE_ONE,
+            "/second": PAGE_TWO,
+            "/attempt-download": (
+                "<!doctype html><title>Automatic download fixture</title>"
+                f"<script>location.assign('{UNREQUESTED_DOWNLOAD}');</script>"
+            ),
+        }
         page_path = self.path.split("?", 1)[0]
         if page_path in pages:
             body = pages[page_path].encode("utf-8")

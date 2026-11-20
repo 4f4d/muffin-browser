@@ -64,7 +64,7 @@ def main():
     run("cargo", "build", "--workspace", "--locked", "--release")
     check_release_control_excluded()
     run(
-        "python3", "tests/native/run_smoke.py", "--tabs", "--restart", "--profile",
+        "python3", "tests/native/run_smoke.py", "--tabs", "--restart", "--profile", "--page-tools",
         "--out", str(args.artifacts.resolve()),
     )
 

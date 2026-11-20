@@ -20,5 +20,5 @@ block2 = "=0.6.2"
 objc2 = "0.6"
 objc2-foundation = { version = "=0.3.2", default-features = false, features = ["std"] }
 objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSImage"] }
-objc2-web-kit = { version = "=0.3.2", default-features = false, features = ["std", "WKWebView", "WKWebViewConfiguration", "WKWebsiteDataStore", "WKSnapshotConfiguration", "block2"] }
+objc2-web-kit = { version = "=0.3.2", default-features = false, features = ["std", "WKWebView", "WKWebViewConfiguration", "WKWebsiteDataStore", "WKSnapshotConfiguration", "WKFindConfiguration", "WKFindResult", "WKPDFConfiguration", "block2"] }
 rfd = { version = "=0.16.0", default-features = false }

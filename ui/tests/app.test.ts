@@ -283,6 +283,50 @@ describe('browser chrome controls', () => {
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(document.body.classList.contains('surface-expanded')).toBe(false);
   });
+
+  it('shows completed downloads and routes reveal requests', async () => {
+    bridgeState.bridge.render(makeSnapshot({
+      surface: 'downloads',
+      downloads: [
+        { id: 91, name: 'Annual report.pdf', status: 'finished', bytes: 1250000 },
+        { id: 92, name: 'Large archive.zip', status: 'downloading', bytes: 2048 },
+        { id: 93, name: 'Broken file', status: 'failed', bytes: 0 }
+      ]
+    }));
+    await tick();
+    expect(document.querySelector('#downloads-heading')?.textContent).toBe('Downloads');
+    expect(document.querySelector('.download-copy strong')?.textContent).toBe('Annual report.pdf');
+    expect(document.querySelectorAll('.download-list li')).toHaveLength(3);
+    document.querySelector<HTMLButtonElement>('[aria-label="Show Annual report.pdf in folder"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'reveal_download', id: 91 });
+  });
+
+  it('handles native Find focus, match navigation, page tools, and Escape', async () => {
+    bridgeState.bridge.render(makeSnapshot({ surface: 'browse', page_tools: { zoom_percent: 125, find_found: null, fullscreen: false } }));
+    await tick();
+    bridgeState.bridge.focusFind();
+    await tick();
+    await tick();
+    const find = document.querySelector<HTMLInputElement>('#page-find')!;
+    expect(document.activeElement).toBe(find);
+    find.value = 'muffin';
+    find.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'find_page', value: 'muffin', backwards: false });
+    find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'find_page', value: 'muffin', backwards: true });
+    expect(document.querySelector('.find-result')?.textContent).toContain('status unavailable');
+    document.querySelector<HTMLButtonElement>('[aria-label="Zoom in"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'zoom_page', value: 'in' });
+    document.querySelector<HTMLButtonElement>('[aria-label="Reset zoom"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'zoom_page', value: 'reset' });
+    document.querySelector<HTMLButtonElement>('[aria-label="Print page"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'print_page' });
+    find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await tick();
+    await tick();
+    expect(document.querySelector('#page-find')).toBeNull();
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Page tools');
+  });
 });
 
 async function openTabSearchFromNative() {

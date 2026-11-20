@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import type { ChromeAction, ChromeSnapshot, LocalSuggestion } from '../lib/bridge';
   import StartPage from './StartPage.svelte';
   import Library from './Library.svelte';
   import Settings from './Settings.svelte';
+  import Downloads from './Downloads.svelte';
 
   const initial: ChromeSnapshot = {
     version: 1,
@@ -24,7 +25,9 @@
     bookmarks: [],
     shortcuts: [],
     bookmarked: false,
-    notice: ''
+    notice: '',
+    downloads: [],
+    page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
   };
 
   let snapshot = $state(window.muffinChrome?.snapshot ?? initial);
@@ -33,6 +36,8 @@
   let submitted: string | null = null;
   let tabSearchOpen = $state(false);
   let tabSearch = $state('');
+  let pageToolsOpen = $state(false);
+  let findQuery = $state('');
   let activeTab = $derived(snapshot.tabs.find((tab) => tab.id === snapshot.selected_tab));
   let visibleTabs = $derived(snapshot.tabs.filter((tab) => tab.title.toLocaleLowerCase().includes(tabSearch.trim().toLocaleLowerCase())));
   let visibleSuggestions = $derived(snapshot.suggestions.slice(0, 5));
@@ -88,6 +93,28 @@
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'l') {
       event.preventDefault();
       bridge?.focusAddress();
+    }
+  }
+
+  async function openFind() {
+    if (snapshot.surface !== 'browse') return;
+    pageToolsOpen = true;
+    await tick();
+    const input = document.querySelector<HTMLInputElement>('#page-find');
+    input?.focus();
+    input?.select();
+  }
+
+  function closePageTools() {
+    pageToolsOpen = false;
+    void tick().then(() => document.querySelector<HTMLButtonElement>('[aria-label="Page tools"]')?.focus());
+  }
+
+  function onFindKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') { event.preventDefault(); closePageTools(); return; }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      send({ version: 1, action: 'find_page', value: findQuery, backwards: event.shiftKey });
     }
   }
 
@@ -163,6 +190,9 @@
       editing = false;
       submitted = null;
     }
+    if (detail.selected_tab !== snapshot.selected_tab || detail.url !== snapshot.url) {
+      findQuery = '';
+    }
     snapshot = detail;
     if (!editing) address = displayedAddress(detail.url);
   }
@@ -178,6 +208,11 @@
       window.removeEventListener('keydown', onGlobalKeydown);
       window.removeEventListener('muffin:focus-tab-search', tabSearchShortcut);
     };
+  });
+
+  onMount(() => {
+    window.addEventListener('muffin:focus-find', openFind);
+    return () => window.removeEventListener('muffin:focus-find', openFind);
   });
 </script>
 
@@ -249,7 +284,27 @@
   </div>
 
   <div class="tabbar" role="group" aria-label="Open tabs and tab actions">
-    {#if snapshot.surface === 'browse' && editing && visibleSuggestions.length > 0}
+    {#if pageToolsOpen && snapshot.surface === 'browse'}
+      <div class="page-tools-strip" role="group" aria-label="Page tools">
+        <form class="find-shell" role="search" onsubmit={(event) => event.preventDefault()}>
+          <label class="visually-hidden" for="page-find">Find on page</label>
+          <input id="page-find" type="search" bind:value={findQuery} onkeydown={onFindKeydown} oninput={() => send({ version: 1, action: 'find_page', value: findQuery, backwards: false })} placeholder="Find on page" />
+          <span class="find-result" aria-live="polite">{findQuery.trim() ? snapshot.page_tools.find_found === true ? 'Match found' : snapshot.page_tools.find_found === false ? 'No match' : 'Searching…' : ''}</span>
+          <button class="mini-action" type="button" aria-label="Previous match" title="Previous match" onclick={() => send({ version: 1, action: 'find_page', value: findQuery, backwards: true })}>↑</button>
+          <button class="mini-action" type="button" aria-label="Next match" title="Next match" onclick={() => send({ version: 1, action: 'find_page', value: findQuery, backwards: false })}>↓</button>
+        </form>
+        <span class="tool-divider" aria-hidden="true"></span>
+        <button class="quiet-button" type="button" aria-label="Zoom out" title="Zoom out" onclick={() => send({ version: 1, action: 'zoom_page', value: 'out' })}>−</button>
+        <span class="zoom-value" aria-label={`Page zoom ${snapshot.page_tools.zoom_percent} percent`}>{snapshot.page_tools.zoom_percent}%</span>
+        <button class="quiet-button" type="button" aria-label="Zoom in" title="Zoom in" onclick={() => send({ version: 1, action: 'zoom_page', value: 'in' })}>+</button>
+        <button class="quiet-button" type="button" aria-label="Reset zoom" title="Reset zoom" onclick={() => send({ version: 1, action: 'zoom_page', value: 'reset' })}>Reset</button>
+        <button class="quiet-button" type="button" aria-pressed={snapshot.page_tools.fullscreen} onclick={() => send({ version: 1, action: 'toggle_fullscreen' })}>{snapshot.page_tools.fullscreen ? 'Exit full screen' : 'Full screen'}</button>
+        <button class="quiet-button" type="button" aria-label="Print page" onclick={() => send({ version: 1, action: 'print_page' })}>Print</button>
+        <button class="quiet-button" type="button" aria-label="Save page as PDF" onclick={() => send({ version: 1, action: 'save_pdf' })}>Save PDF</button>
+        {#if snapshot.notice}<span class="find-result" role="status">{snapshot.notice}</span>{/if}
+        <button class="mini-action" type="button" aria-label="Close page tools" onclick={closePageTools}>×</button>
+      </div>
+    {:else if snapshot.surface === 'browse' && editing && visibleSuggestions.length > 0}
       <div class="browser-suggestions" role="listbox" aria-label="Local suggestions">
         {#each visibleSuggestions as suggestion (suggestion.url)}
           <button class="browser-suggestion" role="option" aria-selected="false" type="button" onpointerdown={(event) => event.preventDefault()} onclick={() => openSuggestion(suggestion)}>
@@ -318,6 +373,9 @@
       <button class="mini-action" aria-label={activeTab?.pinned ? 'Unpin selected tab' : 'Pin selected tab'} title={activeTab?.pinned ? 'Unpin tab' : 'Pin tab'} disabled={!activeTab} onclick={() => activeTab && send({ version: 1, action: 'pin_tab', id: activeTab.id, pinned: !activeTab.pinned })}>
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 3 6 0-1 4 3 3v1H5v-1l3-3zM10 11v6" /></svg>
       </button>
+      <button class="mini-action" aria-label="Page tools" title="Page tools" aria-pressed={pageToolsOpen} disabled={snapshot.surface !== 'browse'} onclick={() => void openFind()}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5"/><path d="m12.2 12.2 4.2 4.2M6.5 8.5h4"/></svg>
+      </button>
       <button class="mini-action" aria-label="Duplicate selected tab" title="Duplicate tab" disabled={!activeTab} onclick={() => activeTab && send({ version: 1, action: 'duplicate_tab', id: activeTab.id })}>
         <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="6" width="10" height="10" rx="2" /><path d="M13 6V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v7.5A1.5 1.5 0 0 0 4 13h2" /></svg>
       </button>
@@ -338,6 +396,9 @@
       <button class="mini-action surface-nav-button" aria-label="Settings" title="Settings" aria-pressed={snapshot.surface === 'settings'} onclick={() => send({ version: 1, action: 'show_surface', value: 'settings' })}>
         <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3" /><path d="m10 2.5.7 1.7 1.8.7 1.7-.6 1.2 1.2-.6 1.7.7 1.8 1.7.7v1.7l-1.7.7-.7 1.8.6 1.7-1.2 1.2-1.7-.6-1.8.7-.7 1.7H8.3l-.7-1.7-1.8-.7-1.7.6-1.2-1.2.6-1.7-.7-1.8-1.7-.7V9.7l1.7-.7.7-1.8-.6-1.7 1.2-1.2 1.7.6 1.8-.7.7-1.7z" /></svg>
       </button>
+      <button class="mini-action surface-nav-button" aria-label="Downloads" title="Downloads" aria-pressed={snapshot.surface === 'downloads'} onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v9m-3.5-3.5L10 11.5l3.5-3.5M3.5 13.5v2A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-2"/></svg>
+      </button>
     </div>
   </div>
 
@@ -347,5 +408,7 @@
     <Library {snapshot} {send} />
   {:else if snapshot.surface === 'settings'}
     <Settings {snapshot} {send} />
+  {:else if snapshot.surface === 'downloads'}
+    <Downloads {snapshot} {send} />
   {/if}
 </main>

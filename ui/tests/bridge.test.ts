@@ -45,7 +45,9 @@ describe('chrome IPC bridge', () => {
       bookmarks: [],
       shortcuts: [],
       bookmarked: false,
-      notice: ''
+      notice: '',
+      downloads: [],
+      page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
     };
     state.bridge.render(snapshot);
     expect(state.bridge.snapshot).toEqual(snapshot);
@@ -83,7 +85,7 @@ describe('chrome IPC bridge', () => {
 
   it('validates M3 action variants and argument ranges', () => {
     expect(isAction({ version: 1, action: 'show_surface', value: 'library' })).toBe(true);
-    expect(isAction({ version: 1, action: 'show_surface', value: 'downloads' })).toBe(false);
+    expect(isAction({ version: 1, action: 'show_surface', value: 'private' })).toBe(false);
     expect(isAction({ version: 1, action: 'set_theme', value: 'dark' })).toBe(true);
     expect(isAction({ version: 1, action: 'set_theme', value: 'auto' })).toBe(false);
     expect(isAction({ version: 1, action: 'clear_history', value: 'week' })).toBe(true);
@@ -94,6 +96,13 @@ describe('chrome IPC bridge', () => {
     expect(isAction({ version: 1, action: 'move_bookmark', id: 5, parent_id: -1 })).toBe(false);
     expect(isAction({ version: 1, action: 'add_shortcut', title: 'Docs', url: 'https://example.test' })).toBe(true);
     expect(isAction({ version: 1, action: 'move_bookmark', id: 5, parent_id: null, extra: true })).toBe(false);
+    expect(isAction({ version: 1, action: 'find_page', value: 'muffin', backwards: false })).toBe(true);
+    expect(isAction({ version: 1, action: 'find_page', value: 'x', backwards: 'no' })).toBe(false);
+    expect(isAction({ version: 1, action: 'zoom_page', value: 'reset' })).toBe(true);
+    expect(isAction({ version: 1, action: 'toggle_fullscreen' })).toBe(true);
+    expect(isAction({ version: 1, action: 'print_page' })).toBe(true);
+    expect(isAction({ version: 1, action: 'reveal_download', id: 9 })).toBe(true);
+    expect(isAction({ version: 1, action: 'reveal_download', id: 0 })).toBe(false);
   });
 
   it('rejects malformed M3 snapshot data and freezes accepted records', () => {
@@ -105,17 +114,21 @@ describe('chrome IPC bridge', () => {
       suggestions: [{ url: 'https://saved.test', title: 'Saved', bookmarked: true }],
       history: [{ id: 1, url: 'https://visited.test', title: 'Visited', visited_at_ms: 1_700_000_000_000 }],
       bookmarks: [{ id: 2, parent_id: null, url: 'https://saved.test', title: 'Saved' }],
-      shortcuts: [{ id: 3, url: 'https://docs.test', title: 'Docs' }], bookmarked: true, notice: ''
+      shortcuts: [{ id: 3, url: 'https://docs.test', title: 'Docs' }], bookmarked: true, notice: '',
+      downloads: [{ id: 9, name: 'report.pdf', status: 'finished', bytes: 1250 }],
+      page_tools: { zoom_percent: 125, find_found: true, fullscreen: false }
     };
     state.bridge.render(snapshot);
     expect(state.bridge.snapshot).toEqual(snapshot);
     expect(Object.isFrozen(state.bridge.snapshot.settings)).toBe(true);
     expect(Object.isFrozen(state.bridge.snapshot.history[0])).toBe(true);
 
-    state.bridge.render({ ...snapshot, surface: 'downloads' } as unknown as ChromeSnapshot);
+    state.bridge.render({ ...snapshot, surface: 'private' } as unknown as ChromeSnapshot);
     expect(state.bridge.snapshot.surface).toBe('start');
     state.bridge.render({ ...snapshot, settings: { ...snapshot.settings, search_engine: 'unknown' } } as unknown as ChromeSnapshot);
     expect(state.bridge.snapshot.settings.search_engine).toBe('duckduckgo');
+    state.bridge.render({ ...snapshot, downloads: [{ id: 9, name: 'bad', status: 'unknown', bytes: 0 }] } as unknown as ChromeSnapshot);
+    expect(state.bridge.snapshot.downloads[0].status).toBe('finished');
     state.bridge.render({ ...snapshot, bookmarks: [{ id: 2, parent_id: null, url: 'https://saved.test', title: 'Bad', extra: true }] } as unknown as ChromeSnapshot);
     expect(state.bridge.snapshot.bookmarks[0].url).toBe('https://saved.test');
   });

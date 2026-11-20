@@ -135,6 +135,13 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .tab-search-input { width: 100%; height: 24px; font-size: 11px; }
 .search-close { width: 20px; height: 20px; }
 .no-tabs { padding: 0 8px; color: var(--ink-muted); font-size: 11px; }
+.page-tools-strip { display: flex; align-items: center; gap: 5px; width: 100%; min-width: 0; height: 36px; overflow-x: auto; scrollbar-width: thin; }
+.find-shell { display: flex; align-items: center; gap: 4px; width: min(430px, 45vw); min-width: 190px; height: 29px; flex: 1 1 270px; padding: 0 5px 0 9px; border: 1px solid var(--address-edge); border-radius: 9px; background: var(--address); }
+.find-shell:focus-within { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus-ring); }
+.find-shell input { height: 26px; flex: 1 1 auto; font-size: 11px; }
+.find-result { flex: 0 0 auto; color: var(--ink-muted); font-size: 9px; white-space: nowrap; }
+.tool-divider { width: 1px; height: 16px; flex: 0 0 auto; margin: 0 3px; background: var(--edge); }
+.zoom-value { flex: 0 0 auto; min-width: 36px; color: var(--ink-muted); font-size: 10px; font-variant-numeric: tabular-nums; text-align: center; }
 .browser-suggestions { display: flex; align-items: center; gap: 5px; min-width: 0; height: 36px; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
 .browser-suggestions::-webkit-scrollbar { display: none; }
 .browser-suggestion { display: flex; align-items: center; gap: 7px; min-width: 100px; max-width: 230px; height: 28px; padding: 0 9px; overflow: hidden; border: 0; border-radius: 8px; color: var(--ink-muted); background: transparent; font: inherit; font-size: 11px; text-align: left; white-space: nowrap; }
@@ -185,6 +192,20 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 
 .page-title-row { min-height: 34px; margin-bottom: 20px; }
 .page-title-row h1 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.028em; }
+.downloads-caption { margin: 4px 0 0; color: var(--ink-muted); font-size: 12px; }
+.downloads-width { max-width: 850px; }
+.download-list { padding: 0; margin: 8px 0 0; list-style: none; }
+.download-list li { display: flex; align-items: center; gap: 13px; min-height: 58px; border-top: 1px solid var(--line); }
+.download-mark { display: grid; place-items: center; width: 31px; height: 34px; flex: 0 0 auto; border-radius: 8px; color: var(--caramel-ink); background: var(--new-tab); }
+.download-mark svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
+.download-copy { display: grid; min-width: 0; flex: 1 1 auto; gap: 4px; }
+.download-copy strong { overflow: hidden; color: var(--ink); font-size: 12px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+.download-copy span { color: var(--ink-muted); font-size: 10px; }
+.download-failed { flex: 0 0 auto; color: var(--error); font-size: 10px; }
+.downloads-empty { display: grid; justify-items: center; padding: 60px 20px; color: var(--ink-muted); text-align: center; }
+.downloads-empty-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; color: var(--caramel-ink); background: var(--new-tab); font-size: 24px; }
+.downloads-empty h2 { margin: 15px 0 4px; color: var(--ink); font-size: 14px; font-weight: 560; }
+.downloads-empty p { margin: 0; font-size: 11px; }
 .library-actions { display: flex; align-items: center; gap: 3px; }
 .range-select, .settings-control select, .move-bookmark select {
   appearance: none;

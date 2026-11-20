@@ -15,7 +15,11 @@ export type ChromeAction =
   | { version: 1; action: 'remove_visit' | 'delete_bookmark' | 'remove_shortcut'; id: number }
   | { version: 1; action: 'create_folder'; title: string; parent_id: number | null }
   | { version: 1; action: 'move_bookmark'; id: number; parent_id: number | null }
-  | { version: 1; action: 'add_shortcut'; title: string; url: string };
+  | { version: 1; action: 'add_shortcut'; title: string; url: string }
+  | { version: 1; action: 'find_page'; value: string; backwards: boolean }
+  | { version: 1; action: 'zoom_page'; value: 'in' | 'out' | 'reset' }
+  | { version: 1; action: 'toggle_fullscreen' | 'print_page' | 'save_pdf' }
+  | { version: 1; action: 'reveal_download'; id: number };
 
 export type TabSnapshot = {
   id: number;
@@ -25,7 +29,9 @@ export type TabSnapshot = {
   discarded: boolean;
 };
 
-export type BrowserSurface = 'browse' | 'start' | 'library' | 'settings';
+export type BrowserSurface = 'browse' | 'start' | 'library' | 'settings' | 'downloads';
+export type DownloadEntry = { id: number; name: string; status: 'downloading' | 'finished' | 'failed'; bytes: number };
+export type PageToolsState = { zoom_percent: number; find_found: boolean | null; fullscreen: boolean };
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type SearchEngine = 'duckduckgo' | 'google' | 'bing';
 export type LocalSuggestion = { url: string; title: string; bookmarked: boolean };
@@ -59,6 +65,8 @@ export type ChromeSnapshot = {
   shortcuts: ShortcutEntry[];
   bookmarked: boolean;
   notice: string;
+  downloads: DownloadEntry[];
+  page_tools: PageToolsState;
 };
 
 export type ChromeBridge = {
@@ -66,6 +74,7 @@ export type ChromeBridge = {
   render(snapshot: ChromeSnapshot): void;
   focusAddress(): void;
   focusTabSearch(): void;
+  focusFind(): void;
   readonly snapshot: ChromeSnapshot;
 };
 
@@ -105,12 +114,15 @@ const initialSnapshot: ChromeSnapshot = {
   bookmarks: [],
   shortcuts: [],
   bookmarked: false,
-  notice: ''
+  notice: '',
+  downloads: [],
+  page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
 };
 
 export function createChromeBridge(
   focusAddress: () => void = () => undefined,
-  focusTabSearch: () => void = () => undefined
+  focusTabSearch: () => void = () => undefined,
+  focusFind: () => void = () => undefined
 ) {
   const actions: ChromeAction[] = [];
   let currentSnapshot = initialSnapshot;
@@ -128,7 +140,9 @@ export function createChromeBridge(
         suggestions: freezeRows(snapshot.suggestions),
         history: freezeRows(snapshot.history),
         bookmarks: freezeRows(snapshot.bookmarks),
-        shortcuts: freezeRows(snapshot.shortcuts)
+        shortcuts: freezeRows(snapshot.shortcuts),
+        downloads: freezeRows(snapshot.downloads),
+        page_tools: Object.freeze({ ...snapshot.page_tools })
       });
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('muffin:render', { detail: currentSnapshot }));
@@ -136,6 +150,7 @@ export function createChromeBridge(
     },
     focusAddress,
     focusTabSearch,
+    focusFind,
     get snapshot() {
       return currentSnapshot;
     }
@@ -174,7 +189,7 @@ export function isAction(value: unknown): value is ChromeAction {
     return validId(value.id) && Number.isSafeInteger(value.index) && (value.index as number) >= 0 && (value.index as number) < 256;
   }
   if (value.action === 'show_surface' && hasExactKeys(value, ['version', 'action', 'value'])) {
-    return ['browse', 'start', 'library', 'settings'].includes(value.value as string);
+    return ['browse', 'start', 'library', 'settings', 'downloads'].includes(value.value as string);
   }
   if (['query_omnibox', 'query_library', 'set_theme', 'set_search_engine', 'clear_history'].includes(value.action)
     && hasExactKeys(value, ['version', 'action', 'value']) && typeof value.value === 'string' && value.value.length <= MAX_URL_LENGTH) {
@@ -196,6 +211,12 @@ export function isAction(value: unknown): value is ChromeAction {
   if (value.action === 'add_shortcut' && hasExactKeys(value, ['version', 'action', 'title', 'url'])) {
     return validTitle(value.title) && validUrl(value.url);
   }
+  if (value.action === 'find_page' && hasExactKeys(value, ['version', 'action', 'value', 'backwards'])) {
+    return typeof value.value === 'string' && value.value.length <= 512 && typeof value.backwards === 'boolean';
+  }
+  if (value.action === 'zoom_page' && hasExactKeys(value, ['version', 'action', 'value'])) return ['in', 'out', 'reset'].includes(value.value as string);
+  if (hasExactKeys(value, ['version', 'action']) && ['toggle_fullscreen', 'print_page', 'save_pdf'].includes(value.action)) return true;
+  if (value.action === 'reveal_download' && hasExactKeys(value, ['version', 'action', 'id'])) return validId(value.id);
   return false;
 }
 
@@ -205,7 +226,7 @@ function validId(value: unknown) {
 
 function isSnapshot(value: unknown): value is ChromeSnapshot {
   if (!isObject(value)) return false;
-  return hasExactKeys(value, ['version', 'url', 'title', 'loading', 'can_back', 'can_forward', 'status', 'secure', 'tabs', 'selected_tab', 'can_restore', 'surface', 'settings', 'suggestions', 'history', 'bookmarks', 'shortcuts', 'bookmarked', 'notice'])
+  return hasExactKeys(value, ['version', 'url', 'title', 'loading', 'can_back', 'can_forward', 'status', 'secure', 'tabs', 'selected_tab', 'can_restore', 'surface', 'settings', 'suggestions', 'history', 'bookmarks', 'shortcuts', 'bookmarked', 'notice', 'downloads', 'page_tools'])
     && value.version === 1
     && typeof value.url === 'string' && value.url.length <= MAX_URL_LENGTH
     && typeof value.title === 'string' && value.title.length <= MAX_TITLE_LENGTH
@@ -220,14 +241,29 @@ function isSnapshot(value: unknown): value is ChromeSnapshot {
       ? value.selected_tab === 0
       : value.tabs.some((tab) => tab.id === value.selected_tab))
     && typeof value.can_restore === 'boolean'
-    && ['browse', 'start', 'library', 'settings'].includes(value.surface as string)
+    && ['browse', 'start', 'library', 'settings', 'downloads'].includes(value.surface as string)
     && isSettings(value.settings)
     && Array.isArray(value.suggestions) && value.suggestions.length <= 20 && value.suggestions.every(isSuggestion) && hasUniqueBy(value.suggestions, (entry) => entry.url)
     && Array.isArray(value.history) && value.history.length <= 500 && value.history.every(isHistoryEntry) && hasUniqueBy(value.history, (entry) => entry.id)
     && Array.isArray(value.bookmarks) && value.bookmarks.length <= 500 && value.bookmarks.every(isBookmarkEntry) && hasUniqueBy(value.bookmarks, (entry) => entry.id)
     && Array.isArray(value.shortcuts) && value.shortcuts.length <= 64 && value.shortcuts.every(isShortcutEntry) && hasUniqueBy(value.shortcuts, (entry) => entry.id)
     && typeof value.bookmarked === 'boolean'
-    && typeof value.notice === 'string' && value.notice.length <= MAX_TITLE_LENGTH * 2;
+    && typeof value.notice === 'string' && value.notice.length <= MAX_TITLE_LENGTH * 2
+    && Array.isArray(value.downloads) && value.downloads.length <= 256 && value.downloads.every(isDownload) && hasUniqueBy(value.downloads, (entry) => entry.id)
+    && isPageTools(value.page_tools);
+}
+
+function isDownload(value: unknown): value is DownloadEntry {
+  if (!isObject(value)) return false;
+  return hasExactKeys(value, ['id', 'name', 'status', 'bytes']) && validId(value.id)
+    && validText(value.name) && ['downloading', 'finished', 'failed'].includes(value.status as string)
+    && Number.isSafeInteger(value.bytes) && (value.bytes as number) >= 0;
+}
+
+function isPageTools(value: unknown): value is PageToolsState {
+  if (!isObject(value) || !hasExactKeys(value, ['zoom_percent', 'find_found', 'fullscreen'])) return false;
+  return Number.isSafeInteger(value.zoom_percent) && (value.zoom_percent as number) >= 25 && (value.zoom_percent as number) <= 500
+    && (value.find_found === null || typeof value.find_found === 'boolean') && typeof value.fullscreen === 'boolean';
 }
 
 function isSettings(value: unknown): value is BrowserSettings {
@@ -319,6 +355,8 @@ export function installChromeBridge() {
     addressInput?.select();
   }, () => {
     window.dispatchEvent(new Event('muffin:focus-tab-search'));
+  }, () => {
+    window.dispatchEvent(new Event('muffin:focus-find'));
   });
 
   Object.defineProperty(window, 'muffinChrome', {

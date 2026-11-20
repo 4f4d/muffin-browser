@@ -26,6 +26,8 @@ export function makeSnapshot(overrides: Partial<ChromeSnapshot> = {}): ChromeSna
     shortcuts: [],
     bookmarked: false,
     notice: '',
+    downloads: [],
+    page_tools: { zoom_percent: 100, find_found: null, fullscreen: false },
     ...overrides
   };
 }

@@ -7,7 +7,11 @@ fn main() {
 }
 
 #[cfg(target_os = "macos")]
+mod downloads;
+#[cfg(target_os = "macos")]
 mod instance;
+#[cfg(target_os = "macos")]
+mod pdf;
 #[cfg(target_os = "macos")]
 mod profile;
 #[cfg(target_os = "macos")]
@@ -20,19 +24,25 @@ mod tabs;
 #[cfg(target_os = "macos")]
 mod browser {
     use super::{
+        downloads::{DownloadItem, Downloads},
         profile::{Bookmark, Profile, Settings, Shortcut, Suggestion, Visit},
         session::SessionStore,
         tabs::{SavedWindow, SessionDocument, TabSet},
     };
     use objc2::MainThreadMarker;
     use objc2_foundation::NSString;
-    use objc2_web_kit::{WKWebViewConfiguration, WKWebsiteDataStore};
+    use objc2_web_kit::{
+        WKFindConfiguration, WKFindResult, WKWebViewConfiguration, WKWebsiteDataStore,
+    };
     use serde::{Deserialize, Serialize};
     #[cfg(debug_assertions)]
     use std::path::Path;
     use std::{
-        collections::HashMap,
+        cell::RefCell,
+        collections::{HashMap, HashSet},
         path::PathBuf,
+        ptr::NonNull,
+        rc::Rc,
         time::{Duration, Instant},
     };
     #[cfg(debug_assertions)]
@@ -46,7 +56,7 @@ mod browser {
         event_loop::{
             ControlFlow, EventLoop, EventLoopBuilder, EventLoopProxy, EventLoopWindowTarget,
         },
-        window::{Window, WindowBuilder, WindowId},
+        window::{Fullscreen, Window, WindowBuilder, WindowId},
     };
     use wry::{
         PageLoadEvent, PermissionResponse, WebView, WebViewBuilder, WebViewBuilderExtDarwin,
@@ -56,6 +66,7 @@ mod browser {
     const CHROME: &str = include_str!("../../../ui/dist/index.html");
     const CHROME_HEIGHT: u32 = 96;
     const MAX_MESSAGE_BYTES: usize = 64 * 1024;
+    type SharedDownloads = Rc<RefCell<Downloads>>;
 
     #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
     #[serde(rename_all = "snake_case")]
@@ -65,6 +76,22 @@ mod browser {
         Start,
         Library,
         Settings,
+        Downloads,
+    }
+
+    #[derive(Clone, Copy, Debug, Deserialize)]
+    #[serde(rename_all = "snake_case")]
+    enum ZoomStep {
+        In,
+        Out,
+        Reset,
+    }
+
+    #[derive(Serialize)]
+    struct PageToolsSnapshot {
+        zoom_percent: u16,
+        find_found: Option<bool>,
+        fullscreen: bool,
     }
 
     #[derive(Clone, Default, Serialize)]
@@ -84,6 +111,24 @@ mod browser {
     enum Action {
         #[serde(rename = "show_surface")]
         ShowSurface { version: u8, value: Surface },
+        #[serde(rename = "find_page")]
+        FindPage {
+            version: u8,
+            value: String,
+            backwards: bool,
+        },
+        #[serde(rename = "zoom_page")]
+        ZoomPage { version: u8, value: ZoomStep },
+        #[serde(rename = "toggle_fullscreen")]
+        ToggleFullscreen { version: u8 },
+        #[serde(rename = "print_page")]
+        PrintPage { version: u8 },
+        #[serde(rename = "save_pdf")]
+        SavePdf { version: u8 },
+        #[serde(rename = "reveal_download")]
+        RevealDownload { version: u8, id: u32 },
+        #[serde(skip)]
+        FocusFind { version: u8 },
         #[serde(rename = "query_omnibox")]
         QueryOmnibox { version: u8, value: String },
         #[serde(rename = "query_library")]
@@ -180,6 +225,8 @@ mod browser {
         Capture { version: u8 },
         #[serde(rename = "inspect_chrome")]
         Inspect { version: u8 },
+        #[serde(rename = "capture_pdf")]
+        CapturePdf { version: u8 },
     }
 
     #[cfg(debug_assertions)]
@@ -198,7 +245,8 @@ mod browser {
             TestCommand::Chrome(
                 ChromeTestAction::Navigate { version: 1, .. }
                 | ChromeTestAction::Capture { version: 1 }
-                | ChromeTestAction::Inspect { version: 1 },
+                | ChromeTestAction::Inspect { version: 1 }
+                | ChromeTestAction::CapturePdf { version: 1 },
             ) => Some(command),
             TestCommand::Native(action) if action.version() == 1 => Some(command),
             TestCommand::Quit { version: 1, action } if action == "quit_test" => Some(command),
@@ -210,6 +258,13 @@ mod browser {
         fn version(&self) -> u8 {
             match self {
                 Self::ShowSurface { version, .. }
+                | Self::FindPage { version, .. }
+                | Self::ZoomPage { version, .. }
+                | Self::ToggleFullscreen { version }
+                | Self::PrintPage { version }
+                | Self::SavePdf { version }
+                | Self::RevealDownload { version, .. }
+                | Self::FocusFind { version }
                 | Self::QueryOmnibox { version, .. }
                 | Self::QueryLibrary { version, .. }
                 | Self::SetTheme { version, .. }
@@ -304,6 +359,8 @@ mod browser {
         tabs: Vec<TabSnapshot>,
         selected_tab: u32,
         can_restore: bool,
+        downloads: Vec<DownloadItem>,
+        page_tools: PageToolsSnapshot,
         #[serde(flatten)]
         profile: ProfileSnapshot,
     }
@@ -316,6 +373,9 @@ mod browser {
         Loaded(WindowId, u32, u64, PageLoadEvent, String),
         Title(WindowId, u32, u64, String),
         ProcessTerminated(WindowId, u32, u64),
+        DownloadChanged,
+        FindResult(WindowId, u32, u64, u64, bool),
+        PdfFinished(WindowId, bool),
         DiscardSafety(WindowId, u32, u64, u64, bool),
     }
 
@@ -400,6 +460,23 @@ mod browser {
         load_started: Option<Instant>,
         finished_navigation: bool,
         discard_ticket: Option<u64>,
+        find_ticket: u64,
+        find_found: Option<bool>,
+        download_grant: Rc<RefCell<Option<DownloadGrant>>>,
+    }
+
+    struct DownloadGrant {
+        address: url::Url,
+        expires: Instant,
+    }
+
+    impl DownloadGrant {
+        fn consume(grant: &mut Option<Self>, address: &str) -> bool {
+            grant.take().is_some_and(|grant| {
+                Instant::now() <= grant.expires
+                    && external_web_url(address).as_ref() == Some(&grant.address)
+            })
+        }
     }
 
     struct BrowserWindow {
@@ -417,6 +494,7 @@ mod browser {
         profile_state: ProfileSnapshot,
         omnibox_query: String,
         library_query: String,
+        downloads: SharedDownloads,
     }
 
     impl BrowserWindow {
@@ -425,6 +503,7 @@ mod browser {
             proxy: EventLoopProxy<Message>,
             saved: Option<SavedWindow>,
             test_mode: bool,
+            downloads: SharedDownloads,
         ) -> Result<Self, String> {
             let window = WindowBuilder::new()
                 .with_title("Muffin")
@@ -460,6 +539,7 @@ mod browser {
                 profile_state: ProfileSnapshot::default(),
                 omnibox_query: String::new(),
                 library_query: String::new(),
+                downloads,
             };
             let selected = browser.tabs.selected();
             browser.ensure_view(selected)?;
@@ -502,6 +582,14 @@ mod browser {
             let title_proxy = self.proxy.clone();
             let terminate_proxy = self.proxy.clone();
             let popup_proxy = self.proxy.clone();
+            let download_started = Rc::clone(&self.downloads);
+            let download_completed = Rc::clone(&self.downloads);
+            let download_started_proxy = self.proxy.clone();
+            let download_completed_proxy = self.proxy.clone();
+            let download_grant = Rc::new(RefCell::new(None));
+            let grant_for_engine = Rc::clone(&download_grant);
+            let accepted_downloads = Rc::new(RefCell::new(HashSet::new()));
+            let completed_downloads = Rc::clone(&accepted_downloads);
             let configuration = Self::make_web_configuration(self.test_mode)?;
             let builder = WebViewBuilder::new()
                 .with_webview_configuration(configuration)
@@ -516,7 +604,24 @@ mod browser {
                     }
                     wry::NewWindowResponse::Deny
                 })
-                .with_download_started_handler(|_, _| false)
+                .with_download_started_handler(move |url, destination| {
+                    if !DownloadGrant::consume(&mut grant_for_engine.borrow_mut(), &url) {
+                        return false;
+                    }
+                    let Some(path) = download_started.borrow_mut().begin(&url, destination) else {
+                        return false;
+                    };
+                    *destination = path;
+                    accepted_downloads.borrow_mut().insert(url);
+                    let _ = download_started_proxy.send_event(Message::DownloadChanged);
+                    true
+                })
+                .with_download_completed_handler(move |url, _path, success| {
+                    if completed_downloads.borrow_mut().remove(&url) {
+                        download_completed.borrow_mut().finish(&url, success);
+                        let _ = download_completed_proxy.send_event(Message::DownloadChanged);
+                    }
+                })
                 .with_permission_handler(|_| PermissionResponse::Deny)
                 .with_on_page_load_handler(move |event, url| {
                     let _ = loaded_proxy
@@ -551,6 +656,9 @@ mod browser {
                     load_started: None,
                     finished_navigation: false,
                     discard_ticket: None,
+                    find_ticket: 0,
+                    find_found: None,
+                    download_grant,
                 },
             );
             if start_url != "about:blank" {
@@ -594,10 +702,10 @@ mod browser {
         }
 
         fn navigate(&mut self, tab_id: u32, url: &str) {
-            self.navigate_internal(tab_id, url, false);
+            self.navigate_internal(tab_id, url, false, false);
         }
 
-        fn navigate_internal(&mut self, tab_id: u32, url: &str, recovering: bool) {
+        fn navigate_internal(&mut self, tab_id: u32, url: &str, recovering: bool, direct: bool) {
             if self.ensure_view(tab_id).is_err() {
                 self.status = Status::Failed;
                 return;
@@ -613,6 +721,13 @@ mod browser {
                 self.layout();
             }
             self.begin_tab_load(tab_id, !recovering);
+            if direct {
+                *self.views[&tab_id].download_grant.borrow_mut() =
+                    external_web_url(url).map(|address| DownloadGrant {
+                        address,
+                        expires: Instant::now() + Duration::from_secs(30),
+                    });
+            }
             if self.views[&tab_id].webview.load_url(url).is_err() {
                 self.fail_tab_load(tab_id);
             }
@@ -623,6 +738,9 @@ mod browser {
                 view.load_started = Some(Instant::now());
                 view.finished_navigation = false;
                 view.discard_ticket = None;
+                view.find_ticket = view.find_ticket.wrapping_add(1);
+                view.find_found = None;
+                view.download_grant.borrow_mut().take();
                 if explicit {
                     view.recovery_attempted = false;
                 }
@@ -653,6 +771,63 @@ mod browser {
                 .map(|view| &view.webview)
         }
 
+        fn find_page(&mut self, value: &str, backwards: bool) {
+            let id = self.tabs.selected();
+            let Some(tab) = self.tabs.get(id) else { return };
+            if self.profile_state.surface != Surface::Browse || tab.loading {
+                return;
+            }
+            let Some(view) = self.views.get_mut(&id) else {
+                return;
+            };
+            view.find_ticket = view.find_ticket.wrapping_add(1);
+            view.find_found = None;
+            if value.trim().is_empty() || value.len() > 1024 || value.chars().any(char::is_control)
+            {
+                return;
+            }
+            let Some(main_thread) = MainThreadMarker::new() else {
+                return;
+            };
+            let window = self.window.id();
+            let generation = tab.generation;
+            let ticket = view.find_ticket;
+            let proxy = self.proxy.clone();
+            let callback = block2::RcBlock::new(move |result: NonNull<WKFindResult>| {
+                let found = unsafe { result.as_ref().matchFound() };
+                let _ =
+                    proxy.send_event(Message::FindResult(window, id, generation, ticket, found));
+            });
+            unsafe {
+                let configuration = WKFindConfiguration::new(main_thread);
+                configuration.setBackwards(backwards);
+                configuration.setWraps(true);
+                view.webview
+                    .webview()
+                    .findString_withConfiguration_completionHandler(
+                        &NSString::from_str(value),
+                        Some(&configuration),
+                        &callback,
+                    );
+            }
+        }
+
+        fn zoom_page(&self, step: ZoomStep) {
+            if self.profile_state.surface != Surface::Browse {
+                return;
+            }
+            if let Some(view) = self.selected_view() {
+                let current = unsafe { view.webview().pageZoom() };
+                let percent = (current * 100.0).round();
+                let requested = match step {
+                    ZoomStep::In => percent + 10.0,
+                    ZoomStep::Out => percent - 10.0,
+                    ZoomStep::Reset => 100.0,
+                };
+                let _ = view.zoom(requested.clamp(50.0, 200.0) / 100.0);
+            }
+        }
+
         fn apply(&mut self, action: Action) -> WindowEffect {
             if action.version() != 1 {
                 return WindowEffect::None;
@@ -661,7 +836,9 @@ mod browser {
             match action {
                 Action::Navigate { value, .. } => {
                     match address_destination(&value, &self.profile_state.settings.search_engine) {
-                        Some(url) => self.navigate(self.tabs.selected(), &url),
+                        Some(url) => {
+                            self.navigate_internal(self.tabs.selected(), &url, false, true)
+                        }
                         None => self.status = Status::Blocked,
                     }
                 }
@@ -717,6 +894,69 @@ mod browser {
                     let _ = self
                         .chrome
                         .evaluate_script("window.muffinChrome?.focusAddress()");
+                }
+                Action::FindPage {
+                    value, backwards, ..
+                } => self.find_page(&value, backwards),
+                Action::ZoomPage { value, .. } => self.zoom_page(value),
+                Action::FocusFind { .. } => {
+                    if self.profile_state.surface == Surface::Browse {
+                        let _ = self.chrome.focus();
+                        let _ = self.chrome.evaluate_script(
+                            "window.dispatchEvent(new Event('muffin:focus-find'))",
+                        );
+                    }
+                }
+                Action::ToggleFullscreen { .. } => {
+                    let fullscreen = self
+                        .window
+                        .fullscreen()
+                        .is_none()
+                        .then_some(Fullscreen::Borderless(None));
+                    self.window.set_fullscreen(fullscreen);
+                }
+                Action::PrintPage { .. } => {
+                    if self.profile_state.surface == Surface::Browse {
+                        if let Some(view) = self.selected_view() {
+                            if view.print().is_err() {
+                                self.profile_state.notice =
+                                    "Muffin couldn’t open the system print dialog.".into();
+                            }
+                        }
+                    }
+                }
+                Action::SavePdf { .. } => {
+                    if self.profile_state.surface == Surface::Browse && !self.test_mode {
+                        if let Some(view) = self.selected_view() {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .add_filter("PDF document", &["pdf"])
+                                .set_file_name("Web Page.pdf")
+                                .save_file()
+                            {
+                                let id = self.window.id();
+                                let proxy = self.proxy.clone();
+                                super::pdf::save(view, path, move |result| {
+                                    let _ =
+                                        proxy.send_event(Message::PdfFinished(id, result.is_ok()));
+                                });
+                            }
+                        }
+                    }
+                }
+                Action::RevealDownload { id, .. } => {
+                    if self.profile_state.surface == Surface::Downloads && !self.test_mode {
+                        let path = self
+                            .downloads
+                            .borrow()
+                            .completed_path(id)
+                            .map(|path| path.to_owned());
+                        if let Some(path) = path {
+                            let _ = std::process::Command::new("/usr/bin/open")
+                                .arg("-R")
+                                .arg(path)
+                                .spawn();
+                        }
+                    }
                 }
                 Action::OpenHome { .. } => self.navigate(self.tabs.selected(), "about:blank"),
                 Action::NewTab { .. } => {
@@ -861,7 +1101,7 @@ mod browser {
                             item.title = bounded_title(&item.title);
                         }
                     }
-                    Surface::Browse | Surface::Settings => {}
+                    Surface::Browse | Surface::Settings | Surface::Downloads => {}
                 }
                 Ok(())
             })();
@@ -902,6 +1142,18 @@ mod browser {
                     .collect(),
                 selected_tab: id,
                 can_restore: self.tabs.can_reopen(),
+                downloads: if self.profile_state.surface == Surface::Downloads {
+                    self.downloads.borrow().items()
+                } else {
+                    Vec::new()
+                },
+                page_tools: PageToolsSnapshot {
+                    zoom_percent: view.map_or(100, |view| {
+                        (unsafe { view.webview().pageZoom() } * 100.0).round() as u16
+                    }),
+                    find_found: self.views.get(&id).and_then(|view| view.find_found),
+                    fullscreen: self.window.fullscreen().is_some(),
+                },
                 profile: self.profile_state.clone(),
             }
         }
@@ -995,6 +1247,7 @@ mod browser {
         proxy: EventLoopProxy<Message>,
         session: Option<SessionStore>,
         profile: Option<Profile>,
+        downloads: SharedDownloads,
         test_control: Option<TestControl>,
         session_dirty: bool,
         last_session_save: Instant,
@@ -1046,6 +1299,19 @@ mod browser {
             };
             let proxy = event_loop.create_proxy();
             let test_mode = test_control.is_some();
+            let downloads_root = if let Some(control) = &test_control {
+                let path = control.directory.join("downloads");
+                std::fs::create_dir_all(&path)
+                    .map_err(|error| format!("create fixture downloads directory: {error}"))?;
+                path
+            } else {
+                std::env::var_os("HOME")
+                    .map(PathBuf::from)
+                    .filter(|home| home.is_absolute())
+                    .map(|home| home.join("Downloads"))
+                    .unwrap_or_default()
+            };
+            let downloads = Rc::new(RefCell::new(Downloads::new(downloads_root)));
             let saved_windows = saved
                 .map(|document| document.windows)
                 .filter(|windows| !windows.is_empty());
@@ -1057,6 +1323,7 @@ mod browser {
                         proxy.clone(),
                         Some(saved),
                         test_mode,
+                        Rc::clone(&downloads),
                     )?);
                 }
             } else {
@@ -1065,6 +1332,7 @@ mod browser {
                     proxy.clone(),
                     None,
                     test_mode,
+                    Rc::clone(&downloads),
                 )?);
             }
             let focused = windows[0].window.id();
@@ -1074,6 +1342,7 @@ mod browser {
                 proxy,
                 session,
                 profile,
+                downloads,
                 test_control,
                 session_dirty: false,
                 last_session_save: Instant::now(),
@@ -1185,6 +1454,7 @@ mod browser {
                 self.proxy.clone(),
                 None,
                 self.test_control.is_some(),
+                Rc::clone(&self.downloads),
             ) {
                 self.focused = window.window.id();
                 self.windows.push(window);
@@ -1360,6 +1630,46 @@ mod browser {
         fn handle(&mut self, target: &EventLoopWindowTarget<Message>, message: Message) {
             match message {
                 Message::ExternalUrls(urls) => self.forward_urls(urls),
+                Message::DownloadChanged => {
+                    for window in &self.windows {
+                        if window.profile_state.surface == Surface::Downloads {
+                            window.render();
+                        }
+                    }
+                    self.write_test_state();
+                }
+                Message::PdfFinished(id, saved) => {
+                    if let Some(window) = self.window_mut(id) {
+                        window.profile_state.notice = if saved {
+                            "PDF saved.".into()
+                        } else {
+                            "Muffin couldn’t save the PDF.".into()
+                        };
+                        window.render();
+                    }
+                    self.write_test_state();
+                }
+                Message::FindResult(id, tab_id, generation, ticket, found) => {
+                    if let Some(window) = self.window_mut(id) {
+                        if window
+                            .tabs
+                            .get(tab_id)
+                            .is_some_and(|tab| tab.generation == generation)
+                        {
+                            if let Some(view) = window
+                                .views
+                                .get_mut(&tab_id)
+                                .filter(|view| view.find_ticket == ticket)
+                            {
+                                view.find_found = Some(found);
+                                if tab_id == window.tabs.selected() {
+                                    window.render();
+                                }
+                            }
+                        }
+                    }
+                    self.write_test_state();
+                }
                 Message::UserPopup(id, opener, generation, url) => {
                     let current = self.active_id() == id
                         && self.window_mut(id).is_some_and(|window| {
@@ -1526,7 +1836,7 @@ mod browser {
                             });
                             window.status = Status::Terminated;
                             if recover {
-                                window.navigate_internal(tab_id, &url, true);
+                                window.navigate_internal(tab_id, &url, true, false);
                             }
                             window.render();
                         }
@@ -1615,6 +1925,23 @@ mod browser {
                         .map(|control| control.directory.clone());
                     if let (Some(window), Some(directory)) = (self.window_mut(active), directory) {
                         inspect_chrome_view(&window.chrome, &directory);
+                    }
+                }
+                TestCommand::Chrome(ChromeTestAction::CapturePdf { .. }) => {
+                    let path = self
+                        .test_control
+                        .as_ref()
+                        .map(|control| control.directory.join("fixture-export.pdf"));
+                    if let (Some(window), Some(path)) = (self.window_mut(active), path) {
+                        if window.profile_state.surface == Surface::Browse {
+                            if let Some(view) = window.selected_view() {
+                                super::pdf::save(view, path, |result| {
+                                    if let Err(error) = result {
+                                        eprintln!("fixture_pdf_failed: {error}");
+                                    }
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -1913,6 +2240,24 @@ mod browser {
                         Action::FocusAddress { version: 1 }
                     }
                     [letter] if letter.eq_ignore_ascii_case(&b'r') => Action::Reload { version: 1 },
+                    [letter] if letter.eq_ignore_ascii_case(&b'f') => {
+                        Action::FocusFind { version: 1 }
+                    }
+                    [letter] if letter.eq_ignore_ascii_case(&b'p') => {
+                        Action::PrintPage { version: 1 }
+                    }
+                    b"=" | b"+" => Action::ZoomPage {
+                        version: 1,
+                        value: ZoomStep::In,
+                    },
+                    b"-" => Action::ZoomPage {
+                        version: 1,
+                        value: ZoomStep::Out,
+                    },
+                    b"0" => Action::ZoomPage {
+                        version: 1,
+                        value: ZoomStep::Reset,
+                    },
                     [letter] if letter.eq_ignore_ascii_case(&b'd') => {
                         Action::BookmarkCurrent { version: 1 }
                     }
@@ -2012,6 +2357,7 @@ mod browser {
                     if let Some(app) = app.as_mut() {
                         if let Some(window) = app.window_mut(window_id) {
                             window.layout();
+                            window.render();
                         }
                     }
                 }
@@ -2116,6 +2462,26 @@ mod browser {
     #[cfg(test)]
     mod tests {
         use super::*;
+
+        #[test]
+        fn download_grant_is_consumed_by_any_attempt() {
+            let authorized = "https://fixture.test/download";
+            let fresh = || {
+                Some(DownloadGrant {
+                    address: external_web_url(authorized).unwrap(),
+                    expires: Instant::now() + Duration::from_secs(30),
+                })
+            };
+            let mut grant = fresh();
+            assert!(!DownloadGrant::consume(
+                &mut grant,
+                "https://fixture.test/other"
+            ));
+            assert!(!DownloadGrant::consume(&mut grant, authorized));
+            let mut grant = fresh();
+            assert!(DownloadGrant::consume(&mut grant, authorized));
+            assert!(!DownloadGrant::consume(&mut grant, authorized));
+        }
 
         #[test]
         fn address_policy_keeps_web_schemes_and_local_fixture_http() {

@@ -99,3 +99,12 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | Actual native window screenshot | The readiness probe crossed the trusted toolbar and reached the remote fixture, but CoreGraphics did not enumerate a layer-0 window for the PID. Capture the exact window number reported by the app's NSWindow and record the visual outcome separately from navigation. | Local development smoke receipt at `target/dev-verification/readiness-probe/smoke.json` |
 | Native stop observation | App state reported Stop while the captured WKWebView loading flag was still true. Publish changes from the engine's subsequent loading observation so the smoke verifies asynchronous cancellation rather than the initial signal alone. | Local development smoke receipt at `target/dev-verification/window-number-probe/smoke.json` |
 | Actual native window screenshot | The exact window-number capture returned “could not create image from window.” The desktop-control attempt to open a local development bundle timed out. Keep the whole-window criterion open for interactive visual qualification. | [Native chrome-only capture](reports/platform/m1/macos-arm64-native-chrome.png) |
+
+## M2 integration attempts
+
+| Criterion | Hypothesis before retry | Evidence |
+|---|---|---|
+| Preserve the M1 native Stop check | The M2 route reported chrome loading as false, but its revised observation omitted the WebKit loading flag. Restore the native flag to the debug snapshot and retain the original assertion. | First M2 local smoke receipt at `target/dev-verification/m2-first-native/smoke.json` |
+| New-tab load state | The second M2 smoke created and selected a real new tab, but the native snapshot retained the previous tab's ready state while showing an empty page. Derive the window snapshot from the newly selected tab as part of each selection transition. | Second M2 local smoke receipt at `target/dev-verification/m2-second-native/smoke.json` |
+| M2 release compile and debug exclusion | Debug tests compiled, but the release build still referenced types compiled only in debug. Gate the entire debug dispatch path and independently compile both profiles before repeating the verifier. | First complete M2 verifier log at `target/dev-verification/m2-verify.log` |
+| Local instance acknowledgement | A full run rejected a valid same-UID request even though an earlier run passed. Check whether accepted macOS Unix streams inherit the listener's nonblocking mode by connecting before sending the frame. | M2 rerun at `target/dev-verification/m2-verify-rerun.log` |

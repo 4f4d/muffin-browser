@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import type { ChromeAction, ChromeSnapshot } from '../lib/bridge';
 
   const initial: ChromeSnapshot = {
@@ -9,13 +10,20 @@
     can_back: false,
     can_forward: false,
     status: 'home',
-    secure: false
+    secure: false,
+    tabs: [],
+    selected_tab: 0,
+    can_restore: false
   };
 
   let snapshot = $state(initial);
   let address = $state('');
   let editing = $state(false);
   let submitted: string | null = null;
+  let tabSearchOpen = $state(false);
+  let tabSearch = $state('');
+  let activeTab = $derived(snapshot.tabs.find((tab) => tab.id === snapshot.selected_tab));
+  let visibleTabs = $derived(snapshot.tabs.filter((tab) => tab.title.toLocaleLowerCase().includes(tabSearch.trim().toLocaleLowerCase())));
 
   const bridge = window.muffinChrome;
 
@@ -49,6 +57,66 @@
     }
   }
 
+  async function closeTabSearch() {
+    tabSearch = '';
+    tabSearchOpen = false;
+    await tick();
+    const selectedButton = document.querySelector<HTMLButtonElement>(`[data-tab-id="${snapshot.selected_tab}"]`);
+    if (selectedButton) {
+      selectedButton.focus();
+      return;
+    }
+    const searchButton = document.querySelector<HTMLButtonElement>('[aria-label="Search tabs"]');
+    if (searchButton) searchButton.focus();
+    else bridge?.focusAddress();
+  }
+
+  async function openTabSearch(announce = true) {
+    tabSearchOpen = true;
+    if (announce) send({ version: 1, action: 'tab_search' });
+    await tick();
+    const input = document.querySelector<HTMLInputElement>('#tab-search');
+    input?.focus();
+    input?.select();
+  }
+
+  function onTabSearchKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') closeTabSearch();
+    if (event.key === 'Enter' && visibleTabs.length > 0) {
+      const tabId = visibleTabs[0].id;
+      send({ version: 1, action: 'select_tab', id: tabId });
+      tabSearch = '';
+      tabSearchOpen = false;
+      document.querySelector<HTMLButtonElement>(`[data-tab-id="${tabId}"]`)?.focus();
+    }
+  }
+
+  function onTabKeydown(event: KeyboardEvent, tabId: number) {
+    const index = snapshot.tabs.findIndex((tab) => tab.id === tabId);
+    if (index < 0) return;
+    const moveLeft = (event.altKey || event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'ArrowLeft';
+    const moveRight = (event.altKey || event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'ArrowRight';
+    if (moveLeft || moveRight) {
+      event.preventDefault();
+      const nextIndex = Math.max(0, Math.min(snapshot.tabs.length - 1, index + (moveLeft ? -1 : 1)));
+      if (nextIndex !== index) send({ version: 1, action: 'move_tab', id: tabId, index: nextIndex });
+      return;
+    }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      const nextIndex = Math.max(0, Math.min(snapshot.tabs.length - 1, index + (event.key === 'ArrowLeft' ? -1 : 1)));
+      const nextTab = snapshot.tabs[nextIndex];
+      if (nextTab) {
+        send({ version: 1, action: 'select_tab', id: nextTab.id });
+        document.querySelector<HTMLButtonElement>(`[data-tab-id="${nextTab.id}"]`)?.focus();
+      }
+    }
+  }
+
+  function tabSearchShortcut() {
+    void openTabSearch(false);
+  }
+
   function syncSnapshot(event: Event) {
     const detail = (event as CustomEvent<ChromeSnapshot>).detail;
     if (!detail || detail.version !== 1) return;
@@ -66,9 +134,11 @@
   $effect(() => {
     window.addEventListener('muffin:render', syncSnapshot);
     window.addEventListener('keydown', onGlobalKeydown);
+    window.addEventListener('muffin:focus-tab-search', tabSearchShortcut);
     return () => {
       window.removeEventListener('muffin:render', syncSnapshot);
       window.removeEventListener('keydown', onGlobalKeydown);
+      window.removeEventListener('muffin:focus-tab-search', tabSearchShortcut);
     };
   });
 </script>
@@ -137,5 +207,81 @@
     <button class="home-button" aria-label="Open start page" title="Open start page" onclick={() => send({ version: 1, action: 'open_home' })}>
       <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m3.5 9 6.5-5.5L16.5 9v7a1.5 1.5 0 0 1-1.5 1.5h-3.2v-5h-3.6v5H5A1.5 1.5 0 0 1 3.5 16z" /></svg>
     </button>
+  </div>
+
+  <div class="tabbar" role="group" aria-label="Open tabs and tab actions">
+    <div class="tab-list-scroll">
+      <div class="tab-list" role="tablist" aria-label="Open tabs">
+        {#each visibleTabs as tab (tab.id)}
+          <div class="tab-item" role="presentation" class:selected={tab.id === snapshot.selected_tab} class:pinned={tab.pinned} class:discarded={tab.discarded}>
+            <button
+              class="tab-select"
+              role="tab"
+              aria-selected={tab.id === snapshot.selected_tab}
+              aria-label={`${tab.title || 'New tab'}${tab.pinned ? ', pinned' : ''}${tab.discarded ? ', discarded' : ''}`}
+              title={tab.title || 'New tab'}
+              tabindex={tab.id === snapshot.selected_tab ? 0 : -1}
+              data-tab-id={tab.id}
+              onclick={() => send({ version: 1, action: 'select_tab', id: tab.id })}
+              onkeydown={(event) => onTabKeydown(event, tab.id)}
+            >
+              {#if tab.loading}<span class="tab-loading" aria-hidden="true"></span>{:else if tab.pinned}<span class="tab-pin-mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m5 2 6 0-.8 3.2 2.2 2.3v.7H3.6v-.7l2.2-2.3zM8 8.2v5.3" /></svg></span>{:else if tab.discarded}<span class="tab-discard-mark" aria-hidden="true"></span>{/if}
+              <span class="tab-title">{tab.title || 'New tab'}</span>
+            </button>
+            <button
+              class="tab-discard"
+              aria-label={`Unload ${tab.title || 'tab'}; may lose unsaved in-page state`}
+              title={`Unload tab. May lose unsaved in-page state.`}
+              disabled={tab.id === snapshot.selected_tab || tab.loading || tab.discarded}
+              onclick={() => {
+                if (tab.id !== snapshot.selected_tab && !tab.loading && !tab.discarded) {
+                  send({ version: 1, action: 'discard_tab', id: tab.id });
+                }
+              }}
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v7m-2.5-2.5L8 9.5l2.5-2.5M3 10.5v2A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-2" /></svg>
+            </button>
+            <button class="tab-close" aria-label={`Close ${tab.title || 'tab'}`} title="Close tab" onclick={() => send({ version: 1, action: 'close_tab', id: tab.id })}>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7" /></svg>
+            </button>
+          </div>
+        {:else}
+          {#if tabSearchOpen}<span class="no-tabs" role="status">No matching tabs</span>{/if}
+        {/each}
+      </div>
+    </div>
+
+    <div class="tab-actions" aria-label="Tab actions">
+      {#if tabSearchOpen}
+        <form class="tab-search-shell" role="search" onsubmit={(event) => event.preventDefault()}>
+          <label class="visually-hidden" for="tab-search">Find a tab</label>
+          <input id="tab-search" class="tab-search-input" type="search" bind:value={tabSearch} onkeydown={onTabSearchKeydown} placeholder="Find tabs" aria-label="Find tabs" />
+          <button class="mini-action search-close" type="button" aria-label="Close tab search" title="Close search" onclick={closeTabSearch}>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7" /></svg>
+          </button>
+        </form>
+      {:else}
+        <button class="mini-action" aria-label="Search tabs" title="Search tabs" onclick={() => void openTabSearch()}>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5" /><path d="m12.2 12.2 4.2 4.2" /></svg>
+        </button>
+      {/if}
+      <span class="tab-action-divider" aria-hidden="true"></span>
+      <button class="mini-action" aria-label={activeTab?.pinned ? 'Unpin selected tab' : 'Pin selected tab'} title={activeTab?.pinned ? 'Unpin tab' : 'Pin tab'} disabled={!activeTab} onclick={() => activeTab && send({ version: 1, action: 'pin_tab', id: activeTab.id, pinned: !activeTab.pinned })}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 3 6 0-1 4 3 3v1H5v-1l3-3zM10 11v6" /></svg>
+      </button>
+      <button class="mini-action" aria-label="Duplicate selected tab" title="Duplicate tab" disabled={!activeTab} onclick={() => activeTab && send({ version: 1, action: 'duplicate_tab', id: activeTab.id })}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="6" width="10" height="10" rx="2" /><path d="M13 6V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v7.5A1.5 1.5 0 0 0 4 13h2" /></svg>
+      </button>
+      <button class="mini-action" aria-label="Restore recently closed tab" title="Restore closed tab" disabled={!snapshot.can_restore} onclick={() => send({ version: 1, action: 'reopen_tab' })}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5V2.8M4 5.5h2.8M4.2 5.7a6.7 6.7 0 1 1-1 5.5" /><path d="M10 6.5v4l2.5 1.5" /></svg>
+      </button>
+      <span class="tab-action-divider" aria-hidden="true"></span>
+      <button class="mini-action" aria-label="Open new window" title="New window" onclick={() => send({ version: 1, action: 'new_window' })}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="12" height="11" rx="2" /><path d="M7 16.5h7.5A2.5 2.5 0 0 0 17 14V7.5" /></svg>
+      </button>
+      <button class="mini-action new-tab-button" aria-label="Open new tab" title="New tab" onclick={() => send({ version: 1, action: 'new_tab' })}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+      </button>
+    </div>
   </div>
 </main>

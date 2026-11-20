@@ -29,6 +29,7 @@ PAGE_TWO = """<!doctype html>
     },
   };
   setTimeout(() => {
+    window.open('/unsolicited-popup', '_blank');
     fetch('/remote-page-ready?chrome_state=' + String(stateReceived), {method: 'POST'});
   }, 600);
 </script>

@@ -63,7 +63,10 @@ def main():
     run("cargo", "build", "--workspace", "--locked")
     run("cargo", "build", "--workspace", "--locked", "--release")
     check_release_control_excluded()
-    run("python3", "tests/native/run_smoke.py", "--out", str(args.artifacts.resolve()))
+    run(
+        "python3", "tests/native/run_smoke.py", "--tabs", "--restart",
+        "--out", str(args.artifacts.resolve()),
+    )
 
 
 if __name__ == "__main__":

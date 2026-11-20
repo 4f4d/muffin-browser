@@ -2,41 +2,56 @@
 
 #[cfg(not(target_os = "macos"))]
 fn main() {
-    eprintln!("Muffin M1 currently targets macOS Apple Silicon.");
+    eprintln!("This Muffin development build targets macOS Apple Silicon.");
     std::process::exit(1);
 }
 
 #[cfg(target_os = "macos")]
+mod instance;
+#[cfg(target_os = "macos")]
+#[path = "session.rs"]
+mod session;
+#[cfg(target_os = "macos")]
+#[path = "tabs.rs"]
+mod tabs;
+
+#[cfg(target_os = "macos")]
 mod browser {
+    use super::{
+        session::SessionStore,
+        tabs::{SavedWindow, SessionDocument, TabSet},
+    };
     use objc2::MainThreadMarker;
     use objc2_foundation::NSString;
     use objc2_web_kit::{WKWebViewConfiguration, WKWebsiteDataStore};
     use serde::{Deserialize, Serialize};
     #[cfg(debug_assertions)]
     use std::path::Path;
+    use std::{
+        collections::HashMap,
+        path::PathBuf,
+        time::{Duration, Instant},
+    };
     #[cfg(debug_assertions)]
     use std::{
         fs,
         io::{BufRead, BufReader},
     };
-    use std::{
-        path::PathBuf,
-        time::{Duration, Instant},
-    };
     use tao::{
         dpi::{LogicalPosition, LogicalSize},
         event::{Event, WindowEvent},
-        event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopProxy},
-        window::{Window, WindowBuilder},
+        event_loop::{
+            ControlFlow, EventLoop, EventLoopBuilder, EventLoopProxy, EventLoopWindowTarget,
+        },
+        window::{Window, WindowBuilder, WindowId},
     };
-    use tempfile::TempDir;
     use wry::{
-        PageLoadEvent, PermissionResponse, WebContext, WebView, WebViewBuilder,
-        WebViewBuilderExtDarwin, WebViewBuilderExtMacos, WebViewExtMacOS,
+        PageLoadEvent, PermissionResponse, WebView, WebViewBuilder, WebViewBuilderExtDarwin,
+        WebViewBuilderExtMacos, WebViewExtMacOS,
     };
 
     const CHROME: &str = include_str!("../../../ui/dist/index.html");
-    const CHROME_HEIGHT: u32 = 56;
+    const CHROME_HEIGHT: u32 = 96;
     const MAX_MESSAGE_BYTES: usize = 64 * 1024;
 
     #[derive(Clone, Debug, Deserialize)]
@@ -58,6 +73,30 @@ mod browser {
         FocusAddress { version: u8 },
         #[serde(rename = "open_home")]
         OpenHome { version: u8 },
+        #[serde(rename = "new_tab")]
+        NewTab { version: u8 },
+        #[serde(rename = "new_window")]
+        NewWindow { version: u8 },
+        #[serde(rename = "reopen_tab")]
+        ReopenTab { version: u8 },
+        #[serde(rename = "tab_search")]
+        TabSearch { version: u8 },
+        #[serde(rename = "select_tab")]
+        SelectTab { version: u8, id: u32 },
+        #[serde(rename = "close_tab")]
+        CloseTab { version: u8, id: u32 },
+        #[serde(rename = "duplicate_tab")]
+        DuplicateTab { version: u8, id: u32 },
+        #[serde(rename = "discard_tab")]
+        DiscardTab { version: u8, id: u32 },
+        #[serde(rename = "pin_tab")]
+        PinTab { version: u8, id: u32, pinned: bool },
+        #[serde(rename = "move_tab")]
+        MoveTab { version: u8, id: u32, index: u32 },
+        #[serde(rename = "close_window")]
+        CloseWindow { version: u8 },
+        #[serde(skip)]
+        CloseSelectedTab { version: u8 },
     }
 
     #[cfg(debug_assertions)]
@@ -76,6 +115,7 @@ mod browser {
     enum TestCommand {
         Chrome(ChromeTestAction),
         Native(Action),
+        Quit { version: u8, action: String },
     }
 
     #[cfg(debug_assertions)]
@@ -87,6 +127,7 @@ mod browser {
                 | ChromeTestAction::Capture { version: 1 },
             ) => Some(command),
             TestCommand::Native(action) if action.version() == 1 => Some(command),
+            TestCommand::Quit { version: 1, action } if action == "quit_test" => Some(command),
             _ => None,
         }
     }
@@ -102,6 +143,17 @@ mod browser {
                 | Self::FocusPage { version }
                 | Self::FocusAddress { version }
                 | Self::OpenHome { version } => *version,
+                Self::CloseWindow { version } | Self::CloseSelectedTab { version } => *version,
+                Self::NewTab { version }
+                | Self::NewWindow { version }
+                | Self::ReopenTab { version }
+                | Self::TabSearch { version } => *version,
+                Self::SelectTab { version, .. }
+                | Self::CloseTab { version, .. }
+                | Self::DuplicateTab { version, .. }
+                | Self::DiscardTab { version, .. }
+                | Self::PinTab { version, .. }
+                | Self::MoveTab { version, .. } => *version,
             }
         }
     }
@@ -140,30 +192,45 @@ mod browser {
     }
 
     #[derive(Serialize)]
-    struct Snapshot<'a> {
+    struct TabSnapshot {
+        id: u32,
+        title: String,
+        pinned: bool,
+        loading: bool,
+        discarded: bool,
+    }
+
+    #[derive(Serialize)]
+    struct Snapshot {
         version: u8,
-        url: &'a str,
-        title: &'a str,
+        url: String,
+        title: String,
         loading: bool,
         can_back: bool,
         can_forward: bool,
         status: Status,
         secure: bool,
+        tabs: Vec<TabSnapshot>,
+        selected_tab: u32,
+        can_restore: bool,
     }
 
     enum Message {
-        ChromeResult(String),
-        NativeAction(Action),
-        Loaded(PageLoadEvent, String),
-        Title(String),
-        Resize,
-        ProcessTerminated,
+        ExternalUrls(Vec<url::Url>),
+        UserPopup(WindowId, u32, u64, url::Url),
+        ChromeResult(WindowId, String),
+        NativeAction(isize, Action),
+        Loaded(WindowId, u32, u64, PageLoadEvent, String),
+        Title(WindowId, u32, u64, String),
+        ProcessTerminated(WindowId, u32, u64),
+        DiscardSafety(WindowId, u32, u64, u64, bool),
     }
 
     #[cfg_attr(not(debug_assertions), allow(dead_code))]
     struct TestControl {
         directory: PathBuf,
         cursor: u64,
+        session_path: Option<PathBuf>,
     }
 
     impl TestControl {
@@ -199,23 +266,26 @@ mod browser {
         #[cfg(debug_assertions)]
         fn write_state(
             &self,
-            state: &Snapshot<'_>,
+            state: &Snapshot,
             chrome_ready: bool,
             window_number: isize,
+            window_count: usize,
             native_loading: bool,
         ) {
             #[derive(Serialize)]
             struct Observation<'a> {
                 #[serde(flatten)]
-                snapshot: &'a Snapshot<'a>,
+                snapshot: &'a Snapshot,
                 chrome_ready: bool,
                 window_number: isize,
+                window_count: usize,
                 native_loading: bool,
             }
             let Ok(json) = serde_json::to_vec(&Observation {
                 snapshot: state,
                 chrome_ready,
                 window_number,
+                window_count,
                 native_loading,
             }) else {
                 return;
@@ -231,44 +301,41 @@ mod browser {
         }
     }
 
-    struct App {
-        window: Window,
-        chrome: WebView,
-        content: WebView,
-        _context: WebContext,
-        _data: TempDir,
-        proxy: EventLoopProxy<Message>,
-        #[cfg_attr(not(debug_assertions), allow(dead_code))]
-        test_control: Option<TestControl>,
-        address: String,
-        title: String,
-        load_started: Option<Instant>,
-        status: Status,
-        last_poll: Instant,
-        chrome_ready: bool,
-        chrome_poll_started: Option<Instant>,
+    struct TabView {
+        webview: WebView,
         recovery_attempted: bool,
-        native_loading: bool,
+        load_started: Option<Instant>,
         finished_navigation: bool,
+        discard_ticket: Option<u64>,
     }
 
-    impl App {
+    struct BrowserWindow {
+        window: Window,
+        chrome: WebView,
+        tabs: TabSet,
+        views: HashMap<u32, TabView>,
+        proxy: EventLoopProxy<Message>,
+        status: Status,
+        chrome_ready: bool,
+        chrome_poll_started: Option<Instant>,
+        last_poll: Instant,
+        test_mode: bool,
+        discard_serial: u64,
+    }
+
+    impl BrowserWindow {
         fn new(
-            event_loop: &EventLoop<Message>,
-            test_control: Option<TestControl>,
+            target: &EventLoopWindowTarget<Message>,
+            proxy: EventLoopProxy<Message>,
+            saved: Option<SavedWindow>,
+            test_mode: bool,
         ) -> Result<Self, String> {
-            let data = tempfile::Builder::new()
-                .prefix("muffin-m1-")
-                .tempdir()
-                .map_err(|e| e.to_string())?;
-            let mut context = WebContext::new(Some(data.path().join("web-data")));
             let window = WindowBuilder::new()
                 .with_title("Muffin")
                 .with_inner_size(LogicalSize::new(1100.0, 760.0))
                 .with_min_inner_size(LogicalSize::new(640.0, 420.0))
-                .build(event_loop)
-                .map_err(|e| e.to_string())?;
-            let proxy = event_loop.create_proxy();
+                .build(target)
+                .map_err(|error| error.to_string())?;
             let chrome = WebViewBuilder::new()
                 .with_devtools(false)
                 .with_incognito(true)
@@ -277,127 +344,252 @@ mod browser {
                 .with_download_started_handler(|_, _| false)
                 .with_bounds(bounds(&window, 0, CHROME_HEIGHT))
                 .build_as_child(&window)
-                .map_err(|e| e.to_string())?;
-            chrome.load_html(CHROME).map_err(|e| e.to_string())?;
-            let loaded_proxy = proxy.clone();
-            let title_proxy = proxy.clone();
-            let terminated_proxy = proxy.clone();
-            let main_thread =
-                MainThreadMarker::new().ok_or("WebKit must start on the main thread")?;
-            let web_configuration = unsafe { WKWebViewConfiguration::new(main_thread) };
+                .map_err(|error| error.to_string())?;
+            chrome
+                .load_html(CHROME)
+                .map_err(|error| error.to_string())?;
+            let tabs = saved.map(TabSet::from_saved).unwrap_or_else(TabSet::new);
+            let mut browser = Self {
+                window,
+                chrome,
+                tabs,
+                views: HashMap::new(),
+                proxy,
+                status: Status::Home,
+                chrome_ready: false,
+                chrome_poll_started: None,
+                last_poll: Instant::now(),
+                test_mode,
+                discard_serial: 0,
+            };
+            let selected = browser.tabs.selected();
+            browser.ensure_view(selected)?;
+            Ok(browser)
+        }
+
+        fn make_web_configuration(
+            test_mode: bool,
+        ) -> Result<objc2::rc::Retained<WKWebViewConfiguration>, String> {
+            let main_thread = MainThreadMarker::new().ok_or("WebKit must start on main thread")?;
+            let configuration = unsafe { WKWebViewConfiguration::new(main_thread) };
             unsafe {
-                web_configuration
-                    .setWebsiteDataStore(&WKWebsiteDataStore::nonPersistentDataStore(main_thread));
-                web_configuration.setApplicationNameForUserAgent(Some(&NSString::from_str(
-                    &format!("Muffin/{}", env!("CARGO_PKG_VERSION")),
-                )));
+                let store = if test_mode {
+                    WKWebsiteDataStore::nonPersistentDataStore(main_thread)
+                } else {
+                    WKWebsiteDataStore::defaultDataStore(main_thread)
+                };
+                configuration.setWebsiteDataStore(&store);
+                configuration
+                    .preferences()
+                    .setJavaScriptCanOpenWindowsAutomatically(false);
+                configuration.setApplicationNameForUserAgent(Some(&NSString::from_str(&format!(
+                    "Muffin/{}",
+                    env!("CARGO_PKG_VERSION")
+                ))));
             }
-            let content = WebViewBuilder::new_with_web_context(&mut context)
-                .with_webview_configuration(web_configuration)
+            Ok(configuration)
+        }
+
+        fn create_view(&mut self, tab_id: u32) -> Result<(), String> {
+            let window_id = self.window.id();
+            let tab = self.tabs.get_mut(tab_id).ok_or("tab no longer exists")?;
+            tab.generation = tab.generation.saturating_add(1);
+            let generation = tab.generation;
+            let start_url = tab.url.clone();
+            tab.discarded = false;
+            let loaded_proxy = self.proxy.clone();
+            let title_proxy = self.proxy.clone();
+            let terminate_proxy = self.proxy.clone();
+            let popup_proxy = self.proxy.clone();
+            let configuration = Self::make_web_configuration(self.test_mode)?;
+            let builder = WebViewBuilder::new()
+                .with_webview_configuration(configuration)
                 .with_devtools(false)
-                .with_incognito(true)
+                .with_incognito(self.test_mode)
                 .with_focused(false)
                 .with_navigation_handler(allowed_navigation)
-                .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
+                .with_new_window_req_handler(move |url, _| {
+                    if let Some(url) = external_web_url(&url) {
+                        let _ = popup_proxy
+                            .send_event(Message::UserPopup(window_id, tab_id, generation, url));
+                    }
+                    wry::NewWindowResponse::Deny
+                })
                 .with_download_started_handler(|_, _| false)
                 .with_permission_handler(|_| PermissionResponse::Deny)
                 .with_on_page_load_handler(move |event, url| {
-                    let _ = loaded_proxy.send_event(Message::Loaded(event, url));
+                    let _ = loaded_proxy
+                        .send_event(Message::Loaded(window_id, tab_id, generation, event, url));
                 })
                 .with_document_title_changed_handler(move |title| {
-                    let _ = title_proxy.send_event(Message::Title(title));
+                    let _ = title_proxy
+                        .send_event(Message::Title(window_id, tab_id, generation, title));
                 })
                 .with_on_web_content_process_terminate_handler(move || {
-                    let _ = terminated_proxy.send_event(Message::ProcessTerminated);
+                    let _ = terminate_proxy
+                        .send_event(Message::ProcessTerminated(window_id, tab_id, generation));
                 })
                 .with_bounds(bounds(
-                    &window,
+                    &self.window,
                     CHROME_HEIGHT,
-                    window
+                    self.window
                         .inner_size()
-                        .to_logical::<u32>(window.scale_factor())
+                        .to_logical::<u32>(self.window.scale_factor())
                         .height
                         .saturating_sub(CHROME_HEIGHT),
-                ))
-                .build_as_child(&window)
-                .map_err(|e| e.to_string())?;
-            let mut app = Self {
-                window,
-                chrome,
-                content,
-                _context: context,
-                _data: data,
-                proxy,
-                test_control,
-                address: "about:blank".into(),
-                title: "New Tab".into(),
-                load_started: None,
-                status: Status::Home,
-                last_poll: Instant::now(),
-                chrome_ready: false,
-                chrome_poll_started: None,
-                recovery_attempted: false,
-                native_loading: false,
-                finished_navigation: false,
-            };
-            app.render();
-            Ok(app)
+                ));
+            let webview = builder
+                .build_as_child(&self.window)
+                .map_err(|error| error.to_string())?;
+            let _ = webview.set_visible(tab_id == self.tabs.selected());
+            self.views.insert(
+                tab_id,
+                TabView {
+                    webview,
+                    recovery_attempted: false,
+                    load_started: None,
+                    finished_navigation: false,
+                    discard_ticket: None,
+                },
+            );
+            if start_url != "about:blank" {
+                self.navigate(tab_id, &start_url);
+            }
+            Ok(())
+        }
+
+        fn ensure_view(&mut self, tab_id: u32) -> Result<(), String> {
+            if !self.views.contains_key(&tab_id) {
+                self.create_view(tab_id)?;
+            }
+            self.layout();
+            Ok(())
         }
 
         fn layout(&self) {
-            let size = self.window.inner_size();
-            let logical = size.to_logical::<u32>(self.window.scale_factor());
+            let logical = self
+                .window
+                .inner_size()
+                .to_logical::<u32>(self.window.scale_factor());
             let _ = self
                 .chrome
                 .set_bounds(bounds(&self.window, 0, CHROME_HEIGHT));
-            let _ = self.content.set_bounds(bounds(
-                &self.window,
-                CHROME_HEIGHT,
-                logical.height.saturating_sub(CHROME_HEIGHT),
-            ));
+            for (id, view) in &self.views {
+                let _ = view.webview.set_visible(*id == self.tabs.selected());
+                let _ = view.webview.set_bounds(bounds(
+                    &self.window,
+                    CHROME_HEIGHT,
+                    logical.height.saturating_sub(CHROME_HEIGHT),
+                ));
+            }
         }
 
-        fn apply(&mut self, action: Action) {
-            if action.version() != 1 {
+        fn navigate(&mut self, tab_id: u32, url: &str) {
+            self.navigate_internal(tab_id, url, false);
+        }
+
+        fn navigate_internal(&mut self, tab_id: u32, url: &str, recovering: bool) {
+            if self.ensure_view(tab_id).is_err() {
+                self.status = Status::Failed;
                 return;
             }
+            self.begin_tab_load(tab_id, !recovering);
+            if self.views[&tab_id].webview.load_url(url).is_err() {
+                self.fail_tab_load(tab_id);
+            }
+        }
+
+        fn begin_tab_load(&mut self, tab_id: u32, explicit: bool) {
+            if let Some(view) = self.views.get_mut(&tab_id) {
+                view.load_started = Some(Instant::now());
+                view.finished_navigation = false;
+                view.discard_ticket = None;
+                if explicit {
+                    view.recovery_attempted = false;
+                }
+            }
+            if let Some(tab) = self.tabs.get_mut(tab_id) {
+                tab.loading = true;
+            }
+            if self.tabs.selected() == tab_id {
+                self.status = Status::Loading;
+            }
+        }
+
+        fn fail_tab_load(&mut self, tab_id: u32) {
+            if let Some(view) = self.views.get_mut(&tab_id) {
+                view.load_started = None;
+            }
+            if let Some(tab) = self.tabs.get_mut(tab_id) {
+                tab.loading = false;
+            }
+            if self.tabs.selected() == tab_id {
+                self.status = Status::Failed;
+            }
+        }
+
+        fn selected_view(&self) -> Option<&WebView> {
+            self.views
+                .get(&self.tabs.selected())
+                .map(|view| &view.webview)
+        }
+
+        fn apply(&mut self, action: Action) -> WindowEffect {
+            if action.version() != 1 {
+                return WindowEffect::None;
+            }
+            let previously_selected = self.tabs.selected();
             match action {
                 Action::Navigate { value, .. } => match address_destination(&value) {
-                    Some(url) => {
-                        self.recovery_attempted = false;
-                        self.navigate(&url);
-                    }
-                    None => {
-                        self.load_started = None;
-                        self.status = Status::Blocked;
-                    }
+                    Some(url) => self.navigate(self.tabs.selected(), &url),
+                    None => self.status = Status::Blocked,
                 },
-                Action::Back { .. } if self.content.can_go_back().unwrap_or(false) => {
-                    self.recovery_attempted = false;
-                    self.start_load();
-                    let _ = self.content.go_back();
+                Action::Back { .. } => {
+                    if self
+                        .selected_view()
+                        .is_some_and(|view| view.can_go_back().unwrap_or(false))
+                    {
+                        self.begin_tab_load(previously_selected, true);
+                        let _ = self.views[&previously_selected].webview.go_back();
+                    }
                 }
-                Action::Forward { .. } if self.content.can_go_forward().unwrap_or(false) => {
-                    self.recovery_attempted = false;
-                    self.start_load();
-                    let _ = self.content.go_forward();
+                Action::Forward { .. } => {
+                    if self
+                        .selected_view()
+                        .is_some_and(|view| view.can_go_forward().unwrap_or(false))
+                    {
+                        self.begin_tab_load(previously_selected, true);
+                        let _ = self.views[&previously_selected].webview.go_forward();
+                    }
                 }
                 Action::Reload { .. } => {
-                    self.recovery_attempted = false;
-                    self.start_load();
-                    let _ = self.content.reload();
+                    if self.views.contains_key(&previously_selected) {
+                        self.begin_tab_load(previously_selected, true);
+                        let _ = self.views[&previously_selected].webview.reload();
+                    }
                 }
                 Action::Stop { .. } => {
-                    unsafe { self.content.webview().stopLoading() };
-                    self.load_started = None;
-                    self.status = if self.address == "about:blank" {
+                    if let Some(view) = self.views.get_mut(&previously_selected) {
+                        unsafe { view.webview.webview().stopLoading() };
+                        view.load_started = None;
+                    }
+                    if let Some(tab) = self.tabs.get_mut(self.tabs.selected()) {
+                        tab.loading = false;
+                    }
+                    self.status = if self
+                        .tabs
+                        .get(previously_selected)
+                        .is_some_and(|tab| tab.url == "about:blank")
+                    {
                         Status::Home
                     } else {
                         Status::Ready
                     };
                 }
                 Action::FocusPage { .. } => {
-                    let _ = self.content.focus();
+                    if let Some(view) = self.selected_view() {
+                        let _ = view.focus();
+                    }
                 }
                 Action::FocusAddress { .. } => {
                     let _ = self.chrome.focus();
@@ -405,57 +597,111 @@ mod browser {
                         .chrome
                         .evaluate_script("window.muffinChrome?.focusAddress()");
                 }
-                Action::OpenHome { .. } => {
-                    self.recovery_attempted = false;
-                    self.navigate("about:blank");
+                Action::OpenHome { .. } => self.navigate(self.tabs.selected(), "about:blank"),
+                Action::NewTab { .. } => {
+                    if self.tabs.can_create() {
+                        self.tabs.create(None);
+                    }
                 }
-                _ => {}
+                Action::NewWindow { .. } => return WindowEffect::NewWindow,
+                Action::CloseWindow { .. } => return WindowEffect::CloseWindow,
+                Action::CloseSelectedTab { .. } => {
+                    let id = self.tabs.selected();
+                    self.views.remove(&id);
+                    self.tabs.close(id);
+                }
+                Action::ReopenTab { .. } => {
+                    self.tabs.reopen();
+                }
+                Action::TabSearch { .. } => {
+                    let _ = self
+                        .chrome
+                        .evaluate_script("window.muffinChrome?.focusTabSearch()");
+                }
+                Action::SelectTab { id, .. } => {
+                    self.tabs.select(id);
+                }
+                Action::CloseTab { id, .. } => {
+                    self.views.remove(&id);
+                    self.tabs.close(id);
+                }
+                Action::DuplicateTab { id, .. } => {
+                    self.tabs.duplicate(id);
+                }
+                Action::PinTab { id, pinned, .. } => {
+                    self.tabs.set_pinned(id, pinned);
+                }
+                Action::MoveTab { id, index, .. } => {
+                    self.tabs.move_to(id, index as usize);
+                }
+                Action::DiscardTab { id, .. } => return WindowEffect::Discard(id),
             }
+            if self.tabs.selected() != previously_selected {
+                self.restore_selected();
+            }
+            self.layout();
             self.render();
+            WindowEffect::None
         }
 
-        fn start_load(&mut self) {
-            self.status = Status::Loading;
-            self.load_started = Some(Instant::now());
-            self.finished_navigation = false;
-        }
-
-        fn fail_load(&mut self) {
-            self.status = Status::Failed;
-            self.load_started = None;
-        }
-
-        fn navigate(&mut self, url: &str) {
-            self.start_load();
-            if self.content.load_url(url).is_err() {
-                self.fail_load();
+        fn restore_selected(&mut self) {
+            let selected = self.tabs.selected();
+            if self.ensure_view(selected).is_err() {
+                self.status = Status::Failed;
+                return;
+            }
+            if let Some(view) = self.views.get_mut(&selected) {
+                view.discard_ticket = None;
+            }
+            if let Some(tab) = self.tabs.get(selected) {
+                self.status = if tab.loading {
+                    Status::Loading
+                } else if tab.url == "about:blank" {
+                    Status::Home
+                } else {
+                    Status::Ready
+                };
+                self.window.set_title(&format!("{} — Muffin", tab.title));
             }
         }
 
-        fn render(&mut self) {
-            self.native_loading = unsafe { self.content.webview().isLoading() };
-            let snapshot = Snapshot {
+        fn snapshot(&self) -> Snapshot {
+            let id = self.tabs.selected();
+            let tab = self.tabs.get(id);
+            let view = self.selected_view();
+            Snapshot {
                 version: 1,
-                url: &self.address,
-                title: &self.title,
-                loading: self.load_started.is_some(),
-                can_back: self.content.can_go_back().unwrap_or(false),
-                can_forward: self.content.can_go_forward().unwrap_or(false),
+                url: tab.map(|tab| tab.url.clone()).unwrap_or_default(),
+                title: tab.map(|tab| tab.title.clone()).unwrap_or_default(),
+                loading: tab.is_some_and(|tab| tab.loading),
+                can_back: view.is_some_and(|view| view.can_go_back().unwrap_or(false)),
+                can_forward: view.is_some_and(|view| view.can_go_forward().unwrap_or(false)),
                 status: self.status,
-                secure: self.status_matches_verified_https(),
-            };
-            #[cfg(debug_assertions)]
-            if let Some(control) = &self.test_control {
-                use tao::platform::macos::WindowExtMacOS;
-                let window = self.window.ns_window().cast::<objc2::runtime::AnyObject>();
-                let window_number: isize = unsafe { objc2::msg_send![window, windowNumber] };
-                control.write_state(
-                    &snapshot,
-                    self.chrome_ready,
-                    window_number,
-                    self.native_loading,
-                );
+                secure: tab.is_some_and(|tab| {
+                    tab.url.starts_with("https://") && matches!(self.status, Status::Ready)
+                }) && self.views.get(&id).is_some_and(|view| {
+                    view.finished_navigation
+                        && unsafe { view.webview.webview().hasOnlySecureContent() }
+                }),
+                tabs: self
+                    .tabs
+                    .tabs()
+                    .iter()
+                    .map(|tab| TabSnapshot {
+                        id: tab.id,
+                        title: tab.title.clone(),
+                        pinned: tab.pinned,
+                        loading: tab.loading,
+                        discarded: tab.discarded,
+                    })
+                    .collect(),
+                selected_tab: id,
+                can_restore: self.tabs.can_reopen(),
             }
+        }
+
+        fn render(&self) {
+            let snapshot = self.snapshot();
             if let Ok(json) = serde_json::to_string(&snapshot) {
                 let _ = self
                     .chrome
@@ -468,117 +714,527 @@ mod browser {
                 return;
             }
             self.last_poll = Instant::now();
-            let native_loading = unsafe { self.content.webview().isLoading() };
-            if self
-                .load_started
-                .is_some_and(|since| since.elapsed() > Duration::from_millis(750))
-                && !native_loading
-            {
-                self.fail_load();
-                self.render();
-            } else if native_loading != self.native_loading {
+            let uncompleted: Vec<_> = self
+                .views
+                .iter()
+                .filter_map(|(&id, view)| {
+                    (view
+                        .load_started
+                        .is_some_and(|since| since.elapsed() > Duration::from_millis(750))
+                        && !unsafe { view.webview.webview().isLoading() })
+                    .then_some(id)
+                })
+                .collect();
+            if !uncompleted.is_empty() {
+                for id in uncompleted {
+                    self.fail_tab_load(id);
+                }
                 self.render();
             }
-            if self.chrome_poll_started.is_none() {
-                let proxy = self.proxy.clone();
-                self.chrome_poll_started = Some(Instant::now());
-                if self.chrome.evaluate_script_with_callback(
-                    "window.muffinChrome && document.getElementById('address') ? ({version: 1, action: window.muffinChrome.take()}) : null",
-                    move |result| {
-                        let _ = proxy.send_event(Message::ChromeResult(result));
-                    },
-                ).is_err() {
-                    self.chrome_poll_started = None;
-                }
-            } else if self
+            if self
                 .chrome_poll_started
                 .is_some_and(|started| started.elapsed() > Duration::from_secs(2))
             {
                 self.chrome_poll_started = None;
             }
-            #[cfg(debug_assertions)]
-            if let Some(command) = self
-                .test_control
-                .as_mut()
-                .filter(|_| self.chrome_ready)
-                .and_then(TestControl::poll)
-            {
-                match command {
-                    TestCommand::Native(action) => self.apply(action),
-                    TestCommand::Chrome(ChromeTestAction::Navigate { value, .. }) => {
-                        if let Ok(value) = serde_json::to_string(&value) {
-                            let _ = self.chrome.evaluate_script(&format!(
-                                "const field = document.querySelector('#address'); if (field) {{ field.value = {value}; field.dispatchEvent(new Event('input', {{ bubbles: true }})); document.querySelector('form[role=search]')?.requestSubmit(); }}"
-                            ));
-                        }
-                    }
-                    TestCommand::Chrome(ChromeTestAction::Capture { .. }) => {
-                        if let Some(control) = &self.test_control {
-                            capture_chrome_view(&self.chrome, &control.directory);
-                        }
-                    }
-                }
+            if self.chrome_poll_started.is_none() {
+                let proxy = self.proxy.clone();
+                let window_id = self.window.id();
+                self.chrome_poll_started = Some(Instant::now());
+                if self.chrome.evaluate_script_with_callback("window.muffinChrome && document.getElementById('address') ? ({version:1,action:window.muffinChrome.take()}) : null", move |result| { let _ = proxy.send_event(Message::ChromeResult(window_id, result)); }).is_err() { self.chrome_poll_started = None; }
             }
         }
 
-        fn status_matches_verified_https(&self) -> bool {
-            if !self.finished_navigation
-                || !matches!(self.status, Status::Ready)
-                || !self.address.starts_with("https://")
+        fn begin_discard(&mut self, tab_id: u32) {
+            if tab_id == self.tabs.selected() || self.tabs.get(tab_id).is_none_or(|tab| tab.loading)
+            {
+                return;
+            }
+            let Some(view) = self.views.get_mut(&tab_id) else {
+                return;
+            };
+            let generation = self.tabs.get(tab_id).unwrap().generation;
+            let window_id = self.window.id();
+            let proxy = self.proxy.clone();
+            let wk = view.webview.webview();
+            if !capture_is_idle(&view.webview) {
+                return;
+            }
+            self.discard_serial = self.discard_serial.wrapping_add(1);
+            let ticket = self.discard_serial;
+            view.discard_ticket = Some(ticket);
+            let callback =
+                block2::RcBlock::new(move |state: objc2_web_kit::WKMediaPlaybackState| {
+                    let safe = state == objc2_web_kit::WKMediaPlaybackState::None;
+                    let _ = proxy.send_event(Message::DiscardSafety(
+                        window_id, tab_id, generation, ticket, safe,
+                    ));
+                });
+            unsafe {
+                wk.requestMediaPlaybackStateWithCompletionHandler(&callback);
+            }
+        }
+    }
+
+    enum WindowEffect {
+        None,
+        NewWindow,
+        CloseWindow,
+        Discard(u32),
+    }
+
+    struct App {
+        windows: Vec<BrowserWindow>,
+        focused: WindowId,
+        proxy: EventLoopProxy<Message>,
+        session: Option<SessionStore>,
+        test_control: Option<TestControl>,
+        session_dirty: bool,
+        last_session_save: Instant,
+    }
+
+    impl App {
+        fn new(
+            event_loop: &EventLoop<Message>,
+            test_control: Option<TestControl>,
+            test_session: Option<PathBuf>,
+        ) -> Result<Self, String> {
+            let session = if let Some(path) = test_session {
+                Some(SessionStore::new(path))
+            } else if test_control.is_some() {
+                None
+            } else {
+                SessionStore::default_path().map(SessionStore::new)
+            };
+            let (saved, session) = match session {
+                Some(store) => match store.load_recovering() {
+                    Ok(saved) => (saved, Some(store)),
+                    Err(error) => {
+                        eprintln!("session_load_failed: {error}");
+                        (None, None)
+                    }
+                },
+                None => (None, None),
+            };
+            let proxy = event_loop.create_proxy();
+            let test_mode = test_control.is_some();
+            let saved_windows = saved
+                .map(|document| document.windows)
+                .filter(|windows| !windows.is_empty());
+            let mut windows = Vec::new();
+            if let Some(saved_windows) = saved_windows {
+                for saved in saved_windows.into_iter().take(8) {
+                    windows.push(BrowserWindow::new(
+                        event_loop,
+                        proxy.clone(),
+                        Some(saved),
+                        test_mode,
+                    )?);
+                }
+            } else {
+                windows.push(BrowserWindow::new(
+                    event_loop,
+                    proxy.clone(),
+                    None,
+                    test_mode,
+                )?);
+            }
+            let focused = windows[0].window.id();
+            let app = Self {
+                windows,
+                focused,
+                proxy,
+                session,
+                test_control,
+                session_dirty: false,
+                last_session_save: Instant::now(),
+            };
+            app.save_session();
+            app.render_active();
+            Ok(app)
+        }
+
+        fn active_id(&self) -> WindowId {
+            self.windows
+                .iter()
+                .find(|window| window.window.id() == self.focused)
+                .map(|window| window.window.id())
+                .unwrap_or_else(|| self.windows[0].window.id())
+        }
+        fn window_mut(&mut self, id: WindowId) -> Option<&mut BrowserWindow> {
+            self.windows
+                .iter_mut()
+                .find(|window| window.window.id() == id)
+        }
+        fn render_active(&self) {
+            if let Some(window) = self
+                .windows
+                .iter()
+                .find(|window| window.window.id() == self.active_id())
+            {
+                window.render();
+            }
+        }
+        fn save_session(&self) {
+            let Some(store) = &self.session else {
+                return;
+            };
+            let document = SessionDocument {
+                version: 1,
+                windows: self
+                    .windows
+                    .iter()
+                    .map(|window| window.tabs.saved())
+                    .collect(),
+            };
+            if let Err(error) = store.save(&document) {
+                eprintln!("session_save_failed: {error}");
+            }
+        }
+        fn write_test_state(&self) {
+            #[cfg(debug_assertions)]
+            if let Some(control) = &self.test_control {
+                if let Some(window) = self
+                    .windows
+                    .iter()
+                    .find(|window| window.window.id() == self.active_id())
+                {
+                    use tao::platform::macos::WindowExtMacOS;
+                    let native = window
+                        .window
+                        .ns_window()
+                        .cast::<objc2::runtime::AnyObject>();
+                    let number: isize = unsafe { objc2::msg_send![native, windowNumber] };
+                    control.write_state(
+                        &window.snapshot(),
+                        window.chrome_ready,
+                        number,
+                        self.windows.len(),
+                        window
+                            .selected_view()
+                            .is_some_and(|view| unsafe { view.webview().isLoading() }),
+                    );
+                }
+            }
+        }
+        fn create_window(&mut self, target: &EventLoopWindowTarget<Message>) {
+            if self.windows.len() >= 8 {
+                return;
+            }
+            if let Ok(window) = BrowserWindow::new(
+                target,
+                self.proxy.clone(),
+                None,
+                self.test_control.is_some(),
+            ) {
+                self.focused = window.window.id();
+                self.windows.push(window);
+                self.session_dirty = true;
+            }
+        }
+        fn forward_urls(&mut self, urls: Vec<url::Url>) {
+            let active = self.active_id();
+            if let Some(window) = self.window_mut(active) {
+                window.window.set_minimized(false);
+                window.window.set_focus();
+            }
+            for url in urls {
+                let value = url.to_string();
+                if external_web_url(&value).is_none() {
+                    continue;
+                }
+                if let Some(window) = self
+                    .windows
+                    .iter_mut()
+                    .find(|window| window.window.id() == active)
+                {
+                    if !window.tabs.can_create() {
+                        break;
+                    }
+                    let id = window.tabs.create(None);
+                    if window.ensure_view(id).is_ok() {
+                        window.navigate(id, &value);
+                        window.render();
+                    }
+                }
+            }
+            self.session_dirty = true;
+            self.write_test_state();
+        }
+        fn close_window(&mut self, id: WindowId) -> bool {
+            if self.windows.len() <= 1 {
+                return false;
+            }
+            let Some(index) = self
+                .windows
+                .iter()
+                .position(|window| window.window.id() == id)
+            else {
+                return false;
+            };
+            self.windows.remove(index);
+            if self.focused == id {
+                self.focused = self.windows[0].window.id();
+            }
+            self.session_dirty = true;
+            true
+        }
+        fn apply(&mut self, target: &EventLoopWindowTarget<Message>, id: WindowId, action: Action) {
+            let effect = if let Some(window) = self.window_mut(id) {
+                window.apply(action)
+            } else {
+                return;
+            };
+            match effect {
+                WindowEffect::None => {}
+                WindowEffect::NewWindow => self.create_window(target),
+                WindowEffect::CloseWindow => {
+                    self.close_window(id);
+                }
+                WindowEffect::Discard(tab_id) => {
+                    if let Some(window) = self.window_mut(id) {
+                        window.begin_discard(tab_id);
+                    }
+                }
+            }
+            self.session_dirty = true;
+            self.write_test_state();
+        }
+        fn handle(&mut self, target: &EventLoopWindowTarget<Message>, message: Message) {
+            match message {
+                Message::ExternalUrls(urls) => self.forward_urls(urls),
+                Message::UserPopup(id, opener, generation, url) => {
+                    let current = self.active_id() == id
+                        && self.window_mut(id).is_some_and(|window| {
+                            window.tabs.selected() == opener
+                                && window
+                                    .tabs
+                                    .get(opener)
+                                    .is_some_and(|tab| tab.generation == generation)
+                        });
+                    if current {
+                        self.forward_urls(vec![url]);
+                    }
+                }
+                Message::ChromeResult(id, raw) => {
+                    let action = if let Some(window) = self.window_mut(id) {
+                        window.chrome_poll_started = None;
+                        let reply = decode_reply(&raw);
+                        if reply.is_some() && !window.chrome_ready {
+                            window.chrome_ready = true;
+                            window.render();
+                        }
+                        reply.and_then(|reply| reply.action)
+                    } else {
+                        None
+                    };
+                    if let Some(action) = action {
+                        self.apply(target, id, action);
+                    }
+                }
+                Message::NativeAction(number, action) => {
+                    use tao::platform::macos::WindowExtMacOS;
+                    let found = self
+                        .windows
+                        .iter()
+                        .find(|window| {
+                            let observed: isize = unsafe {
+                                objc2::msg_send![
+                                    window
+                                        .window
+                                        .ns_window()
+                                        .cast::<objc2::runtime::AnyObject>(),
+                                    windowNumber
+                                ]
+                            };
+                            observed == number
+                        })
+                        .map(|window| window.window.id());
+                    if let Some(id) = found {
+                        self.apply(target, id, action);
+                    }
+                }
+                Message::Loaded(id, tab_id, generation, event, url) => {
+                    if let Some(window) = self.window_mut(id) {
+                        if window
+                            .tabs
+                            .get(tab_id)
+                            .is_none_or(|tab| tab.generation != generation)
+                        {
+                            return;
+                        }
+                        match event {
+                            PageLoadEvent::Started => {
+                                window.begin_tab_load(tab_id, false);
+                                if allowed_navigation(url.clone()) {
+                                    if let Some(tab) = window.tabs.get_mut(tab_id) {
+                                        tab.url = url;
+                                    }
+                                }
+                            }
+                            PageLoadEvent::Finished if allowed_navigation(url.clone()) => {
+                                if let Some(view) = window.views.get_mut(&tab_id) {
+                                    view.load_started = None;
+                                    view.finished_navigation = true;
+                                    view.discard_ticket = None;
+                                }
+                                if let Some(tab) = window.tabs.get_mut(tab_id) {
+                                    tab.url = url;
+                                    tab.loading = false;
+                                    tab.discarded = false;
+                                }
+                                if tab_id == window.tabs.selected() {
+                                    window.status = if window
+                                        .tabs
+                                        .get(tab_id)
+                                        .is_some_and(|tab| tab.url == "about:blank")
+                                    {
+                                        Status::Home
+                                    } else {
+                                        Status::Ready
+                                    };
+                                }
+                            }
+                            _ => {}
+                        }
+                        window.render();
+                    }
+                    self.session_dirty = true;
+                    self.write_test_state();
+                }
+                Message::Title(id, tab_id, generation, title) => {
+                    if let Some(window) = self.window_mut(id) {
+                        let selected = tab_id == window.tabs.selected();
+                        let display_title = if let Some(tab) = window
+                            .tabs
+                            .get_mut(tab_id)
+                            .filter(|tab| tab.generation == generation)
+                        {
+                            tab.title = bounded_title(&title);
+                            Some(tab.title.clone())
+                        } else {
+                            None
+                        };
+                        if selected {
+                            if let Some(title) = display_title {
+                                window.window.set_title(&format!("{} — Muffin", title));
+                            }
+                        }
+                        window.render();
+                    }
+                    self.session_dirty = true;
+                    self.write_test_state();
+                }
+                Message::ProcessTerminated(id, tab_id, generation) => {
+                    if let Some(window) = self.window_mut(id) {
+                        let url = window
+                            .tabs
+                            .get(tab_id)
+                            .filter(|tab| tab.generation == generation)
+                            .map(|tab| tab.url.clone());
+                        if let Some(url) = url {
+                            if let Some(view) = window.views.get_mut(&tab_id) {
+                                view.load_started = None;
+                                view.finished_navigation = false;
+                            }
+                            if let Some(tab) = window.tabs.get_mut(tab_id) {
+                                tab.loading = false;
+                            }
+                            if tab_id != window.tabs.selected() {
+                                window.tabs.discard(tab_id);
+                                window.views.remove(&tab_id);
+                                window.render();
+                                return;
+                            }
+                            let recover = window.views.get_mut(&tab_id).is_some_and(|view| {
+                                should_recover(&mut view.recovery_attempted, &url)
+                            });
+                            window.status = Status::Terminated;
+                            if recover {
+                                window.navigate_internal(tab_id, &url, true);
+                            }
+                            window.render();
+                        }
+                    }
+                }
+                Message::DiscardSafety(id, tab_id, generation, ticket, safe) => {
+                    if let Some(window) = self.window_mut(id) {
+                        let current_tab = window.tabs.get(tab_id).is_some_and(|tab| {
+                            tab.generation == generation
+                                && !tab.loading
+                                && tab_id != window.tabs.selected()
+                        });
+                        let matching_view = window.views.get_mut(&tab_id).is_some_and(|view| {
+                            if view.discard_ticket != Some(ticket) {
+                                return false;
+                            }
+                            view.discard_ticket = None;
+                            safe && capture_is_idle(&view.webview)
+                                && !unsafe { view.webview.webview().isLoading() }
+                        });
+                        if current_tab && matching_view && window.tabs.discard(tab_id) {
+                            window.views.remove(&tab_id);
+                            window.render();
+                        }
+                    }
+                    self.write_test_state();
+                }
+            }
+        }
+        fn poll(&mut self, target: &EventLoopWindowTarget<Message>) -> bool {
+            for window in &mut self.windows {
+                window.poll_chrome();
+            }
+            if self.session_dirty && self.last_session_save.elapsed() >= Duration::from_millis(500)
+            {
+                self.save_session();
+                self.session_dirty = false;
+                self.last_session_save = Instant::now();
+            }
+            #[cfg(debug_assertions)]
+            if self.poll_test_control(target) {
+                return true;
+            }
+            #[cfg(not(debug_assertions))]
+            let _ = target;
+            self.write_test_state();
+            false
+        }
+
+        #[cfg(debug_assertions)]
+        fn poll_test_control(&mut self, target: &EventLoopWindowTarget<Message>) -> bool {
+            let active = self.active_id();
+            if !self
+                .windows
+                .iter()
+                .any(|window| window.window.id() == active && window.chrome_ready)
             {
                 return false;
             }
-            unsafe { self.content.webview().hasOnlySecureContent() }
-        }
-
-        fn handle(&mut self, message: Message) {
-            match message {
-                Message::ChromeResult(raw) => {
-                    self.chrome_poll_started = None;
-                    if let Some(reply) = decode_reply(&raw) {
-                        if !self.chrome_ready {
-                            self.chrome_ready = true;
-                            self.render();
-                        }
-                        if let Some(action) = reply.action {
-                            self.apply(action);
-                        }
+            let Some(command) = self.test_control.as_mut().and_then(TestControl::poll) else {
+                return false;
+            };
+            match command {
+                TestCommand::Quit { .. } => return true,
+                TestCommand::Native(action) => self.apply(target, active, action),
+                TestCommand::Chrome(ChromeTestAction::Navigate { value, .. }) => {
+                    if let (Some(window), Ok(value)) =
+                        (self.window_mut(active), serde_json::to_string(&value))
+                    {
+                        let _ = window.chrome.evaluate_script(&format!("(()=>{{const field=document.querySelector('#address');if(field){{field.value={value};field.dispatchEvent(new Event('input',{{bubbles:true}}));document.querySelector('form[role=search]')?.requestSubmit();}}}})()"));
                     }
                 }
-                Message::Loaded(PageLoadEvent::Started, url) => {
-                    self.start_load();
-                    if allowed_navigation(url.clone()) {
-                        self.address = url;
+                TestCommand::Chrome(ChromeTestAction::Capture { .. }) => {
+                    let directory = self
+                        .test_control
+                        .as_ref()
+                        .map(|control| control.directory.clone());
+                    if let (Some(window), Some(directory)) = (self.window_mut(active), directory) {
+                        capture_chrome_view(&window.chrome, &directory);
                     }
-                    self.render();
                 }
-                Message::Loaded(PageLoadEvent::Finished, url) => {
-                    self.load_started = None;
-                    self.finished_navigation = true;
-                    self.address = url;
-                    self.status = if self.address == "about:blank" {
-                        Status::Home
-                    } else {
-                        Status::Ready
-                    };
-                    self.render();
-                }
-                Message::Title(title) => {
-                    self.title = title.chars().take(512).collect();
-                    self.window.set_title(&format!("{} — Muffin", self.title));
-                    self.render();
-                }
-                Message::NativeAction(action) => self.apply(action),
-                Message::ProcessTerminated => {
-                    self.status = Status::Terminated;
-                    self.load_started = None;
-                    if should_recover(&mut self.recovery_attempted, &self.address) {
-                        self.navigate(&self.address.clone());
-                    }
-                    self.render();
-                }
-                Message::Resize => self.layout(),
             }
+            false
         }
     }
 
@@ -605,6 +1261,14 @@ mod browser {
         }
     }
 
+    fn capture_is_idle(view: &WebView) -> bool {
+        let native = view.webview();
+        unsafe {
+            native.cameraCaptureState() == objc2_web_kit::WKMediaCaptureState::None
+                && native.microphoneCaptureState() == objc2_web_kit::WKMediaCaptureState::None
+        }
+    }
+
     fn should_recover(attempted: &mut bool, address: &str) -> bool {
         if *attempted || address == "about:blank" || !allowed_navigation(address.to_owned()) {
             return false;
@@ -622,16 +1286,27 @@ mod browser {
     }
 
     fn allowed_navigation(url: String) -> bool {
-        if url == "about:blank" {
-            return true;
+        url == "about:blank" || external_web_url(&url).is_some()
+    }
+
+    fn external_web_url(url: &str) -> Option<url::Url> {
+        if url.len() > 4096 || url.chars().any(char::is_control) {
+            return None;
         }
-        let Ok(parsed) = url::Url::parse(&url) else {
-            return false;
-        };
-        matches!(parsed.scheme(), "http" | "https")
+        let parsed = url::Url::parse(url).ok()?;
+        (matches!(parsed.scheme(), "http" | "https")
             && parsed.has_host()
             && parsed.username().is_empty()
-            && parsed.password().is_none()
+            && parsed.password().is_none())
+        .then_some(parsed)
+    }
+
+    fn bounded_title(value: &str) -> String {
+        let mut end = value.len().min(512);
+        while !value.is_char_boundary(end) {
+            end -= 1;
+        }
+        value[..end].to_owned()
     }
 
     fn address_destination(input: &str) -> Option<String> {
@@ -676,29 +1351,6 @@ mod browser {
         .then(|| parsed.to_string())
     }
 
-    #[cfg(debug_assertions)]
-    fn test_control() -> Option<TestControl> {
-        let mut args = std::env::args_os().skip(1);
-        while let Some(arg) = args.next() {
-            if arg == "--test-control" {
-                let directory = PathBuf::from(args.next()?);
-                if !directory.is_dir() {
-                    return None;
-                }
-                return Some(TestControl {
-                    directory,
-                    cursor: 0,
-                });
-            }
-        }
-        None
-    }
-
-    #[cfg(not(debug_assertions))]
-    fn test_control() -> Option<TestControl> {
-        None
-    }
-
     fn install_keys(
         proxy: EventLoopProxy<Message>,
     ) -> objc2::rc::Retained<objc2::runtime::AnyObject> {
@@ -724,12 +1376,20 @@ mod browser {
                         Action::FocusAddress { version: 1 }
                     }
                     [letter] if letter.eq_ignore_ascii_case(&b'r') => Action::Reload { version: 1 },
+                    [letter] if letter.eq_ignore_ascii_case(&b't') => Action::NewTab { version: 1 },
+                    [letter] if letter.eq_ignore_ascii_case(&b'n') => {
+                        Action::NewWindow { version: 1 }
+                    }
+                    [letter] if letter.eq_ignore_ascii_case(&b'w') => {
+                        Action::CloseSelectedTab { version: 1 }
+                    }
                     b"[" => Action::Back { version: 1 },
                     b"]" => Action::Forward { version: 1 },
                     b"." => Action::Stop { version: 1 },
                     _ => return event,
                 };
-                let _ = proxy.send_event(Message::NativeAction(action));
+                let number: isize = msg_send![event, windowNumber];
+                let _ = proxy.send_event(Message::NativeAction(number, action));
                 ptr::null_mut()
             }
         });
@@ -740,33 +1400,90 @@ mod browser {
     }
 
     pub fn run() -> Result<(), String> {
-        validate_arguments()?;
+        let (control, startup_urls) = launch_options()?;
         let mut builder = EventLoopBuilder::<Message>::with_user_event();
         let event_loop = builder.build();
-        let mut app = Some(App::new(&event_loop, test_control())?);
+        let session_path = control
+            .as_ref()
+            .and_then(|control| control.session_path.clone());
+        let profile_file = if control.is_some() {
+            session_path.clone()
+        } else {
+            Some(SessionStore::default_path().ok_or("Muffin profile directory is unavailable")?)
+        };
+        let instance_guard = if let Some(profile_file) = profile_file {
+            use std::os::unix::fs::DirBuilderExt;
+            let directory = profile_file
+                .parent()
+                .ok_or("Muffin profile directory is unavailable")?;
+            std::fs::DirBuilder::new()
+                .recursive(true)
+                .mode(0o700)
+                .create(directory)
+                .map_err(|error| format!("create Muffin profile directory: {error}"))?;
+            let proxy = event_loop.create_proxy();
+            match super::instance::start(directory, startup_urls.clone(), move |urls| {
+                proxy.send_event(Message::ExternalUrls(urls)).is_ok()
+            })? {
+                super::instance::Instance::Forwarded => return Ok(()),
+                super::instance::Instance::Primary(guard) => Some(guard),
+            }
+        } else {
+            None
+        };
+        let mut state = App::new(&event_loop, control, session_path)?;
+        if !startup_urls.is_empty() {
+            state.forward_urls(startup_urls);
+        }
+        let mut app = Some(state);
         let _key_monitor = install_keys(event_loop.create_proxy());
         let mut next_tick = Instant::now();
-        event_loop.run(move |event, _, control_flow| {
+        event_loop.run(move |event, target, control_flow| {
+            let _keep_primary_instance = &instance_guard;
             match event {
                 Event::WindowEvent {
                     event: WindowEvent::CloseRequested,
+                    window_id,
                     ..
                 } => {
-                    app = None;
-                    *control_flow = ControlFlow::Exit;
-                    return;
+                    if let Some(state) = app.as_mut() {
+                        if !state.close_window(window_id) {
+                            state.save_session();
+                            app = None;
+                            *control_flow = ControlFlow::Exit;
+                            return;
+                        }
+                    }
                 }
                 Event::WindowEvent {
                     event: WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. },
+                    window_id,
                     ..
                 } => {
                     if let Some(app) = app.as_mut() {
-                        app.handle(Message::Resize);
+                        if let Some(window) = app.window_mut(window_id) {
+                            window.layout();
+                        }
+                    }
+                }
+                Event::WindowEvent {
+                    event: WindowEvent::Focused(true),
+                    window_id,
+                    ..
+                } => {
+                    if let Some(app) = app.as_mut() {
+                        app.focused = window_id;
+                        app.write_test_state();
                     }
                 }
                 Event::UserEvent(message) => {
                     if let Some(app) = app.as_mut() {
-                        app.handle(message);
+                        app.handle(target, message);
+                    }
+                }
+                Event::Opened { urls } => {
+                    if let Some(app) = app.as_mut() {
+                        app.forward_urls(urls);
                     }
                 }
                 Event::LoopDestroyed => return,
@@ -774,24 +1491,72 @@ mod browser {
             }
             if Instant::now() >= next_tick {
                 next_tick = Instant::now() + Duration::from_millis(100);
-                if let Some(app) = app.as_mut() {
-                    app.poll_chrome();
+                let should_quit = app.as_mut().is_some_and(|state| state.poll(target));
+                if should_quit {
+                    if let Some(state) = app.as_ref() {
+                        state.save_session();
+                    }
+                    app = None;
+                    *control_flow = ControlFlow::Exit;
+                    return;
                 }
             }
             *control_flow = ControlFlow::WaitUntil(next_tick);
         });
     }
 
-    fn validate_arguments() -> Result<(), String> {
-        let args: Vec<_> = std::env::args_os().skip(1).collect();
-        if args.is_empty() {
-            return Ok(());
-        }
+    fn launch_options() -> Result<(Option<TestControl>, Vec<url::Url>), String> {
+        let args = std::env::args_os().skip(1).peekable();
         #[cfg(debug_assertions)]
-        if args.len() == 2 && args[0] == "--test-control" && Path::new(&args[1]).is_dir() {
-            return Ok(());
+        let mut args = args;
+        let malformed = || "unknown or malformed argument".to_owned();
+        #[cfg(debug_assertions)]
+        let control = if args.peek().is_some_and(|arg| arg == "--test-control") {
+            args.next();
+            let directory = PathBuf::from(args.next().ok_or_else(malformed)?);
+            if !directory.is_absolute() || !directory.is_dir() {
+                return Err(malformed());
+            }
+            let session_path = if args.peek().is_some_and(|arg| arg == "--test-session") {
+                args.next();
+                let path = PathBuf::from(args.next().ok_or_else(malformed)?);
+                if path != directory.join("session.json") {
+                    return Err(malformed());
+                }
+                Some(path)
+            } else {
+                None
+            };
+            Some(TestControl {
+                directory,
+                cursor: 0,
+                session_path,
+            })
+        } else {
+            None
+        };
+        #[cfg(not(debug_assertions))]
+        let control = None;
+
+        let urls = args
+            .take(17)
+            .map(|argument| {
+                let raw = argument.to_str().ok_or_else(malformed)?;
+                if raw.len() > 4096 || raw.chars().any(char::is_control) || raw.contains('\\') {
+                    return Err(malformed());
+                }
+                let url = url::Url::parse(raw).map_err(|_| malformed())?;
+                if !matches!(url.scheme(), "http" | "https") || !allowed_navigation(raw.to_owned())
+                {
+                    return Err(malformed());
+                }
+                Ok(url)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        if urls.len() > 16 {
+            return Err(malformed());
         }
-        Err("unknown or malformed argument".into())
+        Ok((control, urls))
     }
 
     #[cfg(test)]

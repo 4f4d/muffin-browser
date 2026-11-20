@@ -13,11 +13,11 @@
 
 * { box-sizing: border-box; }
 
-html, body, #app { width: 100%; height: 56px; margin: 0; overflow: hidden; }
+html, body, #app { width: 100%; height: 96px; margin: 0; overflow: hidden; }
 body { background: transparent; }
 
 .chrome {
-  height: 56px;
+  height: 96px;
   padding: 6px 10px 8px;
   user-select: none;
   -webkit-user-select: none;
@@ -33,7 +33,7 @@ body { background: transparent; }
   border: 1px solid var(--edge);
   border-radius: 15px;
   background: var(--glass);
-  box-shadow: 0 1px 1px rgb(45 34 25 / 5%), 0 5px 16px rgb(45 34 25 / 8%), inset 0 1px 0 rgb(255 255 255 / 76%);
+  box-shadow: 0 2px 8px rgb(45 34 25 / 6%);
   -webkit-backdrop-filter: blur(22px) saturate(145%);
   backdrop-filter: blur(22px) saturate(145%);
   -webkit-app-region: drag;
@@ -96,11 +96,48 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .clear-button svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
+.tabbar { display: flex; align-items: center; gap: 8px; height: 40px; min-width: 0; }
+.tab-list-scroll { height: 36px; min-width: 0; flex: 1 1 auto; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.tab-list-scroll::-webkit-scrollbar { display: none; }
+.tab-list { display: flex; align-items: center; gap: 4px; width: max-content; min-width: 100%; height: 36px; }
+.tab-item { display: flex; align-items: center; width: clamp(104px, 18vw, 190px); min-width: 0; height: 30px; padding: 2px 4px 2px 6px; border-radius: 8px; color: var(--ink-muted); transition: background 100ms ease; }
+.tab-item:hover { background: var(--hover); }
+.tab-item.selected { background: var(--tab-active); color: var(--ink); }
+.tab-select { display: flex; align-items: center; gap: 7px; min-width: 0; height: 24px; flex: 1 1 auto; padding: 0 3px; overflow: hidden; border: 0; border-radius: 6px; color: inherit; background: transparent; text-align: left; font: inherit; font-size: 12px; cursor: default; }
+.tab-item.selected .tab-select { font-weight: 550; }
+.tab-select:focus-visible { outline: 2px solid var(--focus); outline-offset: -1px; }
+.tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-close, .tab-discard { display: grid; place-items: center; width: 21px; height: 21px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 6px; color: var(--ink-muted); background: transparent; opacity: 0; cursor: default; }
+.tab-item:hover .tab-close, .tab-item:focus-within .tab-close, .tab-item.selected .tab-close,
+.tab-item:hover .tab-discard, .tab-item:focus-within .tab-discard { opacity: .88; }
+.tab-close:hover, .tab-discard:hover:not(:disabled) { color: var(--ink); background: var(--hover); }
+.tab-discard:disabled { color: var(--disabled); }
+.tab-close svg, .tab-discard svg, .mini-action svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
+.tab-pin-mark { display: grid; place-items: center; width: 13px; height: 13px; flex: 0 0 auto; color: var(--caramel-ink); }
+.tab-pin-mark svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+.tab-discard-mark { width: 7px; height: 7px; flex: 0 0 auto; border: 1px solid currentColor; border-radius: 50%; opacity: .62; }
+.tab-loading { width: 11px; height: 11px; flex: 0 0 auto; border: 1.5px solid var(--focus); border-right-color: transparent; border-radius: 50%; animation: tab-spin 900ms linear infinite; }
+@keyframes tab-spin { to { transform: rotate(360deg); } }
+.tab-actions { display: flex; align-items: center; gap: 1px; height: 30px; flex: 0 0 auto; }
+.mini-action { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 8px; color: var(--ink-muted); background: transparent; cursor: default; }
+.mini-action:hover:not(:disabled) { color: var(--ink); background: var(--hover); }
+.mini-action:disabled { color: var(--disabled); opacity: .7; }
+.mini-action.new-tab-button { color: var(--caramel-ink); background: var(--new-tab); }
+.tab-action-divider { width: 1px; height: 15px; margin: 0 3px; background: var(--edge); }
+.tab-search-shell { display: flex; align-items: center; width: 130px; height: 27px; padding: 0 3px 0 8px; border: 1px solid var(--address-edge); border-radius: 9px; background: var(--address); }
+.tab-search-shell:focus-within { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus-ring); }
+.tab-search-input { width: 100%; height: 24px; font-size: 11px; }
+.search-close { width: 20px; height: 20px; }
+.no-tabs { padding: 0 8px; color: var(--ink-muted); font-size: 11px; }
+
 button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; } }
 @media (prefers-color-scheme: dark) {
   :root { color-scheme: dark; }
-  .toolbar { box-shadow: 0 1px 1px rgb(0 0 0 / 18%), 0 5px 16px rgb(0 0 0 / 30%), inset 0 1px 0 rgb(255 255 255 / 10%); }
+  .toolbar { box-shadow: 0 2px 8px rgb(0 0 0 / 20%); }
+}
+@media (prefers-contrast: more) {
+  .tab-item.selected { outline: 1px solid var(--ink-muted); outline-offset: -1px; }
 }
 @media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
   .toolbar {

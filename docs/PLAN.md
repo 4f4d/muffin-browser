@@ -166,6 +166,8 @@ Window chrome: preserve native traffic lights on macOS and begin with native dec
 
 The owner requested a premium, macOS-native feel with Liquid Glass-inspired controls and edges. Use subtle depth and highlights on the navigation layer, with a quiet page surface and warm tint. Preserve legibility and keyboard focus in light, dark, increased-contrast and reduced-transparency settings. Prefer system material where the target OS and native composition path support it. Qualify actual window composition and measure rendering costs before expanding effects. [Apple material guidance](https://developer.apple.com/design/human-interface-guidelines/materials)
 
+Use a tonal surface and slightly stronger type for the selected tab. Reserve a visible ring for keyboard focus and an edge for the increased-contrast setting. Inspect the native chrome before keeping decorative highlights on compact controls.
+
 ### Design workflow
 
 Do not create a large detached mockup waterfall. Build the real chrome stack and a component-gallery route first. Deliver four initial visual checkpoints: browser frame in light/dark, new-tab page, settings, and downloads panel. Capture screenshots at normal, narrow, and high-DPI sizes. Then iterate using the actual app and platform screenshots. A chrome-only screenshot does not prove content-WebView z-order.

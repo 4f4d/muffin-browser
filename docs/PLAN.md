@@ -164,6 +164,8 @@ Typography: choose a high-quality, openly licensed UI typeface only after checki
 
 Window chrome: preserve native traffic lights on macOS and begin with native decorations on Windows/Linux. Do not break Windows 11 snap layouts or Wayland behaviour with custom caption controls. Shared identity applies to the browser chrome; system title bars, file dialogs, engine form controls, scrollbars, and context menus may necessarily differ.
 
+The owner requested a premium, macOS-native feel with Liquid Glass-inspired controls and edges. Use subtle depth and highlights on the navigation layer, with a quiet page surface and warm tint. Preserve legibility and keyboard focus in light, dark, increased-contrast and reduced-transparency settings. Prefer system material where the target OS and native composition path support it. Qualify actual window composition and measure rendering costs before expanding effects. [Apple material guidance](https://developer.apple.com/design/human-interface-guidelines/materials)
+
 ### Design workflow
 
 Do not create a large detached mockup waterfall. Build the real chrome stack and a component-gallery route first. Deliver four initial visual checkpoints: browser frame in light/dark, new-tab page, settings, and downloads panel. Capture screenshots at normal, narrow, and high-DPI sizes. Then iterate using the actual app and platform screenshots. A chrome-only screenshot does not prove content-WebView z-order.

@@ -1,0 +1,23 @@
+{
+  "name": "muffin-chrome",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "build": "vite build && node scripts/inline-bundle.mjs && vite build --mode gallery && node scripts/inline-bundle.mjs gallery",
+    "gallery": "vite build --mode gallery && node scripts/inline-bundle.mjs gallery",
+    "test": "vitest run",
+    "verify": "npm run test && npm run check && npm run build"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "5.1.1",
+    "@types/node": "26.1.2",
+    "svelte": "5.58.1",
+    "svelte-check": "4.3.4",
+    "typescript": "5.9.3",
+    "vite": "6.4.6",
+    "vitest": "4.1.12",
+    "jsdom": "29.1.1"
+  }
+}

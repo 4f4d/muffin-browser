@@ -1,0 +1,118 @@
+@import './tokens.css';
+
+:root {
+  color-scheme: light dark;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: transparent;
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { width: 100%; height: 56px; margin: 0; overflow: hidden; }
+body { background: transparent; }
+
+.chrome {
+  height: 56px;
+  padding: 6px 10px 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 4px 7px;
+  border: 1px solid var(--edge);
+  border-radius: 15px;
+  background: var(--glass);
+  box-shadow: 0 1px 1px rgb(45 34 25 / 5%), 0 5px 16px rgb(45 34 25 / 8%), inset 0 1px 0 rgb(255 255 255 / 76%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-app-region: drag;
+}
+
+.history { display: flex; align-items: center; gap: 1px; flex: 0 0 auto; }
+.icon-button, .home-button, .clear-button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  color: var(--ink-muted);
+  background: transparent;
+  cursor: default;
+  -webkit-app-region: no-drag;
+}
+.icon-button { width: 28px; height: 30px; border-radius: 9px; }
+.icon-button:hover:not(:disabled), .home-button:hover, .clear-button:hover { color: var(--ink); background: var(--hover); }
+.icon-button:disabled { color: var(--disabled); }
+.icon-button svg, .home-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
+.home-button { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px; }
+
+.address-shell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 32px;
+  flex: 1 1 auto;
+  padding: 0 7px 0 10px;
+  border: 1px solid var(--address-edge);
+  border-radius: 10px;
+  background: var(--address);
+  box-shadow: inset 0 1px 1px rgb(40 32 25 / 3%);
+  -webkit-app-region: no-drag;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+.address-shell:focus-within { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus-ring); background: var(--address-focus); }
+.security-mark { display: grid; width: 17px; height: 17px; flex: 0 0 auto; margin-right: 8px; color: var(--icon-muted); }
+.security-mark.secure { color: var(--secure); }
+.security-mark svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
+input {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  user-select: text;
+  -webkit-user-select: text;
+}
+input::placeholder { color: var(--placeholder); opacity: 1; }
+.status-label { flex: 0 0 auto; margin-left: 8px; color: var(--ink-muted); font-size: 11px; }
+.status-error { color: var(--error); }
+.clear-button { width: 22px; height: 22px; flex: 0 0 auto; margin-left: 3px; border-radius: 7px; opacity: 0; }
+.address-shell:focus-within .clear-button, .address-shell:hover .clear-button { opacity: .82; }
+.clear-button svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; } }
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; }
+  .toolbar { box-shadow: 0 1px 1px rgb(0 0 0 / 18%), 0 5px 16px rgb(0 0 0 / 30%), inset 0 1px 0 rgb(255 255 255 / 10%); }
+}
+@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+  .toolbar {
+    background: var(--solid-toolbar);
+    border-color: var(--ink-muted);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .address-shell, .address-shell:focus-within {
+    background: var(--solid-address);
+    border-color: var(--ink-muted);
+  }
+  .address-shell:focus-within { outline: 2px solid var(--focus); }
+}

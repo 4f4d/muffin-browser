@@ -1,0 +1,8 @@
+[workspace]
+members = ["crates/muffin"]
+exclude = [
+    "spikes/m0b-validation",
+    "spikes/s1/wry-tao",
+    "spikes/s1/tauri/src-tauri",
+]
+resolver = "2"

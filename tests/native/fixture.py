@@ -66,8 +66,9 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         pages = {"/first": PAGE_ONE, "/second": PAGE_TWO}
-        if self.path in pages:
-            body = pages[self.path].encode("utf-8")
+        page_path = self.path.split("?", 1)[0]
+        if page_path in pages:
+            body = pages[page_path].encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))

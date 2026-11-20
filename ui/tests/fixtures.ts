@@ -1,0 +1,31 @@
+import type { ChromeSnapshot } from '../src/lib/bridge';
+
+export function makeSnapshot(overrides: Partial<ChromeSnapshot> = {}): ChromeSnapshot {
+  return {
+    version: 1,
+    url: '',
+    title: 'New tab',
+    loading: false,
+    can_back: false,
+    can_forward: false,
+    status: 'home',
+    secure: false,
+    tabs: [],
+    selected_tab: 0,
+    can_restore: false,
+    surface: 'browse',
+    settings: {
+      theme: 'system',
+      search_engine: 'duckduckgo',
+      restore_session: true,
+      clear_history_on_exit: false
+    },
+    suggestions: [],
+    history: [],
+    bookmarks: [],
+    shortcuts: [],
+    bookmarked: false,
+    notice: '',
+    ...overrides
+  };
+}

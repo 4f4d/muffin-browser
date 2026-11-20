@@ -9,6 +9,8 @@ fn main() {
 #[cfg(target_os = "macos")]
 mod instance;
 #[cfg(target_os = "macos")]
+mod profile;
+#[cfg(target_os = "macos")]
 #[path = "session.rs"]
 mod session;
 #[cfg(target_os = "macos")]
@@ -18,6 +20,7 @@ mod tabs;
 #[cfg(target_os = "macos")]
 mod browser {
     use super::{
+        profile::{Bookmark, Profile, Settings, Shortcut, Suggestion, Visit},
         session::SessionStore,
         tabs::{SavedWindow, SessionDocument, TabSet},
     };
@@ -54,9 +57,77 @@ mod browser {
     const CHROME_HEIGHT: u32 = 96;
     const MAX_MESSAGE_BYTES: usize = 64 * 1024;
 
+    #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+    #[serde(rename_all = "snake_case")]
+    enum Surface {
+        Browse,
+        #[default]
+        Start,
+        Library,
+        Settings,
+    }
+
+    #[derive(Clone, Default, Serialize)]
+    struct ProfileSnapshot {
+        surface: Surface,
+        settings: Settings,
+        suggestions: Vec<Suggestion>,
+        history: Vec<Visit>,
+        bookmarks: Vec<Bookmark>,
+        shortcuts: Vec<Shortcut>,
+        bookmarked: bool,
+        notice: String,
+    }
+
     #[derive(Clone, Debug, Deserialize)]
     #[serde(tag = "action", deny_unknown_fields)]
     enum Action {
+        #[serde(rename = "show_surface")]
+        ShowSurface { version: u8, value: Surface },
+        #[serde(rename = "query_omnibox")]
+        QueryOmnibox { version: u8, value: String },
+        #[serde(rename = "query_library")]
+        QueryLibrary { version: u8, value: String },
+        #[serde(rename = "set_theme")]
+        SetTheme { version: u8, value: String },
+        #[serde(rename = "set_search_engine")]
+        SetSearchEngine { version: u8, value: String },
+        #[serde(rename = "clear_history")]
+        ClearHistory { version: u8, value: String },
+        #[serde(rename = "set_restore_session")]
+        SetRestoreSession { version: u8, enabled: bool },
+        #[serde(rename = "set_clear_history_on_exit")]
+        SetClearHistoryOnExit { version: u8, enabled: bool },
+        #[serde(rename = "bookmark_current")]
+        BookmarkCurrent { version: u8 },
+        #[serde(rename = "import_bookmarks")]
+        ImportBookmarks { version: u8 },
+        #[serde(rename = "export_bookmarks")]
+        ExportBookmarks { version: u8 },
+        #[serde(rename = "remove_visit")]
+        RemoveVisit { version: u8, id: i64 },
+        #[serde(rename = "delete_bookmark")]
+        DeleteBookmark { version: u8, id: i64 },
+        #[serde(rename = "move_bookmark")]
+        MoveBookmark {
+            version: u8,
+            id: i64,
+            parent_id: Option<i64>,
+        },
+        #[serde(rename = "remove_shortcut")]
+        RemoveShortcut { version: u8, id: i64 },
+        #[serde(rename = "create_folder")]
+        CreateFolder {
+            version: u8,
+            title: String,
+            parent_id: Option<i64>,
+        },
+        #[serde(rename = "add_shortcut")]
+        AddShortcut {
+            version: u8,
+            title: String,
+            url: String,
+        },
         #[serde(rename = "navigate")]
         Navigate { version: u8, value: String },
         #[serde(rename = "back")]
@@ -107,6 +178,8 @@ mod browser {
         Navigate { version: u8, value: String },
         #[serde(rename = "capture_chrome")]
         Capture { version: u8 },
+        #[serde(rename = "inspect_chrome")]
+        Inspect { version: u8 },
     }
 
     #[cfg(debug_assertions)]
@@ -124,7 +197,8 @@ mod browser {
         match &command {
             TestCommand::Chrome(
                 ChromeTestAction::Navigate { version: 1, .. }
-                | ChromeTestAction::Capture { version: 1 },
+                | ChromeTestAction::Capture { version: 1 }
+                | ChromeTestAction::Inspect { version: 1 },
             ) => Some(command),
             TestCommand::Native(action) if action.version() == 1 => Some(command),
             TestCommand::Quit { version: 1, action } if action == "quit_test" => Some(command),
@@ -135,7 +209,24 @@ mod browser {
     impl Action {
         fn version(&self) -> u8 {
             match self {
-                Self::Navigate { version, .. }
+                Self::ShowSurface { version, .. }
+                | Self::QueryOmnibox { version, .. }
+                | Self::QueryLibrary { version, .. }
+                | Self::SetTheme { version, .. }
+                | Self::SetSearchEngine { version, .. }
+                | Self::ClearHistory { version, .. }
+                | Self::SetRestoreSession { version, .. }
+                | Self::SetClearHistoryOnExit { version, .. }
+                | Self::BookmarkCurrent { version, .. }
+                | Self::ImportBookmarks { version, .. }
+                | Self::ExportBookmarks { version, .. }
+                | Self::RemoveVisit { version, .. }
+                | Self::DeleteBookmark { version, .. }
+                | Self::MoveBookmark { version, .. }
+                | Self::RemoveShortcut { version, .. }
+                | Self::CreateFolder { version, .. }
+                | Self::AddShortcut { version, .. }
+                | Self::Navigate { version, .. }
                 | Self::Back { version }
                 | Self::Forward { version }
                 | Self::Reload { version }
@@ -213,6 +304,8 @@ mod browser {
         tabs: Vec<TabSnapshot>,
         selected_tab: u32,
         can_restore: bool,
+        #[serde(flatten)]
+        profile: ProfileSnapshot,
     }
 
     enum Message {
@@ -321,6 +414,9 @@ mod browser {
         last_poll: Instant,
         test_mode: bool,
         discard_serial: u64,
+        profile_state: ProfileSnapshot,
+        omnibox_query: String,
+        library_query: String,
     }
 
     impl BrowserWindow {
@@ -361,9 +457,14 @@ mod browser {
                 last_poll: Instant::now(),
                 test_mode,
                 discard_serial: 0,
+                profile_state: ProfileSnapshot::default(),
+                omnibox_query: String::new(),
+                library_query: String::new(),
             };
             let selected = browser.tabs.selected();
             browser.ensure_view(selected)?;
+            browser.set_selected_surface();
+            browser.layout();
             Ok(browser)
         }
 
@@ -471,11 +572,19 @@ mod browser {
                 .window
                 .inner_size()
                 .to_logical::<u32>(self.window.scale_factor());
+            let showing_content = self.profile_state.surface == Surface::Browse;
+            let chrome_height = if showing_content {
+                CHROME_HEIGHT
+            } else {
+                logical.height
+            };
             let _ = self
                 .chrome
-                .set_bounds(bounds(&self.window, 0, CHROME_HEIGHT));
+                .set_bounds(bounds(&self.window, 0, chrome_height));
             for (id, view) in &self.views {
-                let _ = view.webview.set_visible(*id == self.tabs.selected());
+                let _ = view
+                    .webview
+                    .set_visible(showing_content && *id == self.tabs.selected());
                 let _ = view.webview.set_bounds(bounds(
                     &self.window,
                     CHROME_HEIGHT,
@@ -492,6 +601,16 @@ mod browser {
             if self.ensure_view(tab_id).is_err() {
                 self.status = Status::Failed;
                 return;
+            }
+            if tab_id == self.tabs.selected() && !recovering {
+                self.profile_state.surface = if url == "about:blank" {
+                    Surface::Start
+                } else {
+                    Surface::Browse
+                };
+                self.omnibox_query.clear();
+                self.profile_state.suggestions.clear();
+                self.layout();
             }
             self.begin_tab_load(tab_id, !recovering);
             if self.views[&tab_id].webview.load_url(url).is_err() {
@@ -540,10 +659,12 @@ mod browser {
             }
             let previously_selected = self.tabs.selected();
             match action {
-                Action::Navigate { value, .. } => match address_destination(&value) {
-                    Some(url) => self.navigate(self.tabs.selected(), &url),
-                    None => self.status = Status::Blocked,
-                },
+                Action::Navigate { value, .. } => {
+                    match address_destination(&value, &self.profile_state.settings.search_engine) {
+                        Some(url) => self.navigate(self.tabs.selected(), &url),
+                        None => self.status = Status::Blocked,
+                    }
+                }
                 Action::Back { .. } => {
                     if self
                         .selected_view()
@@ -635,6 +756,7 @@ mod browser {
                     self.tabs.move_to(id, index as usize);
                 }
                 Action::DiscardTab { id, .. } => return WindowEffect::Discard(id),
+                _ => return WindowEffect::None,
             }
             if self.tabs.selected() != previously_selected {
                 self.restore_selected();
@@ -644,8 +766,22 @@ mod browser {
             WindowEffect::None
         }
 
+        fn set_selected_surface(&mut self) {
+            self.profile_state.surface = if self
+                .tabs
+                .get(self.tabs.selected())
+                .is_some_and(|tab| tab.url == "about:blank")
+            {
+                Surface::Start
+            } else {
+                Surface::Browse
+            };
+            self.omnibox_query.clear();
+        }
+
         fn restore_selected(&mut self) {
             let selected = self.tabs.selected();
+            self.set_selected_surface();
             if self.ensure_view(selected).is_err() {
                 self.status = Status::Failed;
                 return;
@@ -662,6 +798,75 @@ mod browser {
                     Status::Ready
                 };
                 self.window.set_title(&format!("{} — Muffin", tab.title));
+            }
+        }
+
+        fn refresh_profile(&mut self, database: Option<&Profile>) {
+            let Some(database) = database else {
+                self.profile_state.notice = "The local profile is unavailable.".into();
+                return;
+            };
+            let result = (|| -> super::profile::Result<()> {
+                self.profile_state.settings = database.settings()?;
+                self.profile_state.bookmarked = self
+                    .tabs
+                    .get(self.tabs.selected())
+                    .filter(|tab| tab.url != "about:blank")
+                    .map(|tab| database.bookmark_for_url(&tab.url))
+                    .transpose()?
+                    .flatten()
+                    .is_some();
+                self.profile_state.suggestions = database.suggest(&self.omnibox_query, 8)?;
+                self.profile_state
+                    .suggestions
+                    .retain(|item| external_web_url(&item.url).is_some());
+                for item in &mut self.profile_state.suggestions {
+                    item.title = bounded_title(&item.title);
+                }
+                self.profile_state.history.clear();
+                self.profile_state.bookmarks.clear();
+                self.profile_state.shortcuts.clear();
+                match self.profile_state.surface {
+                    Surface::Library => {
+                        self.profile_state.history = if self.library_query.trim().is_empty() {
+                            database.history(48)?
+                        } else {
+                            database.search_history(&self.library_query, 48)?
+                        };
+                        for item in &mut self.profile_state.history {
+                            item.title = bounded_title(&item.title);
+                        }
+                        self.profile_state.bookmarks = database
+                            .bookmarks()?
+                            .into_iter()
+                            .filter(|item| {
+                                item.url
+                                    .as_ref()
+                                    .is_none_or(|url| external_web_url(url).is_some())
+                            })
+                            .take(500)
+                            .collect();
+                        for item in &mut self.profile_state.bookmarks {
+                            item.title = bounded_title(&item.title);
+                        }
+                    }
+                    Surface::Start => {
+                        self.profile_state.shortcuts = database
+                            .shortcuts()?
+                            .into_iter()
+                            .filter(|item| external_web_url(&item.url).is_some())
+                            .take(32)
+                            .collect();
+                        for item in &mut self.profile_state.shortcuts {
+                            item.title = bounded_title(&item.title);
+                        }
+                    }
+                    Surface::Browse | Surface::Settings => {}
+                }
+                Ok(())
+            })();
+            if result.is_err() {
+                self.profile_state.notice = "Muffin couldn’t read the local profile.".into();
             }
         }
 
@@ -697,6 +902,7 @@ mod browser {
                     .collect(),
                 selected_tab: id,
                 can_restore: self.tabs.can_reopen(),
+                profile: self.profile_state.clone(),
             }
         }
 
@@ -788,6 +994,7 @@ mod browser {
         focused: WindowId,
         proxy: EventLoopProxy<Message>,
         session: Option<SessionStore>,
+        profile: Option<Profile>,
         test_control: Option<TestControl>,
         session_dirty: bool,
         last_session_save: Instant,
@@ -799,6 +1006,26 @@ mod browser {
             test_control: Option<TestControl>,
             test_session: Option<PathBuf>,
         ) -> Result<Self, String> {
+            let opened_profile = if let Some(path) = test_session.as_ref() {
+                Profile::open(path.with_file_name("profile.sqlite3"))
+            } else if test_control.is_some() {
+                Profile::in_memory()
+            } else if let Some(path) = SessionStore::default_path() {
+                Profile::open(path.with_file_name("profile.sqlite3"))
+            } else {
+                Profile::in_memory()
+            };
+            let profile = match opened_profile {
+                Ok(profile) => Some(profile),
+                Err(error) => {
+                    eprintln!("profile_open_failed: {error}");
+                    None
+                }
+            };
+            let restore = profile
+                .as_ref()
+                .and_then(|profile| profile.settings().ok())
+                .is_none_or(|settings| settings.restore_session);
             let session = if let Some(path) = test_session {
                 Some(SessionStore::new(path))
             } else if test_control.is_some() {
@@ -807,6 +1034,7 @@ mod browser {
                 SessionStore::default_path().map(SessionStore::new)
             };
             let (saved, session) = match session {
+                Some(store) if !restore => (None, Some(store)),
                 Some(store) => match store.load_recovering() {
                     Ok(saved) => (saved, Some(store)),
                     Err(error) => {
@@ -840,16 +1068,20 @@ mod browser {
                 )?);
             }
             let focused = windows[0].window.id();
-            let app = Self {
+            let mut app = Self {
                 windows,
                 focused,
                 proxy,
                 session,
+                profile,
                 test_control,
                 session_dirty: false,
                 last_session_save: Instant::now(),
             };
-            app.save_session();
+            app.refresh_profile_windows();
+            if restore {
+                app.save_session();
+            }
             app.render_active();
             Ok(app)
         }
@@ -866,6 +1098,33 @@ mod browser {
                 .iter_mut()
                 .find(|window| window.window.id() == id)
         }
+        fn refresh_profile_windows(&mut self) {
+            for window in &mut self.windows {
+                window.refresh_profile(self.profile.as_ref());
+                window.render();
+            }
+        }
+
+        fn refresh_profile_window(&mut self, id: WindowId) {
+            if let Some(window) = self
+                .windows
+                .iter_mut()
+                .find(|window| window.window.id() == id)
+            {
+                window.refresh_profile(self.profile.as_ref());
+                window.render();
+            }
+        }
+
+        fn quit(&self) {
+            self.save_session();
+            if let Some(profile) = &self.profile {
+                if profile.clear_history_on_exit().is_err() {
+                    eprintln!("clear_history_on_exit_failed");
+                }
+            }
+        }
+
         fn render_active(&self) {
             if let Some(window) = self
                 .windows
@@ -929,6 +1188,7 @@ mod browser {
             ) {
                 self.focused = window.window.id();
                 self.windows.push(window);
+                self.refresh_profile_window(self.focused);
                 self.session_dirty = true;
             }
         }
@@ -980,6 +1240,10 @@ mod browser {
             true
         }
         fn apply(&mut self, target: &EventLoopWindowTarget<Message>, id: WindowId, action: Action) {
+            if self.apply_profile_action(id, &action) {
+                self.write_test_state();
+                return;
+            }
             let effect = if let Some(window) = self.window_mut(id) {
                 window.apply(action)
             } else {
@@ -998,8 +1262,101 @@ mod browser {
                 }
             }
             self.session_dirty = true;
+            self.refresh_profile_window(id);
             self.write_test_state();
         }
+        fn apply_profile_action(&mut self, id: WindowId, action: &Action) -> bool {
+            let Some(window) = self.window_mut(id) else {
+                return true;
+            };
+            match action {
+                Action::ShowSurface { value, .. } => {
+                    window.profile_state.notice.clear();
+                    window.library_query.clear();
+                    window.omnibox_query.clear();
+                    if *value == Surface::Start {
+                        window.navigate(window.tabs.selected(), "about:blank");
+                    } else if *value == Surface::Browse {
+                        window.set_selected_surface();
+                    } else {
+                        window.profile_state.surface = *value;
+                    }
+                    window.layout();
+                    let _ = window.chrome.focus();
+                    self.refresh_profile_window(id);
+                    return true;
+                }
+                Action::QueryOmnibox { value, .. } => {
+                    window.omnibox_query = value.chars().take(240).collect();
+                    self.refresh_profile_window(id);
+                    return true;
+                }
+                Action::QueryLibrary { value, .. } => {
+                    window.library_query = value.chars().take(240).collect();
+                    self.refresh_profile_window(id);
+                    return true;
+                }
+                Action::BookmarkCurrent { .. }
+                | Action::CreateFolder { .. }
+                | Action::DeleteBookmark { .. }
+                | Action::MoveBookmark { .. }
+                | Action::ImportBookmarks { .. }
+                | Action::ExportBookmarks { .. }
+                | Action::RemoveVisit { .. }
+                | Action::ClearHistory { .. }
+                | Action::AddShortcut { .. }
+                | Action::RemoveShortcut { .. }
+                | Action::SetTheme { .. }
+                | Action::SetSearchEngine { .. }
+                | Action::SetRestoreSession { .. }
+                | Action::SetClearHistoryOnExit { .. } => {}
+                _ => return false,
+            }
+
+            let current = window
+                .tabs
+                .get(window.tabs.selected())
+                .map(|tab| (tab.url.clone(), tab.title.clone()))
+                .unwrap_or_default();
+            let file = match action {
+                Action::ImportBookmarks { .. } => {
+                    let Some(path) = rfd::FileDialog::new()
+                        .add_filter("Bookmarks", &["html", "htm"])
+                        .pick_file()
+                    else {
+                        return true;
+                    };
+                    Some(path)
+                }
+                Action::ExportBookmarks { .. } => {
+                    let Some(path) = rfd::FileDialog::new()
+                        .set_file_name("Muffin Bookmarks.html")
+                        .add_filter("Bookmarks", &["html"])
+                        .save_file()
+                    else {
+                        return true;
+                    };
+                    Some(path)
+                }
+                _ => None,
+            };
+            let result = match self.profile.as_mut() {
+                Some(profile) => update_profile(profile, action, &current, file.as_deref()),
+                None => Err("The local profile is unavailable.".into()),
+            };
+            if let Some(window) = self.window_mut(id) {
+                window.profile_state.notice = match result {
+                    Ok(message) => message,
+                    Err(error) => {
+                        eprintln!("profile_action_failed: {error}");
+                        "Muffin couldn’t complete that library change.".into()
+                    }
+                };
+            }
+            self.refresh_profile_windows();
+            true
+        }
+
         fn handle(&mut self, target: &EventLoopWindowTarget<Message>, message: Message) {
             match message {
                 Message::ExternalUrls(urls) => self.forward_urls(urls),
@@ -1055,6 +1412,7 @@ mod browser {
                     }
                 }
                 Message::Loaded(id, tab_id, generation, event, url) => {
+                    let mut visit = None;
                     if let Some(window) = self.window_mut(id) {
                         if window
                             .tabs
@@ -1078,10 +1436,21 @@ mod browser {
                                     view.finished_navigation = true;
                                     view.discard_ticket = None;
                                 }
+                                let title = window
+                                    .views
+                                    .get(&tab_id)
+                                    .and_then(|view| unsafe { view.webview.webview().title() })
+                                    .map(|value| bounded_title(&value.to_string()));
                                 if let Some(tab) = window.tabs.get_mut(tab_id) {
                                     tab.url = url;
                                     tab.loading = false;
                                     tab.discarded = false;
+                                    if let Some(title) = title {
+                                        tab.title = title;
+                                    }
+                                    if external_web_url(&tab.url).is_some() {
+                                        visit = Some((tab.url.clone(), tab.title.clone()));
+                                    }
                                 }
                                 if tab_id == window.tabs.selected() {
                                     window.status = if window
@@ -1099,6 +1468,12 @@ mod browser {
                         }
                         window.render();
                     }
+                    if let (Some(profile), Some((url, title))) = (&self.profile, visit) {
+                        if profile.add_visit(&url, &title, None).is_err() {
+                            eprintln!("history_visit_save_failed");
+                        }
+                    }
+                    self.refresh_profile_window(id);
                     self.session_dirty = true;
                     self.write_test_state();
                 }
@@ -1233,9 +1608,163 @@ mod browser {
                         capture_chrome_view(&window.chrome, &directory);
                     }
                 }
+                TestCommand::Chrome(ChromeTestAction::Inspect { .. }) => {
+                    let directory = self
+                        .test_control
+                        .as_ref()
+                        .map(|control| control.directory.clone());
+                    if let (Some(window), Some(directory)) = (self.window_mut(active), directory) {
+                        inspect_chrome_view(&window.chrome, &directory);
+                    }
+                }
             }
             false
         }
+    }
+
+    fn update_profile(
+        profile: &mut Profile,
+        action: &Action,
+        current: &(String, String),
+        file: Option<&std::path::Path>,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        use std::io::{Read, Write};
+
+        let message = match action {
+            Action::BookmarkCurrent { .. } => {
+                let (url, title) = current;
+                if external_web_url(url).is_none() {
+                    return Ok("Open a web page to bookmark it.".into());
+                }
+                if let Some(id) = profile.bookmark_for_url(url)? {
+                    profile.delete_bookmark(id)?;
+                    "Bookmark removed."
+                } else {
+                    profile.add_bookmark(None, Some(url), title)?;
+                    "Bookmark added."
+                }
+            }
+            Action::CreateFolder {
+                title, parent_id, ..
+            } => {
+                let title = title.trim();
+                if title.is_empty() || title.len() > 512 {
+                    return Ok("Enter a folder name.".into());
+                }
+                profile.add_bookmark(*parent_id, None, title)?;
+                "Folder created."
+            }
+            Action::DeleteBookmark { id, .. } => {
+                profile.delete_bookmark(*id)?;
+                "Bookmark removed."
+            }
+            Action::MoveBookmark { id, parent_id, .. } => {
+                profile.move_bookmark(*id, *parent_id)?;
+                "Bookmark moved."
+            }
+            Action::ImportBookmarks { .. } => {
+                let Some(path) = file else {
+                    return Ok(String::new());
+                };
+                let mut html = String::new();
+                std::fs::File::open(path)?
+                    .take(4 * 1024 * 1024 + 1)
+                    .read_to_string(&mut html)?;
+                let imported = profile.import_bookmarks_html(&html)?;
+                return Ok(format!("Imported {imported} bookmark entries."));
+            }
+            Action::ExportBookmarks { .. } => {
+                let Some(path) = file else {
+                    return Ok(String::new());
+                };
+                let html = profile.export_bookmarks_html()?;
+                let parent = path.parent().ok_or("Export destination is unavailable.")?;
+                let mut temporary = tempfile::NamedTempFile::new_in(parent)?;
+                temporary.write_all(html.as_bytes())?;
+                temporary.as_file().sync_all()?;
+                temporary.persist(path)?;
+                "Bookmarks exported."
+            }
+            Action::RemoveVisit { id, .. } => {
+                profile.delete_visit(*id)?;
+                "History entry removed."
+            }
+            Action::ClearHistory { value, .. } => {
+                let elapsed = match value.as_str() {
+                    "hour" => Some(3_600_000),
+                    "day" => Some(86_400_000),
+                    "week" => Some(604_800_000),
+                    "all" => None,
+                    _ => return Ok("Choose a valid history range.".into()),
+                };
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)?
+                    .as_millis() as i64;
+                profile
+                    .clear_history_range(elapsed.map(|delta| now.saturating_sub(delta)), None)?;
+                "History cleared."
+            }
+            Action::AddShortcut { title, url, .. } => {
+                let Some(url) = external_web_url(url) else {
+                    return Ok("Enter an HTTP or HTTPS address for the shortcut.".into());
+                };
+                profile.set_shortcut(None, url.as_str(), &bounded_title(title.trim()))?;
+                "Shortcut added."
+            }
+            Action::RemoveShortcut { id, .. } => {
+                profile.remove_shortcut(*id)?;
+                "Shortcut removed."
+            }
+            action => {
+                let mut settings = profile.settings()?;
+                match action {
+                    Action::SetTheme { value, .. } => settings.theme = value.clone(),
+                    Action::SetSearchEngine { value, .. } => settings.search_engine = value.clone(),
+                    Action::SetRestoreSession { enabled, .. } => {
+                        settings.restore_session = *enabled
+                    }
+                    Action::SetClearHistoryOnExit { enabled, .. } => {
+                        settings.clear_history_on_exit = *enabled
+                    }
+                    _ => Err("Unsupported profile action.")?,
+                }
+                profile.save_settings(&settings)?;
+                "Settings saved."
+            }
+        };
+        Ok(message.into())
+    }
+
+    #[cfg(debug_assertions)]
+    fn inspect_chrome_view(chrome: &WebView, directory: &Path) {
+        let result_path = directory.join("chrome-layout.json");
+        let temporary_path = directory.join("chrome-layout.tmp");
+        let _ = chrome.evaluate_script_with_callback(
+            r#"(() => {
+                const panel = document.querySelector('.surface-page');
+                const heading = panel?.querySelector('h1');
+                if (!heading) return null;
+                const bounds = panel.getBoundingClientRect();
+                const label = heading.getBoundingClientRect();
+                const start = panel.scrollTop;
+                panel.scrollTop = 64;
+                const scrollProbe = panel.scrollTop;
+                panel.scrollTop = start;
+                return {
+                    width: Math.round(bounds.width), height: Math.round(bounds.height),
+                    heading: heading.textContent.trim(),
+                    heading_visible: label.top >= bounds.top && label.bottom <= bounds.bottom &&
+                        label.bottom <= window.innerHeight && label.height > 0,
+                    client_height: panel.clientHeight, scroll_height: panel.scrollHeight,
+                    scroll_probe: scrollProbe, theme: document.documentElement.dataset.theme,
+                };
+            })()"#,
+            move |json| {
+                if !json.is_empty() && fs::write(&temporary_path, json).is_ok() {
+                    let _ = fs::rename(&temporary_path, &result_path);
+                }
+            },
+        );
     }
 
     #[cfg(debug_assertions)]
@@ -1309,7 +1838,7 @@ mod browser {
         value[..end].to_owned()
     }
 
-    fn address_destination(input: &str) -> Option<String> {
+    fn address_destination(input: &str, engine: &str) -> Option<String> {
         let input = input.trim();
         if input.is_empty()
             || input.len() > 4096
@@ -1340,7 +1869,12 @@ mod browser {
         } else if input.split('/').next()?.contains('.') || input.starts_with("localhost") {
             url::Url::parse(&format!("https://{input}")).ok()?
         } else {
-            let mut search = url::Url::parse("https://duckduckgo.com/").ok()?;
+            let endpoint = match engine {
+                "google" => "https://www.google.com/search",
+                "bing" => "https://www.bing.com/search",
+                _ => "https://duckduckgo.com/",
+            };
+            let mut search = url::Url::parse(endpoint).ok()?;
             search.query_pairs_mut().append_pair("q", input);
             search
         };
@@ -1376,6 +1910,18 @@ mod browser {
                         Action::FocusAddress { version: 1 }
                     }
                     [letter] if letter.eq_ignore_ascii_case(&b'r') => Action::Reload { version: 1 },
+                    [letter] if letter.eq_ignore_ascii_case(&b'd') => {
+                        Action::BookmarkCurrent { version: 1 }
+                    }
+                    [letter] if letter.eq_ignore_ascii_case(&b'y') => Action::ShowSurface {
+                        version: 1,
+                        value: Surface::Library,
+                    },
+                    b"," => Action::ShowSurface {
+                        version: 1,
+                        value: Surface::Settings,
+                    },
+
                     [letter] if letter.eq_ignore_ascii_case(&b't') => Action::NewTab { version: 1 },
                     [letter] if letter.eq_ignore_ascii_case(&b'n') => {
                         Action::NewWindow { version: 1 }
@@ -1448,7 +1994,7 @@ mod browser {
                 } => {
                     if let Some(state) = app.as_mut() {
                         if !state.close_window(window_id) {
-                            state.save_session();
+                            state.quit();
                             app = None;
                             *control_flow = ControlFlow::Exit;
                             return;
@@ -1486,7 +2032,12 @@ mod browser {
                         app.forward_urls(urls);
                     }
                 }
-                Event::LoopDestroyed => return,
+                Event::LoopDestroyed => {
+                    if let Some(state) = app.as_ref() {
+                        state.quit();
+                    }
+                    return;
+                }
                 _ => {}
             }
             if Instant::now() >= next_tick {
@@ -1494,7 +2045,7 @@ mod browser {
                 let should_quit = app.as_mut().is_some_and(|state| state.poll(target));
                 if should_quit {
                     if let Some(state) = app.as_ref() {
-                        state.save_session();
+                        state.quit();
                     }
                     app = None;
                     *control_flow = ControlFlow::Exit;
@@ -1566,15 +2117,15 @@ mod browser {
         #[test]
         fn address_policy_keeps_web_schemes_and_local_fixture_http() {
             assert_eq!(
-                address_destination("example.com"),
+                address_destination("example.com", "duckduckgo"),
                 Some("https://example.com/".into())
             );
             assert_eq!(
-                address_destination("127.0.0.1:8765/page"),
+                address_destination("127.0.0.1:8765/page", "duckduckgo"),
                 Some("http://127.0.0.1:8765/page".into())
             );
             assert_eq!(
-                address_destination("about:blank"),
+                address_destination("about:blank", "duckduckgo"),
                 Some("about:blank".into())
             );
         }
@@ -1591,10 +2142,16 @@ mod browser {
 
         #[test]
         fn address_policy_rejects_file_and_credentials() {
-            assert_eq!(address_destination("file:///etc/passwd"), None);
-            assert_eq!(address_destination("https://user:secret@example.com"), None);
             assert_eq!(
-                address_destination("javascript:alert(1)"),
+                address_destination("file:///etc/passwd", "duckduckgo"),
+                None
+            );
+            assert_eq!(
+                address_destination("https://user:secret@example.com", "duckduckgo"),
+                None
+            );
+            assert_eq!(
+                address_destination("javascript:alert(1)", "duckduckgo"),
                 Some("https://duckduckgo.com/?q=javascript%3Aalert%281%29".into())
             );
         }

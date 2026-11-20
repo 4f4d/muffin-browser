@@ -1,6 +1,9 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import type { ChromeAction, ChromeSnapshot } from '../lib/bridge';
+  import type { ChromeAction, ChromeSnapshot, LocalSuggestion } from '../lib/bridge';
+  import StartPage from './StartPage.svelte';
+  import Library from './Library.svelte';
+  import Settings from './Settings.svelte';
 
   const initial: ChromeSnapshot = {
     version: 1,
@@ -13,10 +16,18 @@
     secure: false,
     tabs: [],
     selected_tab: 0,
-    can_restore: false
+    can_restore: false,
+    surface: 'browse',
+    settings: { theme: 'system', search_engine: 'duckduckgo', restore_session: true, clear_history_on_exit: false },
+    suggestions: [],
+    history: [],
+    bookmarks: [],
+    shortcuts: [],
+    bookmarked: false,
+    notice: ''
   };
 
-  let snapshot = $state(initial);
+  let snapshot = $state(window.muffinChrome?.snapshot ?? initial);
   let address = $state('');
   let editing = $state(false);
   let submitted: string | null = null;
@@ -24,6 +35,7 @@
   let tabSearch = $state('');
   let activeTab = $derived(snapshot.tabs.find((tab) => tab.id === snapshot.selected_tab));
   let visibleTabs = $derived(snapshot.tabs.filter((tab) => tab.title.toLocaleLowerCase().includes(tabSearch.trim().toLocaleLowerCase())));
+  let visibleSuggestions = $derived(snapshot.suggestions.slice(0, 5));
 
   const bridge = window.muffinChrome;
 
@@ -41,9 +53,31 @@
     send({ version: 1, action: 'navigate', value });
   }
 
+  function queryAddress() {
+    if (editing) send({ version: 1, action: 'query_omnibox', value: address });
+  }
+
+  function openSuggestion(suggestion: LocalSuggestion) {
+    send({ version: 1, action: 'show_surface', value: 'browse' });
+    send({ version: 1, action: 'navigate', value: suggestion.url });
+    address = suggestion.url;
+    editing = false;
+  }
+
+  function applySurfaceLayout(surface: ChromeSnapshot['surface']) {
+    const expanded = surface !== 'browse';
+    document.documentElement.classList.toggle('surface-expanded', expanded);
+    document.body.classList.toggle('surface-expanded', expanded);
+    document.getElementById('app')?.classList.toggle('surface-expanded', expanded);
+  }
+
+  function displayedAddress(url: string) {
+    return url === 'about:blank' ? '' : url;
+  }
+
   function onAddressKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
-      address = snapshot.url;
+      address = displayedAddress(snapshot.url);
       editing = false;
       submitted = null;
       (event.currentTarget as HTMLInputElement).blur();
@@ -120,6 +154,8 @@
   function syncSnapshot(event: Event) {
     const detail = (event as CustomEvent<ChromeSnapshot>).detail;
     if (!detail || detail.version !== 1) return;
+    applySurfaceLayout(detail.surface);
+    document.documentElement.dataset.theme = detail.settings.theme;
     const committedNavigation =
       detail.status === 'ready' && (detail.url !== snapshot.url || snapshot.loading) ||
       detail.status === 'home' && detail.url !== snapshot.url;
@@ -128,10 +164,12 @@
       submitted = null;
     }
     snapshot = detail;
-    if (!editing) address = detail.url;
+    if (!editing) address = displayedAddress(detail.url);
   }
 
   $effect(() => {
+    applySurfaceLayout(snapshot.surface);
+    document.documentElement.dataset.theme = snapshot.settings.theme;
     window.addEventListener('muffin:render', syncSnapshot);
     window.addEventListener('keydown', onGlobalKeydown);
     window.addEventListener('muffin:focus-tab-search', tabSearchShortcut);
@@ -143,7 +181,7 @@
   });
 </script>
 
-<main class="chrome" aria-label="Browser controls">
+<main class="chrome" class:expanded={snapshot.surface !== 'browse'} aria-label="Browser controls">
   <div class="toolbar">
     <nav class="history" aria-label="Page history">
       <button class="icon-button" aria-label="Go back" title="Go back" disabled={!snapshot.can_back} onclick={() => send({ version: 1, action: 'back' })}>
@@ -181,10 +219,11 @@
         placeholder="Search or enter address"
         bind:value={address}
         onfocus={() => editing = true}
+        oninput={queryAddress}
         onblur={() => {
           editing = false;
           submitted = null;
-          address = snapshot.url;
+          address = displayedAddress(snapshot.url);
         }}
         onkeydown={onAddressKeydown}
         aria-label="Search or enter address"
@@ -204,12 +243,21 @@
       </button>
     </form>
 
-    <button class="home-button" aria-label="Open start page" title="Open start page" onclick={() => send({ version: 1, action: 'open_home' })}>
+    <button class="home-button" aria-label="Open start page" title="Open start page" onclick={() => send({ version: 1, action: 'show_surface', value: 'start' })}>
       <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m3.5 9 6.5-5.5L16.5 9v7a1.5 1.5 0 0 1-1.5 1.5h-3.2v-5h-3.6v5H5A1.5 1.5 0 0 1 3.5 16z" /></svg>
     </button>
   </div>
 
   <div class="tabbar" role="group" aria-label="Open tabs and tab actions">
+    {#if snapshot.surface === 'browse' && editing && visibleSuggestions.length > 0}
+      <div class="browser-suggestions" role="listbox" aria-label="Local suggestions">
+        {#each visibleSuggestions as suggestion (suggestion.url)}
+          <button class="browser-suggestion" role="option" aria-selected="false" type="button" onpointerdown={(event) => event.preventDefault()} onclick={() => openSuggestion(suggestion)}>
+            <span>{suggestion.title}</span><small>{suggestion.url}</small>{#if suggestion.bookmarked}<span class="suggestion-saved">Saved</span>{/if}
+          </button>
+        {/each}
+      </div>
+    {:else}
     <div class="tab-list-scroll">
       <div class="tab-list" role="tablist" aria-label="Open tabs">
         {#each visibleTabs as tab (tab.id)}
@@ -250,6 +298,7 @@
         {/each}
       </div>
     </div>
+    {/if}
 
     <div class="tab-actions" aria-label="Tab actions">
       {#if tabSearchOpen}
@@ -282,6 +331,21 @@
       <button class="mini-action new-tab-button" aria-label="Open new tab" title="New tab" onclick={() => send({ version: 1, action: 'new_tab' })}>
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
       </button>
+      <span class="tab-action-divider" aria-hidden="true"></span>
+      <button class="mini-action surface-nav-button" aria-label="Library" title="Library" aria-pressed={snapshot.surface === 'library'} onclick={() => send({ version: 1, action: 'show_surface', value: 'library' })}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3.5h10A1.5 1.5 0 0 1 15.5 5v12L9 13.5 2.5 17V5A1.5 1.5 0 0 1 4 3.5ZM5.5 6.5h6M5.5 9h5" /></svg>
+      </button>
+      <button class="mini-action surface-nav-button" aria-label="Settings" title="Settings" aria-pressed={snapshot.surface === 'settings'} onclick={() => send({ version: 1, action: 'show_surface', value: 'settings' })}>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3" /><path d="m10 2.5.7 1.7 1.8.7 1.7-.6 1.2 1.2-.6 1.7.7 1.8 1.7.7v1.7l-1.7.7-.7 1.8.6 1.7-1.2 1.2-1.7-.6-1.8.7-.7 1.7H8.3l-.7-1.7-1.8-.7-1.7.6-1.2-1.2.6-1.7-.7-1.8-1.7-.7V9.7l1.7-.7.7-1.8-.6-1.7 1.2-1.2 1.7.6 1.8-.7.7-1.7z" /></svg>
+      </button>
     </div>
   </div>
+
+  {#if snapshot.surface === 'start'}
+    <StartPage {snapshot} {send} />
+  {:else if snapshot.surface === 'library'}
+    <Library {snapshot} {send} />
+  {:else if snapshot.surface === 'settings'}
+    <Settings {snapshot} {send} />
+  {/if}
 </main>

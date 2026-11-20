@@ -233,18 +233,153 @@ def verify_instance_forwarding(process, control, launch, first, second, steps):
     })
 
 
+def exercise_profile(process, control, first, second, steps, capture):
+    first_url = first.origin + "/first"
+    second_url = second.origin + "/second"
+
+    def command(action, **fields):
+        send_command(control, action, **fields)
+
+    def expect(case, predicate):
+        def read():
+            state = observation(control)
+            return state if state.get("chrome_ready") and predicate(state) else None
+
+        state = until(process, case, read)
+        steps.append({"case": case, "surface": state["surface"]})
+        return state
+
+    def expect_layout(heading, *, scroll=False, theme=None):
+        path = control / "chrome-layout.json"
+        path.unlink(missing_ok=True)
+        command("inspect_chrome")
+        until(process, f"{heading} native layout observation", path.is_file)
+        layout = json.loads(path.read_text(encoding="utf-8"))
+        if (not layout or layout["heading"] != heading or not layout["heading_visible"]
+                or layout["width"] < 600 or layout["height"] < 350):
+            raise AssertionError(f"{heading} does not fill the native chrome WebView: {layout}")
+        if scroll and (layout["scroll_height"] <= layout["client_height"] or layout["scroll_probe"] <= 0):
+            raise AssertionError(f"{heading} does not scroll with an overflowing list: {layout}")
+        if theme is not None and layout["theme"] != theme:
+            raise AssertionError(f"{heading} did not apply {theme} theme: {layout}")
+        steps.append({"native_chrome_layout": layout})
+
+    for index in range(16):
+        url = f"{first_url}?visit={index}"
+        command("navigate", value=url)
+        until(process, f"scroll fixture visit {index}", lambda: (
+            (state := observation(control)).get("url") == url and state.get("status") == "ready"
+        ))
+
+    command("navigate", value=second_url)
+    expect("profile fixture committed a browsing page", lambda s: (
+        s.get("url") == second_url and s.get("status") == "ready" and s.get("surface") == "browse"
+    ))
+    command("show_surface", value="library")
+    expect("Library shows persisted WebKit visits after restart", lambda s: (
+        s.get("surface") == "library" and {first_url, second_url}.issubset(
+            {item["url"] for item in s.get("history", [])}
+        )
+    ))
+    command("query_library", value="first")
+    expect("Library history search matches the requested local term", lambda s: (
+        bool(s.get("history")) and all(item["url"].split("?", 1)[0] == first_url for item in s["history"])
+    ))
+    command("query_library", value="")
+    command("bookmark_current")
+    bookmarked = expect("active committed URL was saved as a bookmark", lambda s: s.get("bookmarked"))["bookmarks"]
+    bookmark_id = next(item["id"] for item in bookmarked if item["url"] == second_url)
+    command("create_folder", title="Reading", parent_id=None)
+    folders = expect("Library contains a new bookmark folder", lambda s: any(
+        item["url"] is None and item["title"] == "Reading" for item in s.get("bookmarks", [])
+    ))["bookmarks"]
+    folder_id = next(item["id"] for item in folders if item["url"] is None and item["title"] == "Reading")
+    command("move_bookmark", id=bookmark_id, parent_id=folder_id)
+    expect("bookmark moved under its folder", lambda s: any(
+        item["id"] == bookmark_id and item["parent_id"] == folder_id for item in s.get("bookmarks", [])
+    ))
+    expect_layout("Library", scroll=True)
+    if capture is not None:
+        capture(process, control, command, "native-library")
+
+    command("show_surface", value="start")
+    expect("Start opens inside the trusted chrome", lambda s: s.get("surface") == "start")
+    command("add_shortcut", title="Read the fixture", url=second_url)
+    expect("Start shows a native-owned shortcut", lambda s: any(
+        item["url"] == second_url and item["title"] == "Read the fixture" for item in s.get("shortcuts", [])
+    ))
+    command("query_omnibox", value="second")
+    expect("Omnibox returns ranked local suggestions including a saved bookmark", lambda s: any(
+        item["url"] == second_url and item["bookmarked"] for item in s.get("suggestions", [])
+    ))
+    expect_layout("Muffin")
+    if capture is not None:
+        capture(process, control, command, "native-start")
+
+    command("show_surface", value="settings")
+    command("set_theme", value="light")
+    command("set_search_engine", value="bing")
+    command("set_restore_session", enabled=False)
+    command("set_clear_history_on_exit", enabled=True)
+    expect("Preferences reflect the applied theme, search and startup settings", lambda s: (
+        s.get("surface") == "settings" and s.get("settings") == {
+            "theme": "light", "search_engine": "bing", "restore_session": False, "clear_history_on_exit": True,
+        }
+    ))
+    expect_layout("Settings", theme="light")
+    if capture is not None:
+        capture(process, control, command, "native-settings")
+
+    command("show_surface", value="library")
+    expect("Library still contains browsing history before clearing it", lambda s: (
+        s.get("surface") == "library" and bool(s.get("history"))
+    ))
+    command("clear_history", value="hour")
+    expect("Clearing the last hour removed the recent fixture visits", lambda s: (
+        s.get("surface") == "library" and s.get("history") == []
+        and s.get("notice") == "History cleared."
+    ))
+    command("navigate", value=first_url)
+    expect("A new visit is committed before clean exit", lambda s: s.get("url") == first_url and s.get("status") == "ready")
+
+
+def verify_profile_restart(process, control, steps):
+    def restored():
+        state = observation(control)
+        settings = state.get("settings") or {}
+        if (
+            state.get("chrome_ready") and state.get("surface") == "start"
+            and state.get("window_count") == 1 and settings.get("theme") == "light"
+            and settings.get("search_engine") == "bing" and settings.get("restore_session") is False
+            and settings.get("clear_history_on_exit") is True and state.get("shortcuts")
+        ):
+            return state
+
+    until(process, "profile preferences and shortcut survived restart", restored)
+    send_command(control, "show_surface", value="library")
+    until(process, "clear-on-exit removed the final visit and kept bookmarks", lambda: (
+        (state := observation(control)).get("surface") == "library"
+        and state.get("history") == []
+        and any(item["title"] == "Reading" for item in state.get("bookmarks", []))
+    ))
+    steps.append({"case": "profile restart retained settings, shortcuts and bookmarks and cleared history"})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, default=Path("target/debug/muffin"))
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--tabs", action="store_true", help="include M2 tab and native window lifecycle checks")
     parser.add_argument("--restart", action="store_true", help="also exercise disposable session restore")
+    parser.add_argument("--profile", action="store_true", help="exercise the disposable local profile")
     visual = parser.add_mutually_exclusive_group()
     visual.add_argument("--capture-window", action="store_true", help="attempt a capture of the fixture window")
     visual.add_argument("--capture-chrome", action="store_true", help="capture the native trusted chrome view")
     args = parser.parse_args()
     if args.restart and not args.tabs:
         parser.error("--restart requires --tabs")
+    if args.profile and not args.restart:
+        parser.error("--profile requires --restart")
     binary = args.binary.resolve(strict=True)
     args.out.mkdir(parents=True, exist_ok=True)
     with binary.open("rb") as stream:
@@ -265,10 +400,10 @@ def main():
     }
     capture = None
     if args.capture_window:
-        def capture(_process, control, _command):
+        def capture(_process, control, _command, name="muffin-window"):
             observation = json.loads((control / "state.json").read_text(encoding="utf-8"))
             window_number = observation["window_number"]
-            image = args.out / "muffin-window.png"
+            image = args.out / f"{name}.png"
             if not isinstance(window_number, int) or window_number <= 0:
                 result["window_capture"] = "unavailable_window_number"
                 return
@@ -284,9 +419,10 @@ def main():
                 result["window_image_sha256"] = file_digest(stream, "sha256").hexdigest()
             result["window_capture"] = "captured"
     if args.capture_chrome:
-        def capture(process, control, command):
+        def capture(process, control, command, name="native-chrome"):
             snapshot = control / "chrome.tiff"
-            image = args.out / "native-chrome.png"
+            snapshot.unlink(missing_ok=True)
+            image = args.out / f"{name}.png"
             command("capture_chrome")
             until(process, "native trusted chrome image", lambda: snapshot.is_file() and snapshot.stat().st_size)
             subprocess.run(
@@ -294,7 +430,11 @@ def main():
                 check=True, capture_output=True, timeout=10,
             )
             with image.open("rb") as stream:
-                result["chrome_image_sha256"] = file_digest(stream, "sha256").hexdigest()
+                checksum = file_digest(stream, "sha256").hexdigest()
+            if name == "native-chrome":
+                result["chrome_image_sha256"] = checksum
+            else:
+                result.setdefault("additional_capture_sha256", {})[name] = checksum
 
     try:
         with TemporaryDirectory(prefix="muffin-smoke-", dir="/private/tmp") as temporary, browser_fixture() as servers:
@@ -320,6 +460,15 @@ def main():
                         (control / "state.json").unlink()
                         process = subprocess.Popen(launch, stdout=log, stderr=log)
                         verify_session_restore(process, control, *servers, result["steps"])
+                    if args.profile:
+                        exercise_profile(process, control, *servers, result["steps"], capture)
+                        send_command(control, "quit_test")
+                        if process.wait(timeout=8) != 0:
+                            raise RuntimeError("profile fixture shutdown failed")
+                        (control / "commands.jsonl").unlink()
+                        (control / "state.json").unlink()
+                        process = subprocess.Popen(launch, stdout=log, stderr=log)
+                        verify_profile_restart(process, control, result["steps"])
                 except Exception:
                     state_path = control / "state.json"
                     if state_path.is_file():

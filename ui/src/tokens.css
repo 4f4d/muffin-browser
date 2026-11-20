@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --cream: #F7F3EC;
   --ivory: #FFFDF9;
   --espresso: #342820;
@@ -12,6 +13,7 @@
   --placeholder: #74675d;
   --disabled: #93877e;
   --glass: rgb(255 253 249 / 84%);
+  --toolbar-shadow: rgb(45 34 25 / 7%);
   --solid-toolbar: #FFFDF9;
   --solid-address: #F7F3EC;
   --edge: rgb(92 70 52 / 18%);
@@ -26,16 +28,22 @@
   --tab-active: #EAE3D9;
   --new-tab: rgb(197 139 85 / 17%);
   --caramel-ink: #80552D;
+  --surface-page: #F7F4EF;
+  --start-wash: rgb(221 184 145 / 24%);
+  --field: rgb(255 253 249 / 82%);
+  --line: rgb(92 70 52 / 13%);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --ink: #F3EAE0;
     --ink-muted: #C2B2A4;
     --icon-muted: #C7B9AD;
     --placeholder: #B6A99E;
     --disabled: #8E8177;
     --glass: rgb(45 37 31 / 84%);
+    --toolbar-shadow: rgb(0 0 0 / 20%);
     --solid-toolbar: #2D251F;
     --solid-address: #1D1916;
     --edge: rgb(239 226 212 / 15%);
@@ -50,5 +58,38 @@
     --tab-active: #33302D;
     --new-tab: rgb(197 139 85 / 22%);
     --caramel-ink: #E8BB91;
+    --surface-page: #201E1C;
+    --start-wash: rgb(141 91 54 / 16%);
+    --field: rgb(29 25 22 / 72%);
+    --line: rgb(239 226 212 / 13%);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #F3EAE0;
+  --ink-muted: #C2B2A4;
+  --icon-muted: #C7B9AD;
+  --placeholder: #B6A99E;
+  --disabled: #8E8177;
+  --glass: rgb(45 37 31 / 84%);
+  --toolbar-shadow: rgb(0 0 0 / 20%);
+  --solid-toolbar: #2D251F;
+  --solid-address: #1D1916;
+  --edge: rgb(239 226 212 / 15%);
+  --address: rgb(29 25 22 / 40%);
+  --address-focus: rgb(29 25 22 / 76%);
+  --address-edge: rgb(239 226 212 / 13%);
+  --hover: rgb(239 226 212 / 9%);
+  --focus: #E6B68A;
+  --focus-ring: rgb(230 182 138 / 24%);
+  --secure: #91C99D;
+  --error: #F0A297;
+  --tab-active: #33302D;
+  --new-tab: rgb(197 139 85 / 22%);
+  --caramel-ink: #E8BB91;
+  --surface-page: #201E1C;
+  --start-wash: rgb(141 91 54 / 16%);
+  --field: rgb(29 25 22 / 72%);
+  --line: rgb(239 226 212 / 13%);
 }

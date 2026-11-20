@@ -1,7 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { mount, tick, unmount } from 'svelte';
 import App from '../src/routes/App.svelte';
 import { installChromeBridge } from '../src/lib/bridge';
+import { makeSnapshot } from './fixtures';
 
 describe('browser chrome controls', () => {
   let component: ReturnType<typeof mount>;
@@ -10,6 +11,10 @@ describe('browser chrome controls', () => {
   beforeAll(() => {
     bridgeState = installChromeBridge();
     component = mount(App, { target: document.body });
+  });
+
+  beforeEach(() => {
+    while (bridgeState.bridge.take() !== null) {}
   });
 
   afterAll(() => {
@@ -26,8 +31,7 @@ describe('browser chrome controls', () => {
   });
 
   it('renders native state and routes reload versus stop', async () => {
-    bridgeState.bridge.render({
-      version: 1,
+    bridgeState.bridge.render(makeSnapshot({
       url: 'https://example.test',
       title: '<unsafe title>',
       loading: true,
@@ -38,7 +42,7 @@ describe('browser chrome controls', () => {
       tabs: [{ id: 20, title: 'Example', pinned: false, loading: true, discarded: false }],
       selected_tab: 20,
       can_restore: false
-    });
+    }));
     await tick();
     const reload = document.querySelector<HTMLButtonElement>('.reload')!;
     expect(reload.getAttribute('aria-label')).toBe('Stop loading');
@@ -49,8 +53,7 @@ describe('browser chrome controls', () => {
 
   it('preserves a blocked submission until the address edit is canceled', async () => {
     const oldAddress = 'https://example.test';
-    const snapshot = {
-      version: 1 as const,
+    const snapshot = makeSnapshot({
       url: oldAddress,
       title: 'First page',
       loading: false,
@@ -60,13 +63,14 @@ describe('browser chrome controls', () => {
       tabs: [{ id: 20, title: 'First page', pinned: false, loading: false, discarded: false }],
       selected_tab: 20,
       can_restore: false
-    };
+    });
     bridgeState.bridge.render({ ...snapshot, status: 'ready' });
     await tick();
     const input = document.querySelector<HTMLInputElement>('#address')!;
     input.focus();
     input.value = 'file:///unavailable';
     input.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'query_omnibox', value: 'file:///unavailable' });
     document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(bridgeState.bridge.take()?.action).toBe('navigate');
     bridgeState.bridge.render({ ...snapshot, status: 'blocked' });
@@ -84,8 +88,7 @@ describe('browser chrome controls', () => {
       { id: 20, title: 'Reading list', pinned: false, loading: false, discarded: false },
       { id: 30, title: 'Docs home', pinned: false, loading: false, discarded: true }
     ];
-    bridgeState.bridge.render({
-      version: 1,
+    bridgeState.bridge.render(makeSnapshot({
       url: 'https://reading.test',
       title: 'Reading list',
       loading: false,
@@ -96,7 +99,7 @@ describe('browser chrome controls', () => {
       tabs,
       selected_tab: 20,
       can_restore: true
-    });
+    }));
     await tick();
 
     document.querySelector<HTMLButtonElement>('.new-tab-button')!.click();
@@ -122,8 +125,7 @@ describe('browser chrome controls', () => {
   });
 
   it('supports keyboard tab reorder and inline tab search', async () => {
-    bridgeState.bridge.render({
-      version: 1,
+    bridgeState.bridge.render(makeSnapshot({
       url: '',
       title: 'Reading list',
       loading: false,
@@ -138,7 +140,7 @@ describe('browser chrome controls', () => {
       ],
       selected_tab: 20,
       can_restore: false
-    });
+    }));
     await tick();
 
     document.querySelector<HTMLButtonElement>('[data-tab-id="20"]')!.dispatchEvent(
@@ -183,8 +185,7 @@ describe('browser chrome controls', () => {
 
   it('falls back to search when a selected tab disappears during search close', async () => {
     await openTabSearchFromNative();
-    bridgeState.bridge.render({
-      version: 1,
+    bridgeState.bridge.render(makeSnapshot({
       url: '',
       title: 'Closed',
       loading: false,
@@ -195,7 +196,7 @@ describe('browser chrome controls', () => {
       tabs: [],
       selected_tab: 0,
       can_restore: false
-    });
+    }));
     await tick();
     document.querySelector<HTMLInputElement>('#tab-search')!.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
@@ -203,6 +204,84 @@ describe('browser chrome controls', () => {
     await tick();
     await tick();
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Search tabs');
+  });
+
+  it('renders the start page and routes local search and shortcut actions', async () => {
+    bridgeState.bridge.render(makeSnapshot({
+      surface: 'start',
+      suggestions: [{ url: 'https://saved.test', title: 'Saved page', bookmarked: true }],
+      shortcuts: [{ id: 4, url: 'https://docs.test', title: 'Docs' }]
+    }));
+    await tick();
+    expect(document.body.classList.contains('surface-expanded')).toBe(true);
+    expect(document.querySelector('#start-heading')?.textContent).toBe('Muffin');
+    const input = document.querySelector<HTMLInputElement>('#start-query')!;
+    input.value = 'local search';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'query_omnibox', value: 'local search' });
+    document.querySelector<HTMLButtonElement>('.suggestion-row')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'show_surface', value: 'browse' });
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'navigate', value: 'https://saved.test' });
+    bridgeState.bridge.render(makeSnapshot({ surface: 'start', shortcuts: [{ id: 4, url: 'https://docs.test', title: 'Docs' }] }));
+    await tick();
+    document.querySelector<HTMLButtonElement>('[aria-label="Remove shortcut Docs"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'remove_shortcut', id: 4 });
+  });
+
+  it('filters and opens library entries and organizes bookmarks into folders', async () => {
+    bridgeState.bridge.render(makeSnapshot({
+      surface: 'library',
+      history: [{ id: 11, url: 'https://news.test', title: 'News', visited_at_ms: 1_700_000_000_000 }],
+      bookmarks: [
+        { id: 21, parent_id: null, url: null, title: 'Reading' },
+        { id: 22, parent_id: null, url: 'https://saved.test', title: 'Saved' }
+      ]
+    }));
+    await tick();
+    expect(document.querySelector('.chrome')?.classList.contains('expanded')).toBe(true);
+    document.querySelector<HTMLInputElement>('.library-search input')!.value = 'news';
+    document.querySelector<HTMLInputElement>('.library-search input')!.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'query_library', value: 'news' });
+    document.querySelector<HTMLButtonElement>('.history-list .library-open')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'show_surface', value: 'browse' });
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'navigate', value: 'https://news.test' });
+
+    const librarySearch = document.querySelector<HTMLInputElement>('.library-search input')!;
+    librarySearch.value = '';
+    librarySearch.dispatchEvent(new Event('input', { bubbles: true }));
+    bridgeState.bridge.take();
+    const bookmarksView = document.querySelector<HTMLButtonElement>('.library-nav [aria-pressed="false"]')!;
+    bookmarksView.click();
+    await tick();
+    expect(bookmarksView.getAttribute('aria-pressed')).toBe('true');
+    document.querySelector<HTMLSelectElement>('[aria-label="Move Saved to folder"]')!.value = '21';
+    document.querySelector<HTMLSelectElement>('[aria-label="Move Saved to folder"]')!.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'move_bookmark', id: 22, parent_id: 21 });
+    [...document.querySelectorAll<HTMLButtonElement>('.library-actions button')].find((button) => button.textContent?.includes('New folder'))!.click();
+    await tick();
+    const folderName = document.querySelector<HTMLInputElement>('.folder-form input')!;
+    folderName.value = 'Research';
+    folderName.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector<HTMLFormElement>('.folder-form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'create_folder', title: 'Research', parent_id: null });
+  });
+
+  it('applies theme preferences and emits explicit settings changes', async () => {
+    bridgeState.bridge.render(makeSnapshot({ surface: 'settings' }));
+    await tick();
+    expect(document.documentElement.dataset.theme).toBe('system');
+    const theme = document.querySelector<HTMLSelectElement>('[aria-label="Theme"]')!;
+    theme.value = 'dark';
+    theme.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'set_theme', value: 'dark' });
+    const clearOnExit = document.querySelector<HTMLInputElement>('#clear-history-on-exit')!;
+    clearOnExit.checked = true;
+    clearOnExit.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'set_clear_history_on_exit', enabled: true });
+    bridgeState.bridge.render(makeSnapshot({ surface: 'browse', settings: { theme: 'light', search_engine: 'duckduckgo', restore_session: true, clear_history_on_exit: false } }));
+    await tick();
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(document.body.classList.contains('surface-expanded')).toBe(false);
   });
 });
 

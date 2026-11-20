@@ -37,7 +37,15 @@ describe('chrome IPC bridge', () => {
       secure: true,
       tabs: [{ id: 3, title: 'Example', pinned: false, loading: false, discarded: false }],
       selected_tab: 3,
-      can_restore: false
+      can_restore: false,
+      surface: 'browse',
+      settings: { theme: 'system', search_engine: 'duckduckgo', restore_session: true, clear_history_on_exit: false },
+      suggestions: [],
+      history: [],
+      bookmarks: [],
+      shortcuts: [],
+      bookmarked: false,
+      notice: ''
     };
     state.bridge.render(snapshot);
     expect(state.bridge.snapshot).toEqual(snapshot);
@@ -71,5 +79,44 @@ describe('chrome IPC bridge', () => {
     expect(isAction({ version: 1, action: 'move_tab', id: 42, index: 256 })).toBe(false);
     expect(isAction({ version: 1, action: 'close_tab', id: -1 })).toBe(false);
     expect(isAction({ version: 1, action: 'pin_tab', id: 42, pinned: 'yes' })).toBe(false);
+  });
+
+  it('validates M3 action variants and argument ranges', () => {
+    expect(isAction({ version: 1, action: 'show_surface', value: 'library' })).toBe(true);
+    expect(isAction({ version: 1, action: 'show_surface', value: 'downloads' })).toBe(false);
+    expect(isAction({ version: 1, action: 'set_theme', value: 'dark' })).toBe(true);
+    expect(isAction({ version: 1, action: 'set_theme', value: 'auto' })).toBe(false);
+    expect(isAction({ version: 1, action: 'clear_history', value: 'week' })).toBe(true);
+    expect(isAction({ version: 1, action: 'clear_history', value: 'month' })).toBe(false);
+    expect(isAction({ version: 1, action: 'set_clear_history_on_exit', enabled: true })).toBe(true);
+    expect(isAction({ version: 1, action: 'create_folder', title: 'Reference', parent_id: null })).toBe(true);
+    expect(isAction({ version: 1, action: 'move_bookmark', id: 5, parent_id: 12 })).toBe(true);
+    expect(isAction({ version: 1, action: 'move_bookmark', id: 5, parent_id: -1 })).toBe(false);
+    expect(isAction({ version: 1, action: 'add_shortcut', title: 'Docs', url: 'https://example.test' })).toBe(true);
+    expect(isAction({ version: 1, action: 'move_bookmark', id: 5, parent_id: null, extra: true })).toBe(false);
+  });
+
+  it('rejects malformed M3 snapshot data and freezes accepted records', () => {
+    const state = createChromeBridge();
+    const snapshot: ChromeSnapshot = {
+      version: 1, url: '', title: 'New tab', loading: false, can_back: false, can_forward: false,
+      status: 'home', secure: false, tabs: [], selected_tab: 0, can_restore: false, surface: 'start',
+      settings: { theme: 'system', search_engine: 'duckduckgo', restore_session: true, clear_history_on_exit: false },
+      suggestions: [{ url: 'https://saved.test', title: 'Saved', bookmarked: true }],
+      history: [{ id: 1, url: 'https://visited.test', title: 'Visited', visited_at_ms: 1_700_000_000_000 }],
+      bookmarks: [{ id: 2, parent_id: null, url: 'https://saved.test', title: 'Saved' }],
+      shortcuts: [{ id: 3, url: 'https://docs.test', title: 'Docs' }], bookmarked: true, notice: ''
+    };
+    state.bridge.render(snapshot);
+    expect(state.bridge.snapshot).toEqual(snapshot);
+    expect(Object.isFrozen(state.bridge.snapshot.settings)).toBe(true);
+    expect(Object.isFrozen(state.bridge.snapshot.history[0])).toBe(true);
+
+    state.bridge.render({ ...snapshot, surface: 'downloads' } as unknown as ChromeSnapshot);
+    expect(state.bridge.snapshot.surface).toBe('start');
+    state.bridge.render({ ...snapshot, settings: { ...snapshot.settings, search_engine: 'unknown' } } as unknown as ChromeSnapshot);
+    expect(state.bridge.snapshot.settings.search_engine).toBe('duckduckgo');
+    state.bridge.render({ ...snapshot, bookmarks: [{ id: 2, parent_id: null, url: 'https://saved.test', title: 'Bad', extra: true }] } as unknown as ChromeSnapshot);
+    expect(state.bridge.snapshot.bookmarks[0].url).toBe('https://saved.test');
   });
 });

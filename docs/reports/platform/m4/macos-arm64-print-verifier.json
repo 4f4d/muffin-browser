@@ -1,0 +1,28 @@
+{
+  "source_commit": "8cc3708c38b7216144d4dbe4897f432da954b625",
+  "source_worktree_clean": true,
+  "command": "just verify",
+  "exit_code": 0,
+  "macos_version": "15.8.3",
+  "host_arch": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "debug_binary_sha256": "03d64af552f4740e115e165f96185080318db6d14be2efaac9d371473153d22d",
+  "release_binary_sha256": "bddedaece4ca3ab75749f87047e8594ea7342a5dc860801811179854fdc5de6d",
+  "tool_tests": 83,
+  "loopback_fixture_unit_tests": 1,
+  "ui_tests": 17,
+  "rust_tests": 32,
+  "release_rejected_debug_test_control": true,
+  "rustsec_allowed_warnings": [
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2024-0429"
+  ],
+  "verification_log_sha256": "7130902bb9d8be35b4189e9c6e6668c1c3f3fdd40f66b71391ff6dd0d5c3b1ad",
+  "local_native_receipt_sha256": "3f302893afdfde7504dc9645f101ae2b5932fe09fee2e93fb959cb222b54e7bd",
+  "print_pdf": {
+    "bytes": 28653,
+    "sha256": "4ee67c4bb5bdb1fae407a0683d5a78bca5704578f7378610471772731c3b8c85",
+    "page_count": 1,
+    "pdftotext_fixture_phrase": "amber muffin fixture"
+  }
+}

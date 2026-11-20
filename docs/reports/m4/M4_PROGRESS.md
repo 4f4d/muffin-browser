@@ -1,6 +1,6 @@
 # M4 — macOS page tools and downloads
 
-The download-consent slice passed independent review and local and hosted verification on `2038bff536c1342a724329b6281dacf7eb52ef5b`. The full M4 engineering gate remains open for native file selection and right-click menus. The target is still the macOS Apple Silicon development build. [Verifier receipt](../platform/m4/macos-arm64-consent-verifier.json), [hosted verifier](https://github.com/4f4d/muffin-browser/actions/runs/44769839442), [status guard](https://github.com/4f4d/muffin-browser/actions/runs/44769839334)
+The download-consent slice passed independent review and local and hosted verification on `2038bff536c1342a724329b6281dacf7eb52ef5b`. The tested AppKit print engine passed independent review on `8cc3708c38b7216144d4dbe4897f432da954b625`. The full M4 engineering gate remains open for native file selection, print-panel interaction and right-click menus. The target is still the macOS Apple Silicon development build. [Download verifier](../platform/m4/macos-arm64-consent-verifier.json), [print verifier](../platform/m4/macos-arm64-print-verifier.json)
 
 ## Verified behavior
 
@@ -11,6 +11,8 @@ The download-consent slice passed independent review and local and hosted verifi
 ## Print verification rationale
 
 The WebKit PDF export path and AppKit print path are separate. The print fixture uses the same window-based WebKit operation as the browser's Print control. It selects AppKit's Save Job disposition with a destination inside the disposable control directory, rechecks that disposition on the operation, and disables the print and progress panels. The test waits for a PDF trailer before examining the file. This covers actual local print output and leaves native print-panel interaction open. The two earlier print attempts produced an incomplete stream or timed out. [Print adapter](../../../crates/muffin/src/pdf.rs), [fixture check](../../../tests/native/run_smoke.py), [attempts](../../BLOCKERS.md#m4-integration-attempts), [Apple print operation](https://developer.apple.com/documentation/appkit/nsprintoperation)
+
+On the clean print commit, the local and hosted full verifiers passed. The local print job yielded a 28,653-byte one-page PDF. Poppler extracted the expected fixture phrase, and the independent reviewer rechecked the page count, text, source identity, and file hash. [Local receipt](../platform/m4/macos-arm64-print-smoke.json), [printed PDF](../platform/m4/macos-arm64-native-print.pdf), [hosted verifier](https://github.com/4f4d/muffin-browser/actions/runs/44772363394), [hosted fixture](../ci/m4/macos-arm64-44772363394-native.json)
 
 ## Open before the M4 exit review
 

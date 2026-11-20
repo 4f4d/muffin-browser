@@ -1,0 +1,321 @@
+{
+  "source_commit": "1958eef8cdc34b2a1211441246e26dd097093f40",
+  "source_worktree_clean": true,
+  "binary_sha256": "011bc5cc1f5f88867ee6e1ab3068396d1a09c350703ed91f6427d8a0937387a1",
+  "host_arch": "arm64",
+  "macos_version": "15.8.2",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_loopback",
+  "steps": [
+    {
+      "version": 1,
+      "status": "home",
+      "chrome_ready": true
+    },
+    {
+      "url": "http://127.0.0.1:49202/first",
+      "status": "ready",
+      "title": "Muffin fixture | First page",
+      "secure": false
+    },
+    {
+      "navigation_input": "trusted chrome address form"
+    },
+    {
+      "webkit_user_agent_token": true,
+      "browser_product_token": "Muffin/0.1.0"
+    },
+    {
+      "url": "http://127.0.0.1:49203/second",
+      "status": "ready",
+      "title": "Muffin fixture | Second page",
+      "can_back": true
+    },
+    {
+      "url": "http://127.0.0.1:49203/second",
+      "status": "ready"
+    },
+    {
+      "remote_page_executed": true,
+      "remote_chrome_state_received": false
+    },
+    {
+      "url": "http://127.0.0.1:49202/first",
+      "status": "ready",
+      "can_forward": true
+    },
+    {
+      "url": "http://127.0.0.1:49203/second",
+      "status": "ready"
+    },
+    {
+      "status": "blocked",
+      "url": "http://127.0.0.1:49203/second"
+    },
+    {
+      "distinct_loopback_origins": true,
+      "redirect_requested": true
+    },
+    {
+      "loading": true
+    },
+    {
+      "loading": false,
+      "native_loading": false
+    },
+    {
+      "unsolicited_popup_requested": false
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "http://127.0.0.1:49202/first",
+      "window_count": 1
+    },
+    {
+      "case": "new tab is selected in the same native window",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        2
+      ],
+      "url": "about:blank",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        2
+      ],
+      "url": "http://127.0.0.1:49203/second",
+      "window_count": 1
+    },
+    {
+      "case": "duplicate retains committed URL with a distinct ID",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        2,
+        3
+      ],
+      "url": "http://127.0.0.1:49203/second",
+      "window_count": 1
+    },
+    {
+      "case": "pin moves tab into the pinned segment",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        2,
+        3
+      ],
+      "url": "http://127.0.0.1:49203/second",
+      "window_count": 1
+    },
+    {
+      "case": "unpinned tab reorders within the unpinned segment",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:49203/second",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:49202/first",
+      "window_count": 1
+    },
+    {
+      "case": "inactive tab retains metadata when its native view is discarded",
+      "selected_tab": 1,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:49202/first",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:49203/second",
+      "window_count": 1
+    },
+    {
+      "case": "selection restores the discarded WebView",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:49203/second",
+      "window_count": 1
+    },
+    {
+      "case": "closed tab exposes an undo entry",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        3
+      ],
+      "url": "http://127.0.0.1:49203/second",
+      "window_count": 1
+    },
+    {
+      "case": "reopened tab reloads its committed URL",
+      "selected_tab": 4,
+      "tabs": [
+        1,
+        3,
+        4
+      ],
+      "url": "http://127.0.0.1:49203/second",
+      "window_count": 1
+    },
+    {
+      "case": "second native window has an independent selected tab",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "about:blank",
+      "window_count": 2
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "http://127.0.0.1:49202/first",
+      "window_count": 2
+    },
+    {
+      "case": "second process forwarded a URL and exited",
+      "window_count": 2,
+      "url": "http://127.0.0.1:49203/second"
+    },
+    {
+      "case": "graceful restart restored two windows and a committed fixture tab",
+      "window_count": 2,
+      "selected_tab": 2,
+      "url": "http://127.0.0.1:49203/second"
+    },
+    {
+      "case": "profile fixture committed a browsing page",
+      "surface": "browse"
+    },
+    {
+      "case": "Library shows persisted WebKit visits after restart",
+      "surface": "library"
+    },
+    {
+      "case": "Library history search matches the requested local term",
+      "surface": "library"
+    },
+    {
+      "case": "active committed URL was saved as a bookmark",
+      "surface": "library"
+    },
+    {
+      "case": "Library contains a new bookmark folder",
+      "surface": "library"
+    },
+    {
+      "case": "bookmark moved under its folder",
+      "surface": "library"
+    },
+    {
+      "native_chrome_layout": {
+        "scroll_probe": 64,
+        "height": 568,
+        "selected_tab_fill": "rgb(234, 227, 217)",
+        "width": 1024,
+        "theme": "system",
+        "heading_visible": true,
+        "client_height": 568,
+        "heading": "Library",
+        "scroll_height": 1605
+      }
+    },
+    {
+      "case": "Start opens inside the trusted chrome",
+      "surface": "start"
+    },
+    {
+      "case": "Start shows a native-owned shortcut",
+      "surface": "start"
+    },
+    {
+      "case": "Omnibox returns ranked local suggestions including a saved bookmark",
+      "surface": "start"
+    },
+    {
+      "native_chrome_layout": {
+        "scroll_probe": 0,
+        "height": 568,
+        "selected_tab_fill": "rgb(234, 227, 217)",
+        "width": 1024,
+        "theme": "system",
+        "heading_visible": true,
+        "client_height": 568,
+        "heading": "Muffin",
+        "scroll_height": 568
+      }
+    },
+    {
+      "case": "Preferences reflect the applied theme, search and startup settings",
+      "surface": "settings"
+    },
+    {
+      "native_chrome_layout": {
+        "scroll_probe": 0,
+        "height": 568,
+        "selected_tab_fill": "rgb(234, 227, 217)",
+        "width": 1024,
+        "theme": "light",
+        "heading_visible": true,
+        "client_height": 568,
+        "heading": "Settings",
+        "scroll_height": 568
+      }
+    },
+    {
+      "case": "Library still contains browsing history before clearing it",
+      "surface": "library"
+    },
+    {
+      "case": "Clearing the last hour removed the recent fixture visits",
+      "surface": "library"
+    },
+    {
+      "case": "A new visit is committed before clean exit",
+      "surface": "browse"
+    },
+    {
+      "case": "profile restart retained settings, shortcuts and bookmarks and cleared history"
+    }
+  ],
+  "outcome": "passed"
+}

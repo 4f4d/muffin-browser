@@ -9,4 +9,6 @@ Muffin stores settings, history, bookmarks and shortcuts in a native SQLite prof
 
 ## Verification limits
 
+The final Apple Silicon build and native fixture also passed in hosted CI from the same source commit. The generated platform status records the build level. [Hosted verifier](https://github.com/4f4d/muffin-browser/actions/runs/44763675822), [status guard](https://github.com/4f4d/muffin-browser/actions/runs/44763675738), [build receipt](../ci/macos-arm64-build-00000000044763675822-0001.json), [hosted fixture](../ci/m3/macos-arm64-44763675822-native.json)
+
 The captures show the actual trusted chrome WebView. Whole-window composition, physical keyboard traversal, VoiceOver, native import/export picker interaction and AppKit materials require interactive coverage. The bookmark format and persistence paths have automated tests. The S1 unexpected-WebContent-termination requirement and deferred M0b qualification remain open. [Profile tests](../../../crates/muffin/src/profile.rs), [qualification decision](../../adr/0002-macos-first-implementation-and-deferred-qualification.md)

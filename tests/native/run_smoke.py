@@ -262,6 +262,8 @@ def exercise_profile(process, control, first, second, steps, capture):
             raise AssertionError(f"{heading} does not scroll with an overflowing list: {layout}")
         if theme is not None and layout["theme"] != theme:
             raise AssertionError(f"{heading} did not apply {theme} theme: {layout}")
+        if theme == "light" and layout["selected_tab_fill"] != "rgb(234, 227, 217)":
+            raise AssertionError(f"{heading} shows a tab fill outside the light palette: {layout}")
         steps.append({"native_chrome_layout": layout})
 
     for index in range(16):

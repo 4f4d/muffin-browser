@@ -1750,6 +1750,8 @@ mod browser {
                 panel.scrollTop = 64;
                 const scrollProbe = panel.scrollTop;
                 panel.scrollTop = start;
+                const selected = document.querySelector('.tab-item.selected');
+                const selectedTabFill = selected ? getComputedStyle(selected).backgroundColor : '';
                 return {
                     width: Math.round(bounds.width), height: Math.round(bounds.height),
                     heading: heading.textContent.trim(),
@@ -1757,6 +1759,7 @@ mod browser {
                         label.bottom <= window.innerHeight && label.height > 0,
                     client_height: panel.clientHeight, scroll_height: panel.scrollHeight,
                     scroll_probe: scrollProbe, theme: document.documentElement.dataset.theme,
+                    selected_tab_fill: selectedTabFill,
                 };
             })()"#,
             move |json| {

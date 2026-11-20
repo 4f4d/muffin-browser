@@ -1,0 +1,69 @@
+{
+  "source_commit": "0f95cf5c1e2a452e86cf273a4b0102fd70d29567",
+  "source_worktree_clean": true,
+  "binary_sha256": "ab8b84da2b67dbd22486e14668926772afa297ff4b6c17a2978e75c06207e2d4",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_loopback",
+  "steps": [
+    {
+      "version": 1,
+      "status": "home",
+      "chrome_ready": true
+    },
+    {
+      "url": "http://127.0.0.1:51657/first",
+      "status": "ready",
+      "title": "Muffin fixture | First page",
+      "secure": false
+    },
+    {
+      "navigation_input": "trusted chrome address form"
+    },
+    {
+      "webkit_user_agent_token": true,
+      "browser_product_token": "Muffin/0.1.0"
+    },
+    {
+      "url": "http://127.0.0.1:51658/second",
+      "status": "ready",
+      "title": "Muffin fixture | Second page",
+      "can_back": true
+    },
+    {
+      "url": "http://127.0.0.1:51658/second",
+      "status": "ready"
+    },
+    {
+      "remote_page_executed": true,
+      "remote_chrome_state_received": false
+    },
+    {
+      "url": "http://127.0.0.1:51657/first",
+      "status": "ready",
+      "can_forward": true
+    },
+    {
+      "url": "http://127.0.0.1:51658/second",
+      "status": "ready"
+    },
+    {
+      "status": "blocked",
+      "url": "http://127.0.0.1:51658/second"
+    },
+    {
+      "distinct_loopback_origins": true,
+      "redirect_requested": true
+    },
+    {
+      "loading": true
+    },
+    {
+      "loading": false,
+      "native_loading": false
+    }
+  ],
+  "chrome_image_sha256": "aad13cd2709b8f3fd1fc4627a08626b41c11404f17ece408be4518dcea7df8f6",
+  "outcome": "passed"
+}

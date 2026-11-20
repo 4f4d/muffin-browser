@@ -1,0 +1,31 @@
+{
+  "source_commit": "0f95cf5c1e2a452e86cf273a4b0102fd70d29567",
+  "source_worktree_clean": true,
+  "os": "macOS 15.8.3",
+  "architecture": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "rust_version": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "node_version": "v24.12.0",
+  "npm_version": "11.17.0",
+  "command": "just verify",
+  "exit_code": 0,
+  "status_guard_python_tests": 83,
+  "loopback_fixture_python_tests": 1,
+  "frontend_tests": 6,
+  "rust_tests": 5,
+  "svelte_diagnostics": 0,
+  "npm_audit_vulnerabilities": 0,
+  "rustsec_warnings_outside_apple_silicon_graph": [
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2024-0429"
+  ],
+  "release_binary_sha256": "3c4773fc25479a707ef204a9f389e6f7a67cf6d9389480bff4a6285923281f07",
+  "release_test_control_rejected": true,
+  "verification_log_sha256": "37cf199125b396b526e6206ff75fda7181f83329a9e467fb9f65eabee90b47e1",
+  "native_fixture_receipt": "macos-arm64-native-smoke.json",
+  "native_chrome_capture": "macos-arm64-native-chrome.png",
+  "native_chrome_pixel_size": [
+    2200,
+    112
+  ]
+}

@@ -1,0 +1,17 @@
+# M1 — macOS walking skeleton
+
+M1 established the production browser workspace at `0f95cf5c1e2a452e86cf273a4b0102fd70d29567`. It includes a native one-tab shell, isolated trusted chrome and remote content views, a local fixture harness, an unsigned developer build and a component gallery. WRY 0.57.2 and TAO 0.37.2 remain provisional. [Architecture](../../adr/0003-trusted-chrome-and-content-webviews.md), [development guide](../../../README.md)
+
+## Verified on Apple Silicon
+
+- `just verify` exited 0 on macOS 15.8.3 with WebKit bundle 20621.3.11.11.3. It ran 83 status and pin tests, one fixture test, six frontend tests and five Rust tests. Svelte checks and Rust Clippy passed, the release binary rejected test control, and npm audit found zero vulnerabilities. RustSec reported two warnings for packages absent from the Apple Silicon dependency graph. [Verifier receipt](../platform/m1/macos-arm64-verifier.json)
+- The debug browser accepted a submission through its actual trusted address form, followed a two-origin loopback redirect, retained the committed address and title and supported Back and Forward. The loopback server observed the normal AppleWebKit token and `Muffin/0.1.0`. The file URL was blocked. A deliberately slow response transitioned out of WebKit's native loading state after Stop. [Native smoke](../platform/m1/macos-arm64-native-smoke.json)
+- A page-owned object resembling the chrome bridge received no render state and was never polled during the fixture run. This is an automated check of the production M1 view architecture. [Native smoke](../platform/m1/macos-arm64-native-smoke.json)
+- The native chrome WKWebView yielded a 2200 × 112 screenshot with the remote destination shown in the address field. The screenshot covers the trusted toolbar. Whole-window capture, z-order and system accessibility settings need further visual evidence. The AppKit window-number capture failed and the desktop-control attempt timed out. [Native toolbar image](../platform/m1/macos-arm64-native-chrome.png), [attempt log](../../BLOCKERS.md#m1-integration-attempts)
+- The independent reviewer inspected the typed bridge, native lifecycle, audit and CI evidence paths and reran locked Rust checks. The resulting fixes use WebKit's own cancellation and allow at most one automatic renderer recovery per explicit browser command. The recovery unit test covers the retry policy. Unexpected WKWebContent termination and recovery remain open. [Recovery test and implementation](../../../crates/muffin/src/main.rs), [native smoke](../platform/m1/macos-arm64-native-smoke.json)
+
+## CI and release state
+
+The source-identified [status guard](https://github.com/4f4d/muffin-browser/actions/runs/44750401025) passed. The [hosted native verifier](https://github.com/4f4d/muffin-browser/actions/runs/44750401099) runs separately and writes only a build record if verification completes. Preserve the existing Windows and Linux feasibility workflows. This handoff keeps the owner-operated qualification results unchanged. [Owner decision](../../adr/0002-macos-first-implementation-and-deferred-qualification.md), [generated status](../../STATUS.json)
+
+M2 builds on the verified local browser path. It will exercise tab and window lifecycle, session metadata and bounded recovery. Release decisions, sign-in qualification and production performance stay open. [Project plan](../../PLAN.md)

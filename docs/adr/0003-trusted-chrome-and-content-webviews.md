@@ -1,0 +1,12 @@
+# ADR 0003 — Trusted chrome and content WebViews
+
+**Status:** Implemented for the macOS M1 baseline
+**Scope:** Apple Silicon development app using the owner's provisional WRY + TAO substrate
+
+The native core owns committed navigation state. It mounts a bundled, hash-authorized Svelte document in a dedicated WKWebView and polls that retained view for versioned, closed-set commands. The core sends display state back to the same view as serialized JSON. A bridge handshake confirms the chrome has mounted before the core accepts its commands. The bundled document has no network resources. [Native shell](../../crates/muffin/src/main.rs), [chrome contract](../../ui/src/lib/bridge.ts), [CSP build](../../ui/scripts/inline-bundle.mjs)
+
+Content uses a separate native WebView configuration with a nonpersistent store in M1. Native code restricts navigation to network web schemes and its empty page, leaves TLS handling to WebKit, and denies popups, downloads and exposed media permission requests at this stage. The content configuration registers no application commands or message handlers. The engine keeps its default user-agent with the truthful versioned Muffin token. [Native shell](../../crates/muffin/src/main.rs), [native smoke](../reports/platform/m1/macos-arm64-native-smoke.json)
+
+We chose typed polling of trusted chrome after M0's view-isolation study. Registering a generic message listener across views would enlarge the authority boundary. Chrome polling introduces periodic evaluations. The scheduler bounds them to one outstanding request between timeouts. Measure this path in the browser's process-tree baseline before expanding it. Debug observation uses a separate operator-provided local directory and is rejected by the release binary. [M0 security assessment](../reports/m0/M0A_S1_FOLLOW_UP.md), [development verifier](../reports/platform/m1/macos-arm64-verifier.json)
+
+The native fixture exercised address submission, a cross-origin redirect and a remote page-owned bridge lookalike. The app retained the remote page and gave the lookalike neither commands nor chrome state. Browser filesystem isolation, broader permission cases, authenticated flows and native fault recovery still require engineering and qualification evidence. Revisit this ADR if a new cross-view capability, a privileged origin or a new platform adapter changes the boundary. [Native smoke](../reports/platform/m1/macos-arm64-native-smoke.json), [implementation and qualification gates](0002-macos-first-implementation-and-deferred-qualification.md)

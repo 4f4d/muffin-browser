@@ -1,0 +1,31 @@
+{
+  "source_commit": "1958eef8cdc34b2a1211441246e26dd097093f40",
+  "source_worktree_clean": true,
+  "os": "macOS 15.8.3",
+  "architecture": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "command": "just verify",
+  "exit_code": 0,
+  "status_guard_python_tests": 83,
+  "loopback_fixture_python_tests": 1,
+  "frontend_tests": 15,
+  "rust_tests": 25,
+  "svelte_diagnostics": 0,
+  "npm_audit_vulnerabilities": 0,
+  "rustsec_warnings_outside_apple_silicon_graph": [
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2024-0429"
+  ],
+  "release_binary_sha256": "01654a1ad76b96f6de00e533e83e69cfda15902fa3982b97e4cd92c50a6303cb",
+  "release_test_control_rejected": true,
+  "verification_log_sha256": "af0add5b01579dc05e3a8adae93488eb14125c16ee60f0e25fef2436e8ad6d97",
+  "native_fixture_receipt": "macos-arm64-native-smoke.json",
+  "native_fixture_receipt_sha256": "30b70596aa204693a4e95aab68179be2171acba8dae037cf4e3372aa6a4523a9",
+  "capture_sha256": {
+    "native-chrome": "67186f80861a2d255e86fed62a2908ea2cef4d248baca37daf220353229f77a9",
+    "native-library": "94be995614588e38aa2aab14da7ca3b4eea9e9f8624b07dc81e7af8bf8f31782",
+    "native-start": "2483746f836446798ac1228cb2d6ab9522596fb68e2ad9c59e9a529a2a481003",
+    "native-settings": "349b0696a9e4053fbd7e02c7f75a5ce0fff12240c8d2bcfd9c386ddecd3685ab"
+  },
+  "capture_boundary": "trusted WKWebView snapshot"
+}

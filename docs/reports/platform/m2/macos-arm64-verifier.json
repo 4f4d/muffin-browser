@@ -1,0 +1,34 @@
+{
+  "source_commit": "449762810e3571203680d2a1b8b664b031f7c800",
+  "source_worktree_clean": true,
+  "os": "macOS 15.8.3",
+  "architecture": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "command": "just verify",
+  "exit_code": 0,
+  "status_guard_python_tests": 83,
+  "loopback_fixture_python_tests": 1,
+  "frontend_tests": 10,
+  "rust_tests": 18,
+  "svelte_diagnostics": 0,
+  "npm_audit_vulnerabilities": 0,
+  "rustsec_warnings_outside_apple_silicon_graph": [
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2024-0429"
+  ],
+  "release_binary_sha256": "d2de3f042026b2b211fc7ecfa4d91adf6a9fec011d1c4c229d916420abbeefe3",
+  "release_test_control_rejected": true,
+  "verification_log_sha256": "b8633194439c2f32f5b93c0aa4126570852ed386af3a614d108e4e86c024faa1",
+  "native_fixture_receipt": "macos-arm64-native-smoke.json",
+  "native_tab_strip_capture": "macos-arm64-tab-strip.png",
+  "native_tab_strip_pixel_size": [
+    2200,
+    192
+  ],
+  "selected_tab_contrast": {
+    "light_text": 11.21,
+    "dark_text": 11.03,
+    "light_keyboard_focus": 4.97,
+    "dark_keyboard_focus": 7.13
+  }
+}

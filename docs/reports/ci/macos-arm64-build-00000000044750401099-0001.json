@@ -1,0 +1,12 @@
+{
+  "source_commit": "0f95cf5c1e2a452e86cf273a4b0102fd70d29567",
+  "run_url": "https://github.com/4f4d/muffin-browser/actions/runs/44750401099/attempts/1",
+  "host_arch": "arm64",
+  "macos_version": "15.8.2",
+  "binary_type": "Mach-O 64-bit executable arm64",
+  "binary_sha256": "102244df07f3f63378133cbde6f69adaad978edba05f0e15df56efb61aae6a1c",
+  "command": "cargo build --workspace --locked --release",
+  "verifier": "python3 tools/verify.py",
+  "verify_log_sha256": "9deccd68d58826e3adce91e6ab09da2020352e206ea165e35f93620f6950044a",
+  "date": "2026-11-20"
+}

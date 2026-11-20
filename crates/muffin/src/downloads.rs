@@ -334,8 +334,9 @@ mod tests {
         let second = downloads
             .items()
             .into_iter()
-            .find(|i| i.name == "report.pdf" && i.id != item.id)
+            .find(|i| i.id != item.id && i.status == DownloadStatus::Finished)
             .unwrap();
+        assert_eq!(second.name, "report (1).pdf");
         assert_eq!(
             downloads.completed_path(second.id).unwrap(),
             fs::canonicalize(dir.path().join("downloads"))

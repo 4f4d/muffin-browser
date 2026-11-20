@@ -1,0 +1,52 @@
+M0b audit — 2026-11-20
+Reviewed checkout a3e356cef60ab738de747cf4253d0e5d1989fe53. Remote git ls-remote --heads origin returned the same validation SHA and the two existing main/M0a branches.
+gh pr list --repo 4f4d/muffin-browser --state open returned an empty list.
+git log --all -- docs/reports/m0/results.json lists only the initial engineering project commit.
+Structure: 20 runbook definitions match results IDs, platform assignments and VM eligibility. All IDs are mapped in preparation.
+
+macos: 0/16 human results. Bare metal: PK-01, PK-02, ME-02, HD-01.
+windows: 0/16 human results. Bare metal: PK-01, PK-02, ME-02, HD-01.
+linux_x11: 0/18 human results. Bare metal: PK-01, PK-02, ME-02, LX-02, LX-04.
+linux_wayland: 0/19 human results. Bare metal: PK-01, PK-02, ME-02, LX-02, LX-04.
+
+Exact archive and executable SHA-256 comparisons
+macos-arm64 3f883b353fce9e3a2c47844d18fb93afcd01a90c archive 20b5a316b8f525d080c9aa727344f72e20c01e5906747f76c39d2d6ebbc027f1 executable 611c3c93750c8b6322227fc8517b85b5a72404b8e1174862c21d022f62f525f4
+windows-x64 3f883b353fce9e3a2c47844d18fb93afcd01a90c archive 7002bd676340632e6a46d2c14ee5caac9c12b2263a692ab8d00a238ffd809584 executable ffbf56483a232142689b5be183e444d44effc54bb1b6d4c6a8932b5eca5e08ce
+ubuntu-24.04-x64 3f883b353fce9e3a2c47844d18fb93afcd01a90c archive 257dd927953f6a849ceda7f841148a8653abf12b09baf5b5a144246db178973d executable b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7
+macos-arm64 ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c archive e02decb21cb27fe980261bdd2d3ae4fdaf1ca0c28e8dd73dffbef30f391666e6 executable 74356468582b47142668ab6329a9d8d30bc9d8253b7fc41f603c0b1dc0845b6d
+
+Committed synthetic run identities. Receipts without supplied executable archives establish receipt consistency only.
+linux-ci-3f883-summary.json 3f883b353fce9e3a2c47844d18fb93afcd01a90c ee28335720f8f3cc47e16cd0f3bb8af82cb49d44f23bc6387d53368866433178
+linux-ci-ed918-summary.json ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c 2bfb8ab4211330e47609d39f6803b9e46b9b7de1c0c01a414cd3bfb2c624f2d4
+linux-host-3f883-wayland-summary.json 3f883b353fce9e3a2c47844d18fb93afcd01a90c b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7
+linux-host-3f883-x11-summary.json 3f883b353fce9e3a2c47844d18fb93afcd01a90c b818ebbc42a6a3fdde490a09d8a1a1c154a22bf2d8a9c76cac33d3939a8000a7
+mac-ci-3f883-summary.json 3f883b353fce9e3a2c47844d18fb93afcd01a90c 611c3c93750c8b6322227fc8517b85b5a72404b8e1174862c21d022f62f525f4
+mac-ci-ed918-summary.json ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c a7a1a15f11c1de5e5ef376eb44bf566a9bdb897b2f64fa31b3948acd499a342c
+mac-local-ed918-summary.json ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c 74356468582b47142668ab6329a9d8d30bc9d8253b7fc41f603c0b1dc0845b6d
+windows-ci-3f883-summary.json 3f883b353fce9e3a2c47844d18fb93afcd01a90c ffbf56483a232142689b5be183e444d44effc54bb1b6d4c6a8932b5eca5e08ce
+windows-ci-623d-summary.json 623d39b4fd037d60ac5f0eb1fdba0e2dd02bdd6d 446a23f16ccceaa3d6936cf16752eb8ec828d4ed8120fb6b0e07172cac6324f1
+windows-ci-ed918-summary.json ed918cf4fcd6a2ac5da08ed8f1bc3d14b1f2652c fc29a8b00db135a690f80ab04a0d0db338ed66abc45b7159e94f2d819cded4d7
+
+Hosted workflow 44591002246 returned final success for macOS/Windows and failure for Ubuntu.
+Local Linux Xvfb and Weston: four download cases failed. Hosted Xvfb: callbacks passed, zero matching payloads. See original receipts.
+Read-only analysis of the WebKitGTK 2.52.6 destination selection and GIO file persistence paths and WRY 0.57.2 destination callback. No new runtime attempt.
+
+Redaction screening: 45 prior validation evidence files were tracked, nonempty and checked for common email, credential, token, sensitive URL and private-path patterns. No pattern matches. No human batch was present.
+
+Fresh automated verification:
+python3 -m unittest discover -s tools/tests -v
+Ran 82 tests in 9.356s
+OK
+python3 -m unittest discover -s spikes/s7 -v
+Ran 6 tests in 0.001s
+OK
+python3 spikes/s7/check_evidence.py
+S7 evidence subset verified
+cargo test --offline --locked --manifest-path spikes/m0b-validation/Cargo.toml
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+python3 -m unittest discover -s spikes/m0b-validation/fixtures -v
+Ran 7 tests in 7.089s
+OK
+python3 tools/gen_status.py and python3 tools/gen_status.py --check passed.
+cargo fmt --check and git diff --check passed.
+Independent read-only reviewer confirmed 82 project tests and status verifier PASS.

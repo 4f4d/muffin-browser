@@ -47,6 +47,7 @@ describe('chrome IPC bridge', () => {
       bookmarked: false,
       notice: '',
       downloads: [],
+      download_approval_count: 0,
       page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
     };
     state.bridge.render(snapshot);
@@ -103,19 +104,24 @@ describe('chrome IPC bridge', () => {
     expect(isAction({ version: 1, action: 'print_page' })).toBe(true);
     expect(isAction({ version: 1, action: 'reveal_download', id: 9 })).toBe(true);
     expect(isAction({ version: 1, action: 'reveal_download', id: 0 })).toBe(false);
+    expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: true })).toBe(true);
+    expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: false })).toBe(true);
+    expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: 1 })).toBe(false);
+    expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: true, path: '/tmp/x' })).toBe(false);
   });
 
   it('rejects malformed M3 snapshot data and freezes accepted records', () => {
     const state = createChromeBridge();
     const snapshot: ChromeSnapshot = {
       version: 1, url: '', title: 'New tab', loading: false, can_back: false, can_forward: false,
-      status: 'home', secure: false, tabs: [], selected_tab: 0, can_restore: false, surface: 'start',
+      status: 'home', secure: false, tabs: [], selected_tab: 0, can_restore: false, surface: 'downloads',
       settings: { theme: 'system', search_engine: 'duckduckgo', restore_session: true, clear_history_on_exit: false },
       suggestions: [{ url: 'https://saved.test', title: 'Saved', bookmarked: true }],
       history: [{ id: 1, url: 'https://visited.test', title: 'Visited', visited_at_ms: 1_700_000_000_000 }],
       bookmarks: [{ id: 2, parent_id: null, url: 'https://saved.test', title: 'Saved' }],
       shortcuts: [{ id: 3, url: 'https://docs.test', title: 'Docs' }], bookmarked: true, notice: '',
-      downloads: [{ id: 9, name: 'report.pdf', status: 'finished', bytes: 1250 }],
+      downloads: [{ id: 9, name: 'report.pdf', host: 'example.test', status: 'finished', bytes: 1250 }],
+      download_approval_count: 1,
       page_tools: { zoom_percent: 125, find_found: true, fullscreen: false }
     };
     state.bridge.render(snapshot);
@@ -124,11 +130,15 @@ describe('chrome IPC bridge', () => {
     expect(Object.isFrozen(state.bridge.snapshot.history[0])).toBe(true);
 
     state.bridge.render({ ...snapshot, surface: 'private' } as unknown as ChromeSnapshot);
-    expect(state.bridge.snapshot.surface).toBe('start');
+    expect(state.bridge.snapshot.surface).toBe('downloads');
     state.bridge.render({ ...snapshot, settings: { ...snapshot.settings, search_engine: 'unknown' } } as unknown as ChromeSnapshot);
     expect(state.bridge.snapshot.settings.search_engine).toBe('duckduckgo');
-    state.bridge.render({ ...snapshot, downloads: [{ id: 9, name: 'bad', status: 'unknown', bytes: 0 }] } as unknown as ChromeSnapshot);
+    state.bridge.render({ ...snapshot, downloads: [{ id: 9, name: 'bad', host: 'example.test', status: 'unknown', bytes: 0 }] } as unknown as ChromeSnapshot);
     expect(state.bridge.snapshot.downloads[0].status).toBe('finished');
+    state.bridge.render({ ...snapshot, downloads: [{ id: 9, name: 'bad', host: 'x'.repeat(256), status: 'finished', bytes: 1 }] });
+    expect(state.bridge.snapshot.downloads[0].host).toBe('example.test');
+    state.bridge.render({ ...snapshot, download_approval_count: 17 });
+    expect(state.bridge.snapshot.download_approval_count).toBe(1);
     state.bridge.render({ ...snapshot, bookmarks: [{ id: 2, parent_id: null, url: 'https://saved.test', title: 'Bad', extra: true }] } as unknown as ChromeSnapshot);
     expect(state.bridge.snapshot.bookmarks[0].url).toBe('https://saved.test');
   });

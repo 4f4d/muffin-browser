@@ -1,6 +1,7 @@
 """Loopback-only pages for the production shell's development tests."""
 
 from contextlib import contextmanager
+from hashlib import sha256
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Event, Thread
 
@@ -16,6 +17,7 @@ PAGE_TWO = """<!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Muffin fixture | Second page</title>
 <h1>Second page</h1><label>Fixture text<input autocomplete="off"></label>
 <p>amber muffin fixture</p>
+<a id="fixture-download" href="/download/alpha" download="shared.bin">Download fixture alpha</a>
 <script>
   // These functions are page-owned lookalikes. The native host must never
   // consume a remote page's queue or give it access to trusted chrome.
@@ -37,9 +39,51 @@ PAGE_TWO = """<!doctype html>
 </html>
 """
 
+UPLOAD_PAGE = """<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Muffin upload fixture</title>
+<h1>Upload fixture</h1><input id="fixture-upload" type="file">
+<script>
+document.querySelector('#fixture-upload').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (file) await fetch('/upload', {method: 'POST', body: await file.arrayBuffer()});
+});
+</script></html>
+"""
+
+
+def make_inline_pdf():
+    content = b"BT /F1 16 Tf 24 72 Td (Muffin inline PDF fixture) Tj ET\n"
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 360 120] "
+        b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length " + str(len(content)).encode("ascii") + b" >>\nstream\n"
+        + content + b"endstream",
+    ]
+    output = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for number, body in enumerate(objects, 1):
+        offsets.append(len(output))
+        output.extend(f"{number} 0 obj\n".encode("ascii") + body + b"\nendobj\n")
+    xref = len(output)
+    output.extend(f"xref\n0 {len(offsets)}\n".encode("ascii"))
+    output.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        output.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+    output.extend(
+        f"trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode("ascii")
+    )
+    return bytes(output)
+
+
+INLINE_PDF = make_inline_pdf()
+
 DOWNLOAD_PAYLOADS = {
     "/download/alpha": b"Muffin fixture alpha\x00\x87\xee" * 64,
     "/download/beta": b"Muffin fixture beta\x01\x19\xff" * 48,
+    "/download/redirect": b"Muffin fixture redirected\x02\x2a\xfe" * 40,
 }
 UNREQUESTED_DOWNLOAD = "/download/unrequested"
 
@@ -51,7 +95,9 @@ class FixtureServer(ThreadingHTTPServer):
         super().__init__(("127.0.0.1", 0), FixtureHandler)
         self.requests = []
         self.user_agents = {}
+        self.uploads = []
         self.redirect_to = ""
+        self.redirect_download_to = ""
         self.release_slow_page = Event()
 
     @property
@@ -72,6 +118,12 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", "0")
             self.end_headers()
             return
+        if self.path == "/redirect-download":
+            self.send_response(302)
+            self.send_header("Location", self.server.redirect_download_to)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         if self.path in DOWNLOAD_PAYLOADS or self.path == UNREQUESTED_DOWNLOAD:
             body = DOWNLOAD_PAYLOADS.get(self.path, b"unrequested fixture transfer")
             self.send_response(200)
@@ -85,6 +137,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
         pages = {
             "/first": PAGE_ONE,
             "/second": PAGE_TWO,
+            "/upload": UPLOAD_PAGE,
             "/attempt-download": (
                 "<!doctype html><title>Automatic download fixture</title>"
                 f"<script>location.assign('{UNREQUESTED_DOWNLOAD}');</script>"
@@ -100,10 +153,26 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        if page_path == "/inline-document":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/pdf")
+            self.send_header("Content-Disposition", 'inline; filename="inline-fixture.pdf"')
+            self.send_header("Content-Length", str(len(INLINE_PDF)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(INLINE_PDF)
+            return
         self.send_error(404)
 
     def do_POST(self):
         self.server.requests.append(("POST", self.path))
+        if self.path == "/upload":
+            length = int(self.headers.get("Content-Length", "0"))
+            if length < 0 or length > 1024 * 1024:
+                self.send_error(413)
+                return
+            body = self.rfile.read(length)
+            self.server.uploads.append({"bytes": len(body), "sha256": sha256(body).hexdigest()})
         self.send_response(204)
         self.end_headers()
 
@@ -130,6 +199,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
 def browser_fixture():
     with FixtureServer() as first, FixtureServer() as second:
         first.redirect_to = second.origin + "/second"
+        first.redirect_download_to = second.origin + "/download/redirect"
         threads = [Thread(target=server.serve_forever, daemon=True) for server in (first, second)]
         for thread in threads:
             thread.start()

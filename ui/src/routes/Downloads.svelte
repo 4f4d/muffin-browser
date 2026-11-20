@@ -21,8 +21,17 @@
         {#each snapshot.downloads as item (item.id)}
           <li>
             <div class="download-mark" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 2.8h6l4 4v9.7a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 5 16.5z"/><path d="M11 3v4h4M10 9v5m-2-2 2 2 2-2"/></svg></div>
-            <div class="download-copy"><strong title={item.name}>{item.name || 'Unnamed download'}</strong><span>{size(item.bytes)} · {item.status === 'downloading' ? 'Downloading' : item.status === 'finished' ? 'Complete' : 'Failed'}</span></div>
-            {#if item.status === 'downloading'}<span class="download-state" aria-label="Download in progress"><span class="tab-loading"></span></span>
+            <div class="download-copy"><strong title={item.name}>{item.name || 'Unnamed download'}</strong>
+              {#if item.status === 'awaiting_approval'}<span>Requested by {item.host}</span>
+              {:else if item.status === 'cancelled'}<span>Cancelled</span>
+              {:else}<span>{size(item.bytes)} · {item.status === 'downloading' ? 'Downloading' : item.status === 'finished' ? 'Complete' : 'Failed'}</span>{/if}
+            </div>
+            {#if item.status === 'awaiting_approval'}
+              <div class="download-consent" role="group" aria-label={`Choose whether to save ${item.name}`}>
+                <button class="download-save" type="button" aria-label={`Save ${item.name}`} onclick={() => send({ version: 1, action: 'decide_download', id: item.id, approve: true })}>Save</button>
+                <button class="quiet-button" type="button" aria-label={`Cancel ${item.name}`} onclick={() => send({ version: 1, action: 'decide_download', id: item.id, approve: false })}>Cancel</button>
+              </div>
+            {:else if item.status === 'downloading'}<span class="download-state" aria-label="Download in progress"><span class="tab-loading"></span></span>
             {:else if item.status === 'finished'}<button class="quiet-button" type="button" aria-label={`Show ${item.name} in folder`} onclick={() => send({ version: 1, action: 'reveal_download', id: item.id })}>Show in folder</button>
             {:else}<span class="download-failed">Couldn’t finish</span>{/if}
           </li>

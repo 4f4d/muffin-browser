@@ -284,19 +284,34 @@ describe('browser chrome controls', () => {
     expect(document.body.classList.contains('surface-expanded')).toBe(false);
   });
 
-  it('shows completed downloads and routes reveal requests', async () => {
+  it('keeps consent text inert and routes approval, cancellation, and reveal actions', async () => {
     bridgeState.bridge.render(makeSnapshot({
       surface: 'downloads',
+      download_approval_count: 2,
       downloads: [
-        { id: 91, name: 'Annual report.pdf', status: 'finished', bytes: 1250000 },
-        { id: 92, name: 'Large archive.zip', status: 'downloading', bytes: 2048 },
-        { id: 93, name: 'Broken file', status: 'failed', bytes: 0 }
+        { id: 90, name: '<img src=x onerror=alert(1)>', host: '<script>evil.test</script>', status: 'awaiting_approval', bytes: 0 },
+        { id: 94, name: 'Later file', host: 'download.example', status: 'awaiting_approval', bytes: 0 },
+        { id: 91, name: 'Annual report.pdf', host: 'reports.example', status: 'finished', bytes: 1250000 },
+        { id: 92, name: 'Large archive.zip', host: 'files.example', status: 'downloading', bytes: 2048 },
+        { id: 93, name: 'Cancelled item', host: 'files.example', status: 'cancelled', bytes: 0 }
       ]
     }));
     await tick();
     expect(document.querySelector('#downloads-heading')?.textContent).toBe('Downloads');
-    expect(document.querySelector('.download-copy strong')?.textContent).toBe('Annual report.pdf');
-    expect(document.querySelectorAll('.download-list li')).toHaveLength(3);
+    expect(document.querySelector('.download-copy strong')?.textContent).toBe('<img src=x onerror=alert(1)>');
+    expect(document.querySelector('img')).toBeNull();
+    expect(document.querySelector('script')).toBeNull();
+    expect(document.querySelectorAll('.download-list li')).toHaveLength(5);
+    expect(document.querySelector('.download-copy span')?.textContent).toContain('<script>evil.test</script>');
+    expect(document.querySelector('.download-copy span')?.textContent).not.toContain('0 B');
+    expect(document.querySelectorAll('.download-copy span')[4]?.textContent).toContain('Cancelled');
+    expect(document.querySelector<HTMLButtonElement>('.approval-badge')?.textContent).toContain('2');
+    document.querySelector<HTMLButtonElement>('.approval-badge')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'show_surface', value: 'downloads' });
+    document.querySelector<HTMLButtonElement>('[aria-label="Save <img src=x onerror=alert(1)>"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'decide_download', id: 90, approve: true });
+    document.querySelector<HTMLButtonElement>('[aria-label="Cancel Later file"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'decide_download', id: 94, approve: false });
     document.querySelector<HTMLButtonElement>('[aria-label="Show Annual report.pdf in folder"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'reveal_download', id: 91 });
   });

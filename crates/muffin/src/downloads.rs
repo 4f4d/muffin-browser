@@ -1,10 +1,4 @@
-//! Bounded download bookkeeping for native WebView download callbacks.
-//!
-//! The browser UI only receives `DownloadItem`; URLs and filesystem paths stay
-//! in this native module. WebView completion callbacks identify transfers by
-//! URL only. Duplicate normalized URLs are rejected at begin. A late completion
-//! callback for an earlier rejected duplicate can still be ambiguous; callers
-//! must not reuse a URL while an earlier callback may still arrive.
+//! Bounded, consent-gated downloads. UI records contain no URL or path.
 
 use serde::Serialize;
 use std::{
@@ -16,19 +10,23 @@ use url::Url;
 
 const MAX_PENDING: usize = 16;
 const MAX_RECENT: usize = 64;
+pub(crate) const MAX_FILE_BYTES: u64 = 512 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DownloadStatus {
+    AwaitingApproval,
     Downloading,
     Finished,
     Failed,
+    Cancelled,
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 pub struct DownloadItem {
     pub id: u32,
     pub name: String,
+    pub host: String,
     pub status: DownloadStatus,
     pub bytes: u64,
 }
@@ -36,8 +34,7 @@ pub struct DownloadItem {
 #[derive(Debug)]
 struct Record {
     item: DownloadItem,
-    url: String,
-    staged_path: PathBuf,
+    staged_path: Option<PathBuf>,
     stage: Option<TempDir>,
     completed_path: Option<PathBuf>,
 }
@@ -59,73 +56,94 @@ impl Downloads {
         }
     }
 
-    /// Allocate a unique, not-yet-existing target under a private transfer
-    /// directory. Only credential-free HTTP(S) URLs are accepted.
-    pub fn begin(&mut self, url: &str, suggested: &Path) -> Option<PathBuf> {
-        if !self.root.is_absolute() {
-            return None;
-        }
-        if self
-            .records
-            .iter()
-            .filter(|r| r.item.status == DownloadStatus::Downloading)
-            .count()
-            >= MAX_PENDING
+    /// Record an engine-proposed transfer without touching the filesystem.
+    /// The returned ID is the internal object identity carried to completion.
+    pub fn offer(&mut self, url: &Url, suggested: &Path) -> Option<u32> {
+        if !["http", "https"].contains(&url.scheme())
+            || url.host_str().is_none()
+            || !url.username().is_empty()
+            || url.password().is_some()
+            || self
+                .records
+                .iter()
+                .filter(|r| {
+                    matches!(
+                        r.item.status,
+                        DownloadStatus::AwaitingApproval | DownloadStatus::Downloading
+                    )
+                })
+                .count()
+                >= MAX_PENDING
         {
-            return None;
-        }
-        let parsed = Url::parse(url).ok()?;
-        if !["http", "https"].contains(&parsed.scheme())
-            || parsed.host_str().is_none()
-            || !parsed.username().is_empty()
-            || parsed.password().is_some()
-        {
-            return None;
-        }
-        let normalized = parsed.to_string();
-        if self
-            .records
-            .iter()
-            .any(|r| r.item.status == DownloadStatus::Downloading && r.url == normalized)
-        {
-            return None;
-        }
-        let root = self.ensure_root()?.to_path_buf();
-        let name = safe_name(suggested);
-        let stage = tempfile::Builder::new()
-            .prefix(".muffin-download-")
-            .tempdir_in(&root)
-            .ok()?;
-        let staged_path = stage.path().join(name.as_str());
-        if fs::symlink_metadata(&staged_path).is_ok() {
             return None;
         }
         let id = self.allocate_id();
         self.records.push(Record {
             item: DownloadItem {
                 id,
-                name,
-                status: DownloadStatus::Downloading,
+                name: safe_name(suggested),
+                host: safe_host(url),
+                status: DownloadStatus::AwaitingApproval,
                 bytes: 0,
             },
-            url: normalized,
-            staged_path: staged_path.clone(),
-            stage: Some(stage),
+            staged_path: None,
+            stage: None,
             completed_path: None,
         });
         self.trim_recent();
-        Some(staged_path)
+        Some(id)
     }
 
-    /// Complete a transfer identified by its URL. WRY currently supplies no
-    /// unique transfer identifier, so duplicate pending URLs are rejected.
-    pub fn finish(&mut self, url: &str, success: bool) {
-        let Ok(parsed) = Url::parse(url) else { return };
-        let normalized = parsed.to_string();
+    /// Allocate a randomized private staging destination only after consent.
+    pub fn approve(&mut self, id: u32) -> Option<PathBuf> {
+        let index = self
+            .records
+            .iter()
+            .position(|r| r.item.id == id && r.item.status == DownloadStatus::AwaitingApproval)?;
+        let prepared = (|| {
+            let root = self.ensure_root()?.to_path_buf();
+            let stage = tempfile::Builder::new()
+                .prefix(".muffin-download-")
+                .tempdir_in(&root)
+                .ok()?;
+            let staged_path = stage.path().join(self.records[index].item.name.as_str());
+            if fs::symlink_metadata(&staged_path).is_ok() {
+                return None;
+            }
+            Some((stage, staged_path))
+        })();
+        if let Some((stage, path)) = prepared {
+            let record = &mut self.records[index];
+            record.staged_path = Some(path.clone());
+            record.stage = Some(stage);
+            record.item.status = DownloadStatus::Downloading;
+            Some(path)
+        } else {
+            self.records[index].item.status = DownloadStatus::Failed;
+            self.trim_recent();
+            None
+        }
+    }
+
+    pub fn dismiss(&mut self, id: u32) -> bool {
+        let Some(record) = self
+            .records
+            .iter_mut()
+            .find(|r| r.item.id == id && r.item.status == DownloadStatus::AwaitingApproval)
+        else {
+            return false;
+        };
+        record.item.status = DownloadStatus::Cancelled;
+        self.trim_recent();
+        true
+    }
+
+    /// Complete the exact offered transfer. Unknown and terminal IDs are no-ops.
+    pub fn finish(&mut self, id: u32, success: bool) {
         let Some(index) = self
             .records
             .iter()
-            .position(|r| r.item.status == DownloadStatus::Downloading && r.url == normalized)
+            .position(|r| r.item.id == id && r.item.status == DownloadStatus::Downloading)
         else {
             return;
         };
@@ -158,6 +176,9 @@ impl Downloads {
 
     fn ensure_root(&mut self) -> Option<&Path> {
         if self.canonical_root.is_none() {
+            if !self.root.is_absolute() {
+                return None;
+            }
             if fs::create_dir_all(&self.root).is_err() {
                 return None;
             }
@@ -171,15 +192,20 @@ impl Downloads {
     }
 
     fn allocate_id(&mut self) -> u32 {
-        let id = self.next_id.max(1);
-        self.next_id = id.wrapping_add(1).max(1);
-        id
+        loop {
+            let id = self.next_id.max(1);
+            self.next_id = id.wrapping_add(1).max(1);
+            if !self.records.iter().any(|r| r.item.id == id) {
+                return id;
+            }
+        }
     }
 
     fn publish_file(&self, index: usize) -> Option<(PathBuf, u64)> {
         let root = self.canonical_root.as_deref()?;
         let record = &self.records[index];
         let stage = record.stage.as_ref()?;
+        let staged_path = record.staged_path.as_deref()?;
         let stage_path = stage.path();
         let Ok(dir_meta) = fs::symlink_metadata(stage_path) else {
             return None;
@@ -190,19 +216,22 @@ impl Downloads {
         let Ok(canonical_dir) = fs::canonicalize(stage_path) else {
             return None;
         };
-        if !canonical_dir.starts_with(root) || record.staged_path.parent() != Some(stage_path) {
+        if !canonical_dir.starts_with(root) || staged_path.parent() != Some(stage_path) {
             return None;
         }
-        let Ok(meta) = fs::symlink_metadata(&record.staged_path) else {
+        let Ok(meta) = fs::symlink_metadata(staged_path) else {
             return None;
         };
         if !meta.is_file() || meta.file_type().is_symlink() {
             return None;
         }
         let bytes = meta.len();
+        if bytes > MAX_FILE_BYTES {
+            return None;
+        }
         for suffix in 0..10_000u32 {
             let visible = root.join(collision_name(&record.item.name, suffix));
-            match fs::hard_link(&record.staged_path, &visible) {
+            match fs::hard_link(staged_path, &visible) {
                 Ok(()) => return Some((visible, bytes)),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
                 Err(_) => return None,
@@ -262,6 +291,26 @@ fn safe_name(path: &Path) -> String {
     }
 }
 
+fn safe_host(url: &Url) -> String {
+    let host = url.host_str().unwrap_or("unknown");
+    let host = if host.contains(':') {
+        format!("[{host}]")
+    } else {
+        host.to_owned()
+    };
+    if let Some(port) = url.port() {
+        let default = match url.scheme() {
+            "http" => Some(80),
+            "https" => Some(443),
+            _ => None,
+        };
+        if Some(port) != default {
+            return format!("{host}:{port}");
+        }
+    }
+    host
+}
+
 fn collision_name(name: &str, suffix: u32) -> String {
     if suffix == 0 {
         return name.to_owned();
@@ -285,36 +334,52 @@ mod tests {
     use std::fs::File;
     use std::io::Write;
 
+    fn url(s: &str) -> Url {
+        Url::parse(s).unwrap()
+    }
+
     #[test]
-    fn rejects_unsafe_urls_and_sanitizes_filename() {
+    fn offer_is_fs_free_and_same_url_gets_distinct_ids() {
         let dir = tempfile::tempdir().unwrap();
         let mut downloads = Downloads::new(dir.path().join("downloads"));
         assert!(downloads
-            .begin("file:///etc/passwd", Path::new("passwd"))
+            .offer(&url("file:///etc/passwd"), Path::new("passwd"))
             .is_none());
         assert!(downloads
-            .begin("https://user:pass@example.test/a", Path::new("a"))
+            .offer(&url("https://user:pass@example.test/a"), Path::new("a"))
             .is_none());
-        let path = downloads
-            .begin("https://example.test/a", Path::new("../../bad name?.txt"))
+        let first = downloads
+            .offer(
+                &url("https://example.test:8443/a"),
+                Path::new("../../bad name?.txt"),
+            )
             .unwrap();
-        assert_eq!(path.file_name().unwrap(), "bad_name_.txt");
-        assert!(path.starts_with(fs::canonicalize(dir.path()).unwrap()));
+        let second = downloads
+            .offer(&url("https://example.test:8443/a"), Path::new("same.txt"))
+            .unwrap();
+        assert_ne!(first, second);
+        assert!(!dir.path().join("downloads").exists());
+        let rows = downloads.items();
+        assert_eq!(rows[0].host, "example.test:8443");
+        assert_eq!(rows[0].name, "bad_name_.txt");
+        assert_eq!(rows[0].status, DownloadStatus::AwaitingApproval);
     }
 
     #[test]
     fn collisions_get_distinct_destinations_and_success_is_retained() {
         let dir = tempfile::tempdir().unwrap();
         let mut downloads = Downloads::new(dir.path().join("downloads"));
-        let a = downloads
-            .begin("https://example.test/a", Path::new("report.pdf"))
+        let ida = downloads
+            .offer(&url("https://example.test/a"), Path::new("report.pdf"))
             .unwrap();
-        let b = downloads
-            .begin("https://example.test/b", Path::new("report.pdf"))
+        let idb = downloads
+            .offer(&url("https://example.test/b"), Path::new("report.pdf"))
             .unwrap();
+        let a = downloads.approve(ida).unwrap();
+        let b = downloads.approve(idb).unwrap();
         assert_ne!(a, b);
         File::create(&a).unwrap().write_all(b"pdf").unwrap();
-        downloads.finish("https://example.test/a", true);
+        downloads.finish(ida, true);
         let item = downloads
             .items()
             .into_iter()
@@ -330,7 +395,7 @@ mod tests {
         );
         assert!(!a.exists());
         File::create(&b).unwrap();
-        downloads.finish("https://example.test/b", true);
+        downloads.finish(idb, true);
         let second = downloads
             .items()
             .into_iter()
@@ -346,56 +411,50 @@ mod tests {
     }
 
     #[test]
-    fn failure_missing_file_rejected_symlink_and_duplicate_url_rejected() {
+    fn failure_missing_file_and_rejected_symlink_cleanup() {
         let dir = tempfile::tempdir().unwrap();
         let mut downloads = Downloads::new(dir.path().join("downloads"));
-        let failed = downloads
-            .begin("https://example.test/fail", Path::new("partial"))
+        let failed_id = downloads
+            .offer(&url("https://example.test/fail"), Path::new("partial"))
             .unwrap();
+        let failed = downloads.approve(failed_id).unwrap();
         File::create(&failed)
             .unwrap()
             .write_all(b"partial")
             .unwrap();
-        downloads.finish("https://example.test/fail", false);
+        downloads.finish(failed_id, false);
         assert!(!failed.exists());
 
-        let missing = downloads
-            .begin("https://example.test/missing", Path::new("gone"))
+        let missing_id = downloads
+            .offer(&url("https://example.test/missing"), Path::new("gone"))
             .unwrap();
-        downloads.finish("https://example.test/missing", true);
+        let missing = downloads.approve(missing_id).unwrap();
+        downloads.finish(missing_id, true);
         assert!(!missing.exists());
 
         #[cfg(unix)]
         {
             use std::os::unix::fs::symlink;
-            let link = downloads
-                .begin("https://example.test/link", Path::new("link"))
+            let link_id = downloads
+                .offer(&url("https://example.test/link"), Path::new("link"))
                 .unwrap();
+            let link = downloads.approve(link_id).unwrap();
             let outside = dir.path().join("outside");
             File::create(&outside).unwrap().write_all(b"keep").unwrap();
             symlink(&outside, &link).unwrap();
-            downloads.finish("https://example.test/link", true);
+            downloads.finish(link_id, true);
             assert!(!link.exists());
             assert_eq!(fs::read(&outside).unwrap(), b"keep");
         }
 
-        let x = downloads
-            .begin("https://example.test/same", Path::new("one"))
-            .unwrap();
-        assert!(downloads
-            .begin("https://example.test/same", Path::new("two"))
-            .is_none());
-        File::create(&x).unwrap();
-        downloads.finish("https://example.test/same", true);
-        assert!(!x.exists());
         assert_eq!(
             downloads
                 .items()
                 .iter()
-                .find(|i| i.name == "one")
+                .find(|i| i.id == missing_id)
                 .unwrap()
                 .status,
-            DownloadStatus::Finished
+            DownloadStatus::Failed
         );
     }
 
@@ -410,9 +469,11 @@ mod tests {
             let link = dir.path().join("link");
             symlink(&target, &link).unwrap();
             let mut downloads = Downloads::new(link);
-            assert!(downloads
-                .begin("https://example.test/a", Path::new("a"))
-                .is_none());
+            let id = downloads
+                .offer(&url("https://example.test/a"), Path::new("a"))
+                .unwrap();
+            assert!(downloads.approve(id).is_none());
+            assert_eq!(downloads.items()[0].status, DownloadStatus::Failed);
         }
     }
 
@@ -422,20 +483,71 @@ mod tests {
         let mut downloads = Downloads::new(dir.path().join("downloads"));
         for n in 0..MAX_PENDING {
             let url = format!("https://example.test/pending/{n}");
-            assert!(downloads.begin(&url, Path::new("pending.bin")).is_some());
+            assert!(downloads
+                .offer(&Url::parse(&url).unwrap(), Path::new("pending.bin"))
+                .is_some());
         }
         assert_eq!(downloads.items().len(), MAX_PENDING);
         assert!(downloads
-            .begin("https://example.test/overflow", Path::new("overflow"))
+            .offer(&url("https://example.test/overflow"), Path::new("overflow"))
             .is_none());
 
         let mut recent = Downloads::new(dir.path().join("recent"));
         for n in 0..(MAX_RECENT + 2) {
             let url = format!("https://example.test/recent/{n}");
-            let path = recent.begin(&url, Path::new("item.bin")).unwrap();
+            let id = recent
+                .offer(&Url::parse(&url).unwrap(), Path::new("item.bin"))
+                .unwrap();
+            let path = recent.approve(id).unwrap();
             File::create(path).unwrap();
-            recent.finish(&url, true);
+            recent.finish(id, true);
         }
         assert_eq!(recent.items().len(), MAX_RECENT);
+    }
+
+    #[test]
+    fn denial_dismissal_missing_id_and_finish_are_idempotent() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("downloads");
+        let mut downloads = Downloads::new(root.clone());
+        let denied = downloads
+            .offer(&url("https://example.test/deny"), Path::new("deny"))
+            .unwrap();
+        assert!(downloads.dismiss(denied));
+        assert!(!downloads.dismiss(denied));
+        downloads.finish(denied, true);
+        assert!(!root.exists());
+        let id = downloads
+            .offer(&url("https://example.test/allow"), Path::new("allow"))
+            .unwrap();
+        assert!(downloads.approve(999_999).is_none());
+        assert!(downloads.approve(id).is_some());
+        downloads.finish(999_999, true);
+        assert_eq!(
+            downloads
+                .items()
+                .iter()
+                .find(|i| i.id == id)
+                .unwrap()
+                .status,
+            DownloadStatus::Downloading
+        );
+    }
+
+    #[test]
+    fn completed_file_size_limit_rejects_oversize_output() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut downloads = Downloads::new(dir.path().join("downloads"));
+        let id = downloads
+            .offer(&url("https://example.test/large"), Path::new("large.bin"))
+            .unwrap();
+        let stage = downloads.approve(id).unwrap();
+        File::create(&stage)
+            .unwrap()
+            .set_len(MAX_FILE_BYTES + 1)
+            .unwrap();
+        downloads.finish(id, true);
+        assert_eq!(downloads.items()[0].status, DownloadStatus::Failed);
+        assert!(downloads.completed_path(id).is_none());
     }
 }

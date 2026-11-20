@@ -417,30 +417,114 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
     until(process, "remote page attempted an automatic download", lambda: (
         ("GET", UNREQUESTED_DOWNLOAD) in first.requests
     ))
-
-    for index, (server, path) in enumerate(zip((first, second), DOWNLOAD_PAYLOADS, strict=True), 1):
-        command("chrome_navigate", value=server.origin + path)
-        until(process, f"fixture received download {index}", lambda: ("GET", path) in server.requests)
-        command("show_surface", value="downloads")
-        expect(f"native download {index} finished", lambda s: (
-            s.get("surface") == "downloads"
-            and len(s.get("downloads", [])) == index
-            and all(item["status"] == "finished" for item in s["downloads"])
-        ))
-
+    command("show_surface", value="downloads")
+    pending = expect("automatic remote attachment awaits trusted approval", lambda s: (
+        s.get("surface") == "downloads"
+        and any(item.get("status") == "awaiting_approval" for item in s.get("downloads", []))
+    ))
+    remote_row = next(item for item in pending["downloads"] if item.get("status") == "awaiting_approval")
     directory = control / "downloads"
+
+    def files_below_download_root():
+        return [path for path in directory.rglob("*") if path.is_file()] if directory.exists() else []
+
+    def file_set():
+        return {path.resolve() for path in files_below_download_root()}
+
+    if any(directory.iterdir()):
+        raise AssertionError("a download created a filesystem artifact before trusted approval")
+    command("decide_download", id=remote_row["id"], approve=False)
+    cancelled = expect("dismissed remote attachment is cancelled", lambda s: any(
+        item.get("id") == remote_row["id"] and item.get("status") == "cancelled"
+        for item in s.get("downloads", [])
+    ))
+    if any(directory.iterdir()):
+        raise AssertionError("a denied remote attachment left a filesystem artifact")
+    steps.append({"remote_attachment": "awaiting_approval_then_cancelled", "published": False})
+
+    def begin_download(label, start, server, requested_path):
+        before = file_set()
+        start()
+        until(process, f"fixture received {label}", lambda: ("GET", requested_path) in server.requests)
+        command("show_surface", value="downloads")
+        state = expect(f"{label} awaits trusted approval", lambda s: (
+            s.get("surface") == "downloads"
+            and any(item.get("status") == "awaiting_approval" for item in s.get("downloads", []))
+        ))
+        row = next(item for item in state["downloads"] if item.get("status") == "awaiting_approval")
+        if not isinstance(row.get("host"), str) or not row["host"]:
+            raise AssertionError(f"{label} pending row omitted its source host")
+        if file_set() != before:
+            raise AssertionError(f"{label} created a filesystem artifact before approval")
+        command("decide_download", id=row["id"], approve=True)
+        terminal = expect(f"{label} approval decision reached a terminal state", lambda s: any(
+            item.get("id") == row["id"]
+            and item.get("status") in {"finished", "failed", "cancelled"}
+            for item in s.get("downloads", [])
+        ))
+        result = next(item for item in terminal["downloads"] if item.get("id") == row["id"])
+        if result.get("status") != "finished":
+            raise AssertionError(f"{label} did not finish after approval: {result.get('status')}")
+        return result
+
+    approved_rows = []
+    command("navigate", value=second_url)
+    expect("content link fixture is ready after declining the automatic attachment", lambda s: (
+        s.get("surface") == "browse" and s.get("status") == "ready" and s.get("url") == second_url
+    ))
+    alpha = begin_download(
+        "content link attachment",
+        lambda: command("click_fixture_link"),
+        second,
+        "/download/alpha",
+    )
+    approved_rows.append(alpha)
+    beta = begin_download(
+        "trusted address-bar attachment",
+        lambda: command("chrome_navigate", value=first.origin + "/download/beta"),
+        first,
+        "/download/beta",
+    )
+    approved_rows.append(beta)
+    redirected = begin_download(
+        "cross-origin redirected attachment",
+        lambda: command("chrome_navigate", value=first.origin + "/redirect-download"),
+        second,
+        "/download/redirect",
+    )
+    if redirected.get("host") != second.origin.removeprefix("http://"):
+        raise AssertionError("the redirected download displayed a host other than the response host")
+
     payloads = []
-    for file in directory.iterdir():
-        if file.is_file() and not file.is_symlink():
+    for file in files_below_download_root():
+        if not file.is_symlink():
             with file.open("rb") as stream:
                 payloads.append((file.stat().st_size, file_digest(stream, "sha256").hexdigest()))
     payloads.sort()
-    expected = sorted((len(data), sha256(data).hexdigest()) for data in DOWNLOAD_PAYLOADS.values())
+    expected_payloads = [DOWNLOAD_PAYLOADS[path] for path in (
+        "/download/alpha", "/download/beta", "/download/redirect",
+    )]
+    expected = sorted((len(data), sha256(data).hexdigest()) for data in expected_payloads)
     if payloads != expected:
-        raise AssertionError(f"native downloads did not match both fixture payloads: {payloads}")
+        raise AssertionError(f"approved native downloads did not match fixture payloads: {payloads}")
+    names = [item.get("name") for item in approved_rows]
+    if names != ["shared.bin", "shared (1).bin"]:
+        raise AssertionError(f"download rows did not report collision-safe publish names: {names}")
     steps.append({
-        "native_downloads": [{"bytes": size, "sha256": digest} for size, digest in payloads],
-        "remote_unrequested_download_published": False,
+        "native_download_consent": {
+            "denied_remote_attachment": next(
+                item["status"] for item in cancelled["downloads"] if item["id"] == remote_row["id"]
+            ),
+            "approved_downloads": [
+                {"name": item.get("name"), "host": item.get("host"), "status": item.get("status")}
+                for item in approved_rows
+            ],
+            "approved_names": names,
+            "approved_payloads": [{"bytes": size, "sha256": digest} for size, digest in payloads],
+            "cross_origin_redirect_status": redirected.get("status"),
+            "cross_origin_redirect_name": redirected.get("name"),
+            "unapproved_filesystem_writes": False,
+        },
     })
     if capture is not None:
         capture(process, control, command, "native-downloads")

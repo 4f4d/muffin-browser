@@ -27,6 +27,7 @@
     bookmarked: false,
     notice: '',
     downloads: [],
+    download_approval_count: 0,
     page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
   };
 
@@ -373,6 +374,11 @@
       <button class="mini-action" aria-label={activeTab?.pinned ? 'Unpin selected tab' : 'Pin selected tab'} title={activeTab?.pinned ? 'Unpin tab' : 'Pin tab'} disabled={!activeTab} onclick={() => activeTab && send({ version: 1, action: 'pin_tab', id: activeTab.id, pinned: !activeTab.pinned })}>
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 3 6 0-1 4 3 3v1H5v-1l3-3zM10 11v6" /></svg>
       </button>
+      {#if snapshot.download_approval_count > 0}
+        <button class="approval-badge" type="button" aria-label={`${snapshot.download_approval_count} downloads need approval`} title="Review downloads" onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
+          <span aria-hidden="true">↓</span><span>{snapshot.download_approval_count}</span>
+        </button>
+      {/if}
       <button class="mini-action" aria-label="Page tools" title="Page tools" aria-pressed={pageToolsOpen} disabled={snapshot.surface !== 'browse'} onclick={() => void openFind()}>
         <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5"/><path d="m12.2 12.2 4.2 4.2M6.5 8.5h4"/></svg>
       </button>

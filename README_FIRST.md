@@ -1,5 +1,7 @@
 # Muffin Browser — Codex starter package (v5)
 
+**2026-11-20 update.** The M0 kickoff below records the original procedure. See the [owner implementation decision](docs/adr/0002-macos-first-implementation-and-deferred-qualification.md) for the current implementation and qualification gates.
+
 1. Create the **public** Muffin Browser repository and open it.
 2. Copy the contents of this package into the repository root, preserving `docs/`, `tools/`, and `.github/`.
 3. If the repository already has an `AGENTS.md`, inspect and merge these project rules without deleting or weakening existing instructions.

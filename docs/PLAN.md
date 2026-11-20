@@ -1,9 +1,12 @@
 # Muffin Browser — Product and Engineering Plan
 
-**Plan status:** Revision 2. Initial plan for M0 validation; architecture is intentionally not yet frozen. Repository is public.  
-**Plan date:** 2026-11-18  
-**Product:** Muffin Browser  
-**Targets:** macOS, Windows, Linux
+**Plan status:** Revision 3. Production implementation authorized. Substrate remains provisional.
+**Plan date:** 2026-11-20
+**Product:** Muffin Browser
+**Initial release target:** macOS Apple Silicon
+**Deferred release targets:** Windows, Linux X11 and Linux Wayland
+
+The owner authorized M1 and subsequent implementation milestones ahead of manual M0b qualification. [Owner decision and gates](adr/0002-macos-first-implementation-and-deferred-qualification.md)
 
 ## 1. Product thesis
 
@@ -66,7 +69,7 @@ Virtualized runs validate functionality only. Do not use them as evidence for GP
 
 ## 5. Feature scope
 
-### Launch scope — implement only after the relevant platform capability passes
+### Launch scope — qualify the relevant platform capabilities before release
 
 **Core navigation**
 - Address/omnibox with URL recognition and search fallback.
@@ -109,7 +112,7 @@ Virtualized runs validate functionality only. Do not use them as evidence for GP
 - Search engine, homepage/new tab, downloads, startup/session restore, privacy, permission, and tab behaviour settings.
 - Accessible keyboard focus, target sizes, labels, contrast, and reduced-motion support.
 
-### Launch only if M0 proves feasibility
+### Launch only with feasibility and qualification evidence
 - Reliable Google/Microsoft/GitHub sign-in and common OAuth flows.
 - Passkey/WebAuthn access, including the Apple entitlement and approval path where applicable.
 - DRM streaming compatibility on representative services and OS versions.
@@ -212,7 +215,7 @@ Create a `/spikes` area, not production architecture. Every spike report lives i
 
 **2026-11-19 authorized S1 follow-up.** The [separate scope and timing record](reports/m0/S1_FOLLOW_UP_SCOPE.md) bounds four WRY + TAO desktop investigations. The [updated capability matrix](reports/m0/M0A_S1_FOLLOW_UP.md) records interactive Mac input and composition evidence, the Mac fixture trust boundary, and blocked Windows 11 and GNOME desktop investigations. The S1 gate remains open for human review.
 
-**2026-11-19 authorized M0a continuation.** The owner provisionally authorized WRY + TAO for the remaining feasibility investigations. S2a, S3, S4, S5, S7 and S8 are recorded with their separate budgets and evidence. The S1 desktop and unexpected-recovery gaps remain open. The [continuation handoff](reports/m0/M0A_CONTINUATION_SUMMARY.md) and [prepared manual diagnostics](reports/m0/M0B_PREPARATION.md) are ready for human review. Architecture, platform support and M0b results remain open. The repository stays at M0a pending the human-operated stage.
+**2026-11-19 authorized M0a continuation.** The owner provisionally authorized WRY + TAO for the remaining feasibility investigations. S2a, S3, S4, S5, S7 and S8 are recorded with their separate budgets and evidence. The S1 desktop and unexpected-recovery gaps remain open. The [continuation handoff](reports/m0/M0A_CONTINUATION_SUMMARY.md) and [prepared manual diagnostics](reports/m0/M0B_PREPARATION.md) are ready for human review. Architecture, platform support and M0b results remain open. At that checkpoint the repository stayed at M0a pending the human-operated stage. The 2026-11-20 owner decision below supersedes that implementation hold.
 
 ### M0b — Human-in-the-loop validation (human)
 
@@ -220,11 +223,13 @@ M0b is human-operated, not an autonomous Codex milestone. Codex may prepare test
 
 The human runs `docs/M0B_MANUAL_TESTS.md` on bare metal where required, and on the Windows VM / Ubuntu Desktop VM where VM results are valid, then records results in `docs/reports/m0/results.json`. Codex prepares the spike binaries and test pages beforehand and, on request, reviews the recorded results. Blank cells stay `not_run`.
 
-**M0 exit (hard stop, human decision):** architecture decision, target OS/engine floors, feature parity table, risk register, measured baselines, M0b results, and an explicit go / beta / no-go decision per platform made by the human. Do not proceed with a platform's full feature plan if its critical navigation, multi-view, or security model fails.
+**2026-11-20 owner decision.** Defer the 15 regular macOS tests and conditional SI-05 diagnostic until feature-complete qualification. Leave unperformed cases unrecorded. Windows, Linux X11 and Linux Wayland are deferred from the initial release. Preserve their prior implementations and evidence. [Owner decision](adr/0002-macos-first-implementation-and-deferred-qualification.md)
 
-### M1 — Walking skeleton and verification harness (requires explicit human approval after M0b)
+**M0 acceptance (owner gate before initial release):** architecture decision, target OS and engine floors, feature parity table, risk register, measured baselines, M0b results and a platform decision for the initial release. Implementation may proceed before this gate. Qualification retains the original navigation, multi-view, security and sign-in criteria.
 
-M1 may start only after the human has reviewed M0a/M0b, recorded explicit per-platform go/beta/no-go decisions and the DEC-UA/sign-in decision, and explicitly instructed Codex to proceed. A passing generator or reviewer report alone does not authorize M1.
+### M1 — Walking skeleton and verification harness
+
+The owner explicitly authorized implementation on 2026-11-20. WRY + TAO is provisional and macOS Apple Silicon is the production target. Preserve native Windows and GTK feasibility coverage through their existing workflows. Record platform evidence according to the platform and test level actually exercised.
 
 - Establish repository structure and typed IPC contract.
 - Make CI write `ci_runner` result records (run URL, artifact hash) so agents never hand-write platform-level evidence. Platform-level artifact files must be committed under `docs/reports/ci/` or `docs/reports/platform/`; do not use ordinary project files as evidence. Add a Dependabot `github-actions` config so action pin bumps arrive as reviewed pull requests (update `tools/tests/test_ci_pins.py` with each reviewed bump).
@@ -262,13 +267,14 @@ M1 may start only after the human has reviewed M0a/M0b, recorded explicit per-pl
 ### M6 — Product polish and accessibility
 
 - Final themes, responsive layouts, empty/loading/error states, keyboard traversal, accessibility, visual consistency and onboarding.
-- Human visual review checkpoint with actual cross-platform screenshots. Do not claim visual verification without the artifacts.
+- Human visual review checkpoint with actual application screenshots on the initial release target. Other platforms require their own visual evidence before a later release. Do not claim visual verification without the artifacts.
 
 ### M7 — Hardening and release readiness
 
 - Regression, security, performance and packaging review.
 - Install/uninstall, default-browser, URL scheme, update and crash recovery tests.
 - Sign/notarize only with explicit user-provided credentials and approval. Unsigned beta artifacts may be generated with clear installation caveats.
+- At feature completion, prepare a consolidated macOS qualification plan and resume the original deferred manual matrix. Final readiness requires the owner's M0b acceptance and release decision.
 - Final documentation, known limitations, platform support matrix and release notes.
 
 ## 9. Verification model
@@ -350,7 +356,7 @@ Avoid duplicating the same information across many hand-maintained files. Genera
 | Point | Type | Who decides |
 |---|---|---|
 | End of M0a | Hard stop | Human reads `M0A_SUMMARY.md` |
-| End of M0b | Hard stop | Human: go / beta / no-go per platform; DEC-UA; sign-in gate |
+| Deferred M0b qualification | Required before initial production release | Human reviews the feature-complete browser, DEC-UA, sign-in gate and platform readiness |
 | End of M1 | Soft checkpoint | Human reviews design tokens and the first screenshots; work may continue meanwhile |
 | M2–M5 | Auto-advance on objective gates | Reviewer sign-off plus `verify` pass; handoff file at each boundary |
 | End of M6 | Hard stop | Human visual and accessibility review on real artifacts |

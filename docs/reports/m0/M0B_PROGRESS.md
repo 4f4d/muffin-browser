@@ -31,4 +31,8 @@ The existing retry limit is reached. This checkpoint used source and evidence re
 
 ### Acceptance
 
-Review any submitted batch against the actual tested binary or its launch receipt, committed redacted artifact and original case criteria. The generator checks record structure and path validity. Independent review is still needed for the executable hash, test environment, redaction and observed result. DEC-UA, the sign-in gate, the substrate choice, OS/runtime floors and per-platform decisions remain open. M1 requires the owner's final M0b acceptance and explicit authorization. [Decision register](../../DECISIONS_PENDING.md)
+Review any submitted batch against the actual tested binary or its launch receipt, committed redacted artifact and original case criteria. The generator checks record structure and path validity. Independent review is still needed for the executable hash, test environment, redaction and observed result. DEC-UA, the sign-in gate, the substrate choice, OS/runtime floors and per-platform decisions remain open. The implementation hold at the time of this audit was superseded by the owner decision below. [Decision register](../../DECISIONS_PENDING.md)
+
+## 2026-11-20 owner decision
+
+Manual macOS M0b validation is deferred to qualification of the feature-complete production app. The owner authorized implementation in milestone order with macOS Apple Silicon as the initial target. Windows and both Linux desktop backends are deferred from the initial release. The previous checkpoint records the state at the time of that audit. [Owner decision](../../adr/0002-macos-first-implementation-and-deferred-qualification.md)

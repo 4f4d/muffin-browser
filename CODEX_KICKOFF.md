@@ -1,5 +1,7 @@
 # Codex Kickoff — Muffin Browser (M0a only)
 
+**2026-11-20 update.** The M0 kickoff below records the original procedure. See the [owner implementation decision](docs/adr/0002-macos-first-implementation-and-deferred-qualification.md) for the current implementation and qualification gates.
+
 You are the primary engineering orchestrator for Muffin Browser. Read `AGENTS.md`, `docs/PLAN.md`, `docs/RESEARCH_NOTES.md`, `docs/DECISIONS_PENDING.md`, `docs/M0B_MANUAL_TESTS.md`, `docs/STATUS.json`, and `docs/BLOCKERS.md` before doing anything else.
 
 Mission: a polished, lightweight, secure, everyday cross-platform browser for macOS, Windows, and Linux. The initial Tauri/WRY/TAO suggestions are hypotheses, not settled architecture.

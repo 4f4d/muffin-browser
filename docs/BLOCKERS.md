@@ -114,3 +114,4 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | Criterion | Hypothesis before retry | Evidence |
 |---|---|---|
 | Native Start, Library and Settings layout | The native WebView fills the window, but the 96-point toolbar container leaves no space for its child panel. Allow the container to grow on internal pages while preserving the toolbar height. Assert visible headings and scroll geometry through the actual WebKit view. | Initial native captures at `target/dev-verification/m3-first-native/native-{start,library,settings}.png` |
+| SQLite persistence test with the default macOS temporary directory | SQLite rejects the test database at `/var/folders/...` because that path descends through the system `/var` symlink. Resolve the test-owned temporary directory before opening the database, and check that a symlink at the database file itself is still rejected. | First complete M3 verifier at `target/dev-verification/m3-verify.log` |

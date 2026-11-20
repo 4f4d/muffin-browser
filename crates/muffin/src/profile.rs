@@ -693,7 +693,9 @@ mod tests {
     #[test]
     fn settings_and_history_persist() {
         let d = tempfile::tempdir().unwrap();
-        let path = d.path().join("profile.sqlite");
+        // macOS returns a temporary path below /var, which is a system symlink.
+        let directory = d.path().canonicalize().unwrap();
+        let path = directory.join("profile.sqlite");
         {
             let p = Profile::open(&path).unwrap();
             let s = Settings {
@@ -712,6 +714,12 @@ mod tests {
         let p = Profile::open(&path).unwrap();
         assert_eq!(p.history(4).unwrap().len(), 1);
         assert_eq!(p.settings().unwrap().theme, "dark");
+        #[cfg(unix)]
+        {
+            let linked_database = directory.join("linked-profile.sqlite");
+            std::os::unix::fs::symlink(&path, &linked_database).unwrap();
+            assert!(Profile::open(&linked_database).is_err());
+        }
     }
     #[test]
     fn fts_search_ranks_matches_and_clear_range_updates_index() {

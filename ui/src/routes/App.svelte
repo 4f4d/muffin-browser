@@ -278,8 +278,16 @@
       tabSearchOpen = false;
       tabSearch = '';
     }
+    const enteringConnectionError = detail.surface === 'connection_error' && snapshot.surface !== detail.surface;
+    const leavingConnectionError = snapshot.surface === 'connection_error' && detail.surface === 'start';
     snapshot = detail;
     if (!editing) address = displayedAddress(detail.url);
+    if (enteringConnectionError || leavingConnectionError) {
+      void tick().then(() => {
+        if (snapshot.surface !== detail.surface) return;
+        document.getElementById(enteringConnectionError ? 'connection-error-heading' : 'address')?.focus();
+      });
+    }
   }
 
   $effect(() => {
@@ -369,7 +377,7 @@
       {:else if snapshot.status === 'blocked'}
         <span class="status-label status-error" aria-live="polite">Blocked</span>
       {:else if snapshot.status === 'failed' || snapshot.status === 'terminated'}
-        <span class="status-label status-error" aria-live="polite">{snapshot.status === 'terminated' ? 'Stopped' : 'Unavailable'}</span>
+        <span class="status-label status-error" aria-live="polite">{snapshot.surface === 'connection_error' ? 'Connection failed' : snapshot.status === 'terminated' ? 'Stopped' : 'Unavailable'}</span>
       {/if}
       <button class="clear-button" type="button" aria-label="Clear address" title="Clear address" onclick={() => {
         address = '';
@@ -517,8 +525,8 @@
   {:else if snapshot.surface === 'connection_error'}
     <section class="surface-page" aria-labelledby="connection-error-heading">
       <div class="page-width connection-error">
-        <h1 id="connection-error-heading">Secure connection failed</h1>
-        <p>Muffin couldn’t verify this site’s secure connection.</p>
+        <h1 id="connection-error-heading" tabindex="-1">Secure connection failed</h1>
+        <p>Check the website address or return to Start.</p>
         <button class="quiet-button" type="button" onclick={() => send({ version: 1, action: 'show_surface', value: 'start' })}>Back to Start</button>
       </div>
     </section>

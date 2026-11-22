@@ -444,6 +444,7 @@ describe('browser chrome controls', () => {
     await tick();
     expect(bridgeState.bridge.take()).toBeNull();
     expect(buttons()[0].textContent).toBe('Cancel');
+    expect(document.activeElement).toBe(buttons()[0]);
     buttons()[0].click();
     await tick();
     expect(bridgeState.bridge.take()).toBeNull();
@@ -451,6 +452,19 @@ describe('browser chrome controls', () => {
     await tick();
     buttons()[1].click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'clear_site_data' });
+  });
+
+  it('moves focus from the connection error heading back to Start’s address field', async () => {
+    bridgeState.bridge.render(makeSnapshot({ surface: 'connection_error', status: 'failed' }));
+    await tick();
+    await tick();
+    expect(document.activeElement?.id).toBe('connection-error-heading');
+    document.querySelector<HTMLButtonElement>('.connection-error button')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'show_surface', value: 'start' });
+    bridgeState.bridge.render(makeSnapshot({ surface: 'start' }));
+    await tick();
+    await tick();
+    expect(document.activeElement?.id).toBe('address');
   });
 
   it('keeps consent text inert and routes approval, cancellation, and reveal actions', async () => {

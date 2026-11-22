@@ -792,6 +792,22 @@ def contrast_ratio(foreground, background):
     return (light + 0.05) / (dark + 0.05)
 
 
+def expect_chrome_focus(process, control, field):
+    layout = control / "chrome-layout.json"
+    layout.unlink(missing_ok=True)
+
+    def read():
+        if layout.exists():
+            current = json.loads(layout.read_text())
+            layout.unlink()
+            if current and current["focused_control"] == field:
+                return current
+        send_command(control, "inspect_chrome")
+        return None
+
+    return until(process, f"WebKit focuses {field}", read, timeout=6)
+
+
 def exercise_native_shortcuts(process, control, first, steps):
     def expect(label, predicate):
         return until(process, label, lambda: (state if predicate(state := observation(control)) else None), timeout=8)
@@ -807,19 +823,7 @@ def exercise_native_shortcuts(process, control, first, steps):
         return state
 
     def expect_chrome_field(field):
-        layout = control / "chrome-layout.json"
-        layout.unlink(missing_ok=True)
-
-        def read():
-            if layout.exists():
-                current = json.loads(layout.read_text())
-                layout.unlink()
-                if current and current["focused_control"] == field:
-                    return current
-            send_command(control, "inspect_chrome")
-            return None
-
-        until(process, f"WebKit focuses {field}", read, timeout=6)
+        expect_chrome_focus(process, control, field)
         steps.append({"focused_chrome_field": field})
 
     address = first.origin + "/first?keyboard"
@@ -976,6 +980,7 @@ def exercise_privacy(process, control, server, launch, steps, capture):
     ))
     if first["history"] or first["suggestions"] or first["bookmarks"] or first["shortcuts"]:
         raise AssertionError("private chrome received regular profile rows")
+    expect_chrome_focus(process, control, "address")
     command("show_surface", value="settings")
     command("add_shortcut", title="private-hidden", url=server.origin + "/private-hidden")
     if capture is not None:
@@ -1071,6 +1076,7 @@ def exercise_privacy(process, control, server, launch, steps, capture):
         "private_download_excluded_from_regular_list": True,
         "explicitly_saved_file_survived_private_window_close": True,
         "published_download_retained_macos_quarantine_attribute": True,
+        "new_private_window_focused_address": True,
     }})
     return regular_url, normal_count
 
@@ -1110,13 +1116,16 @@ def exercise_secure_connection(process, control, steps, capture):
             raise AssertionError("the rejected certificate was rendered as a secure or successful page")
         if server.requests:
             raise AssertionError("the browser reached HTTP after rejecting the certificate")
+        expect_chrome_focus(process, control, "connection-error-heading")
         if capture is not None:
             capture(process, control, command, "native-secure-connection-error")
         command("show_surface", value="start")
         until(process, "safe exit from TLS error", lambda: observation(control).get("surface") == "start")
+        expect_chrome_focus(process, control, "address")
         steps.append({"native_security": {
             "unsupported_protocol_blocked": True, "self_signed_certificate_refused": True,
             "untrusted_server_http_requests": len(server.requests), "safe_interstitial_exit": True,
+            "keyboard_focus_from_error_heading_to_start_address": True,
         }})
 
 

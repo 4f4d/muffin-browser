@@ -2076,6 +2076,7 @@ mod browser {
                                     && window.profile_state.surface == Surface::Browse
                                 {
                                     window.profile_state.surface = Surface::ConnectionError;
+                                    window.set_title("Secure connection failed");
                                     window.layout();
                                     let _ = window.chrome.focus();
                                 }
@@ -2131,12 +2132,22 @@ mod browser {
                     }
                 }
                 Message::ChromeResult(id, raw) => {
+                    let active = self.active_id() == id;
                     let action = if let Some(window) = self.window_mut(id) {
                         window.chrome_poll_started = None;
                         let reply = decode_reply(&raw);
                         if reply.is_some() && !window.chrome_ready {
                             window.chrome_ready = true;
                             window.render();
+                            if active
+                                && window.private_window
+                                && window.profile_state.surface == Surface::Start
+                            {
+                                let _ = window.chrome.focus();
+                                let _ = window
+                                    .chrome
+                                    .evaluate_script("window.muffinChrome?.focusAddress()");
+                            }
                         }
                         reply.and_then(|reply| reply.action)
                     } else {

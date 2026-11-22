@@ -1,0 +1,126 @@
+{
+  "source_commit": "2630d6ce32ca41f8e8bb120ddbbbf56fdf01fdf9",
+  "source_worktree_clean": true,
+  "binary_sha256": "48ab17e60101e1e8838e83042fb463f05169e52021bb0303a9f6cffbfa1ee8df",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_loopback",
+  "steps": [
+    {
+      "version": 1,
+      "status": "home",
+      "chrome_ready": true
+    },
+    {
+      "url": "http://127.0.0.1:49280/first",
+      "status": "ready",
+      "title": "Muffin fixture | First page",
+      "secure": false
+    },
+    {
+      "navigation_input": "trusted chrome address form"
+    },
+    {
+      "webkit_user_agent_token": true,
+      "browser_product_token": "Muffin/0.1.0"
+    },
+    {
+      "url": "http://127.0.0.1:49281/second",
+      "status": "ready",
+      "title": "Muffin fixture | Second page",
+      "can_back": true
+    },
+    {
+      "url": "http://127.0.0.1:49281/second",
+      "status": "ready"
+    },
+    {
+      "remote_page_executed": true,
+      "remote_chrome_state_received": false
+    },
+    {
+      "url": "http://127.0.0.1:49280/first",
+      "status": "ready",
+      "can_forward": true
+    },
+    {
+      "url": "http://127.0.0.1:49281/second",
+      "status": "ready"
+    },
+    {
+      "status": "blocked",
+      "url": "http://127.0.0.1:49281/second"
+    },
+    {
+      "distinct_loopback_origins": true,
+      "redirect_requested": true
+    },
+    {
+      "loading": true
+    },
+    {
+      "loading": false,
+      "native_loading": false
+    },
+    {
+      "unsolicited_popup_requested": false
+    },
+    {
+      "appkit_shortcut": "new_tab",
+      "case": "Command+T opens Start",
+      "first_responder_before": "content",
+      "selected_tab": 2,
+      "surface": "start"
+    },
+    {
+      "focused_chrome_field": "address"
+    },
+    {
+      "appkit_shortcut": "first_tab",
+      "case": "Command+1 selects the first tab",
+      "first_responder_before": "chrome",
+      "selected_tab": 1,
+      "surface": "browse"
+    },
+    {
+      "appkit_shortcut": "last_tab",
+      "case": "Command+9 selects the last tab",
+      "first_responder_before": "chrome",
+      "selected_tab": 2,
+      "surface": "start"
+    },
+    {
+      "appkit_shortcut": "close_tab",
+      "case": "Command+W closes the selected tab",
+      "first_responder_before": "chrome",
+      "selected_tab": 1,
+      "surface": "browse"
+    },
+    {
+      "appkit_shortcut": "reopen_tab",
+      "case": "Shift+Command+T reopens the closed tab",
+      "first_responder_before": "chrome",
+      "selected_tab": 3,
+      "surface": "start"
+    },
+    {
+      "appkit_shortcut": "search_tabs",
+      "case": "Shift+Command+A opens tab search",
+      "first_responder_before": "chrome",
+      "selected_tab": 3,
+      "surface": "start"
+    },
+    {
+      "focused_chrome_field": "tab-search"
+    },
+    {
+      "appkit_shortcut": "downloads",
+      "case": "Shift+Command+J opens Downloads",
+      "first_responder_before": "chrome",
+      "selected_tab": 3,
+      "surface": "downloads"
+    }
+  ],
+  "outcome": "passed"
+}

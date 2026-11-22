@@ -339,13 +339,13 @@
     },
     "macos": {
       "build": {
-        "artifact": "docs/reports/ci/macos-arm64-build-00000000045053669006-0001.json",
-        "artifact_sha256": "2364628e026b662702757d11d8dee3fa1e89c22022102ad2e27ebf1b23696acd",
-        "commit": "f8bdb7bedaf68b797c8e497380aa3b50b86589d1",
+        "artifact": "docs/reports/ci/macos-arm64-build-00000000045057511184-0001.json",
+        "artifact_sha256": "ff6dc2f3612c3b1dbc452820c3ac1ddf40cf0aa7f7beefce165dbd9097b7aed4",
+        "commit": "fadf1c89273e140dee61c493b9840313b475ee1d",
         "date": "2026-11-22",
         "environment": "ci_runner",
         "result": "pass",
-        "run_url": "https://github.com/4f4d/muffin-browser/actions/runs/45053669006/attempts/1"
+        "run_url": "https://github.com/4f4d/muffin-browser/actions/runs/45057511184/attempts/1"
       },
       "functional": {
         "result": "not_run"

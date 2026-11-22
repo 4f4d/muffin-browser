@@ -1,0 +1,167 @@
+{
+  "source_commit": "2630d6ce32ca41f8e8bb120ddbbbf56fdf01fdf9",
+  "source_worktree_clean": true,
+  "binary_sha256": "48ab17e60101e1e8838e83042fb463f05169e52021bb0303a9f6cffbfa1ee8df",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_loopback",
+  "steps": [
+    {
+      "version": 1,
+      "status": "home",
+      "chrome_ready": true
+    },
+    {
+      "url": "http://127.0.0.1:49293/first",
+      "status": "ready",
+      "title": "Muffin fixture | First page",
+      "secure": false
+    },
+    {
+      "navigation_input": "trusted chrome address form"
+    },
+    {
+      "webkit_user_agent_token": true,
+      "browser_product_token": "Muffin/0.1.0"
+    },
+    {
+      "url": "http://127.0.0.1:49294/second",
+      "status": "ready",
+      "title": "Muffin fixture | Second page",
+      "can_back": true
+    },
+    {
+      "url": "http://127.0.0.1:49294/second",
+      "status": "ready"
+    },
+    {
+      "remote_page_executed": true,
+      "remote_chrome_state_received": false
+    },
+    {
+      "url": "http://127.0.0.1:49293/first",
+      "status": "ready",
+      "can_forward": true
+    },
+    {
+      "url": "http://127.0.0.1:49294/second",
+      "status": "ready"
+    },
+    {
+      "status": "blocked",
+      "url": "http://127.0.0.1:49294/second"
+    },
+    {
+      "distinct_loopback_origins": true,
+      "redirect_requested": true
+    },
+    {
+      "loading": true
+    },
+    {
+      "loading": false,
+      "native_loading": false
+    },
+    {
+      "unsolicited_popup_requested": false
+    },
+    {
+      "native-chrome-regular": {
+        "more_actions_fit": false,
+        "more_actions_width": 0,
+        "more_actions_scroll_width": 0,
+        "more_actions_visible": false,
+        "new_tab_gap": 8,
+        "scroll_height": 672,
+        "more_action_count": 0,
+        "new_tab_visible": true,
+        "selected_tab_fill": "rgb(53, 58, 64)",
+        "surface_ink": "rgb(241, 243, 245)",
+        "focused_control": "",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 672,
+        "selected_tab_ink": "rgb(241, 243, 245)",
+        "address_width": 899,
+        "theme": "system",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 220,
+        "width": 1100,
+        "tab_strip_scroll_width": 220,
+        "selected_tab_visible": true,
+        "client_height": 672
+      }
+    },
+    {
+      "native-chrome-compact": {
+        "more_actions_fit": false,
+        "more_actions_width": 0,
+        "more_actions_scroll_width": 0,
+        "more_actions_visible": false,
+        "new_tab_gap": 8,
+        "scroll_height": 432,
+        "more_action_count": 0,
+        "new_tab_visible": true,
+        "selected_tab_fill": "rgb(53, 58, 64)",
+        "surface_ink": "rgb(241, 243, 245)",
+        "focused_control": "address",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 432,
+        "selected_tab_ink": "rgb(241, 243, 245)",
+        "address_width": 439,
+        "theme": "system",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 517,
+        "width": 640,
+        "tab_strip_scroll_width": 1220,
+        "selected_tab_visible": true,
+        "client_height": 432
+      }
+    },
+    {
+      "native-chrome-compact-actions": {
+        "more_actions_fit": true,
+        "more_actions_width": 517,
+        "more_actions_scroll_width": 517,
+        "more_actions_visible": true,
+        "new_tab_gap": null,
+        "scroll_height": 432,
+        "more_action_count": 7,
+        "new_tab_visible": true,
+        "selected_tab_fill": "",
+        "surface_ink": "rgb(241, 243, 245)",
+        "focused_control": "address",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 432,
+        "selected_tab_ink": "",
+        "address_width": 439,
+        "theme": "system",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 0,
+        "width": 640,
+        "tab_strip_scroll_width": 0,
+        "selected_tab_visible": false,
+        "client_height": 432
+      }
+    }
+  ],
+  "chrome_image_sha256": "fb024b9beccc654445d3c0ea176a4584cc94fd3d742131b03ade86bad66f2e84",
+  "additional_capture_sha256": {
+    "native-chrome-regular": "a8d9bccac08e037460a00d50d3c2c44f8f2f52df4f8c5e599f60b7c2cafbf2cb",
+    "native-chrome-compact": "19651615de21f8a53096f726bce0f4407049af22b160182b572b900bfccc1f51",
+    "native-chrome-compact-actions": "529c9e6113cb0b3c9b30d2a4156431c2d88f79858cd5bbd0ba43bd70291d3eb1"
+  },
+  "outcome": "passed"
+}

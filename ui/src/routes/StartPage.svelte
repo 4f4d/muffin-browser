@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ChromeAction, ChromeSnapshot, LocalSuggestion } from '../lib/bridge';
 
-  let { snapshot, send }: { snapshot: ChromeSnapshot; send: (action: ChromeAction) => void } = $props();
+  let { snapshot, send, addressEditing }: { snapshot: ChromeSnapshot; send: (action: ChromeAction) => void; addressEditing: boolean } = $props();
   let query = $state('');
   let addingShortcut = $state(false);
   let shortcutTitle = $state('');
@@ -53,7 +53,7 @@
       <span class="search-engine-name">{snapshot.settings.search_engine === 'duckduckgo' ? 'DuckDuckGo' : snapshot.settings.search_engine === 'google' ? 'Google' : 'Bing'}</span>
     </form>
 
-    {#if visibleSuggestions.length > 0}
+    {#if !addressEditing && visibleSuggestions.length > 0}
       <section class="start-suggestions" aria-label="Recent and saved pages">
         {#each visibleSuggestions as suggestion (suggestion.url)}
           <button class="suggestion-row" type="button" onclick={() => openSuggestion(suggestion)}>

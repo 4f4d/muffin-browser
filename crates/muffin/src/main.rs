@@ -208,6 +208,8 @@ mod browser {
         TabSearch { version: u8 },
         #[serde(rename = "select_tab")]
         SelectTab { version: u8, id: u32 },
+        #[serde(skip)]
+        SelectTabPosition { version: u8, position: u8 },
         #[serde(rename = "close_tab")]
         CloseTab { version: u8, id: u32 },
         #[serde(rename = "duplicate_tab")]
@@ -238,6 +240,11 @@ mod browser {
         CompactWindow { version: u8 },
         #[serde(rename = "open_fixture_browser_actions")]
         OpenBrowserActions { version: u8 },
+        #[serde(rename = "press_fixture_shortcut")]
+        PressShortcut {
+            version: u8,
+            shortcut: FixtureShortcut,
+        },
         #[serde(rename = "capture_pdf")]
         CapturePdf { version: u8 },
         #[serde(rename = "click_fixture_link")]
@@ -246,6 +253,19 @@ mod browser {
         CaptureFixtureContent { version: u8 },
         #[serde(rename = "print_fixture_pdf")]
         PrintFixturePdf { version: u8 },
+    }
+
+    #[cfg(debug_assertions)]
+    #[derive(Deserialize)]
+    #[serde(rename_all = "snake_case")]
+    enum FixtureShortcut {
+        NewTab,
+        CloseTab,
+        ReopenTab,
+        FirstTab,
+        LastTab,
+        SearchTabs,
+        Downloads,
     }
 
     #[cfg(debug_assertions)]
@@ -267,6 +287,7 @@ mod browser {
                 | ChromeTestAction::Inspect { version: 1 }
                 | ChromeTestAction::CompactWindow { version: 1 }
                 | ChromeTestAction::OpenBrowserActions { version: 1 }
+                | ChromeTestAction::PressShortcut { version: 1, .. }
                 | ChromeTestAction::CapturePdf { version: 1 }
                 | ChromeTestAction::ClickFixtureLink { version: 1 }
                 | ChromeTestAction::CaptureFixtureContent { version: 1 }
@@ -322,6 +343,7 @@ mod browser {
                 | Self::ReopenTab { version }
                 | Self::TabSearch { version } => *version,
                 Self::SelectTab { version, .. }
+                | Self::SelectTabPosition { version, .. }
                 | Self::CloseTab { version, .. }
                 | Self::DuplicateTab { version, .. }
                 | Self::DiscardTab { version, .. }
@@ -822,6 +844,7 @@ mod browser {
                 return WindowEffect::None;
             }
             let previously_selected = self.tabs.selected();
+            let mut focus_address_after_render = false;
             match action {
                 Action::Navigate { value, .. } => {
                     match address_destination(&value, &self.profile_state.settings.search_engine) {
@@ -949,6 +972,7 @@ mod browser {
                 Action::NewTab { .. } => {
                     if self.tabs.can_create() {
                         self.tabs.create(None);
+                        focus_address_after_render = true;
                     }
                 }
                 Action::NewWindow { .. } => return WindowEffect::NewWindow,
@@ -962,12 +986,24 @@ mod browser {
                     self.tabs.reopen();
                 }
                 Action::TabSearch { .. } => {
+                    let _ = self.chrome.focus();
                     let _ = self
                         .chrome
                         .evaluate_script("window.muffinChrome?.focusTabSearch()");
                 }
                 Action::SelectTab { id, .. } => {
                     self.tabs.select(id);
+                }
+                Action::SelectTabPosition { position, .. } => {
+                    let tabs = self.tabs.tabs();
+                    let index = if position == 9 {
+                        tabs.len().checked_sub(1)
+                    } else {
+                        usize::from(position).checked_sub(1)
+                    };
+                    if let Some(id) = index.and_then(|index| tabs.get(index)).map(|tab| tab.id) {
+                        self.tabs.select(id);
+                    }
                 }
                 Action::CloseTab { id, .. } => {
                     self.views.remove(&id);
@@ -990,6 +1026,12 @@ mod browser {
             }
             self.layout();
             self.render();
+            if focus_address_after_render {
+                let _ = self.chrome.focus();
+                let _ = self
+                    .chrome
+                    .evaluate_script("window.muffinChrome?.focusAddress()");
+            }
             WindowEffect::None
         }
 
@@ -1984,6 +2026,15 @@ mod browser {
                         );
                     }
                 }
+                TestCommand::Chrome(ChromeTestAction::PressShortcut { shortcut, .. }) => {
+                    let directory = self
+                        .test_control
+                        .as_ref()
+                        .map(|control| control.directory.clone());
+                    if let (Some(window), Some(directory)) = (self.window_mut(active), directory) {
+                        post_fixture_shortcut(window, shortcut, &directory);
+                    }
+                }
                 TestCommand::Chrome(ChromeTestAction::CapturePdf { .. }) => {
                     let path = self
                         .test_control
@@ -2199,6 +2250,8 @@ mod browser {
                         selectedBounds.right <= stripBounds.right + 1,
                     new_tab_visible: !!newTab && newTab.width > 0 &&
                         newTab.left >= 0 && newTab.right <= window.innerWidth,
+                    new_tab_gap: stripBounds && newTab ? Math.round(newTab.left - stripBounds.right) : null,
+                    focused_control: document.activeElement?.id ?? '',
                     more_actions_visible: !!actionsBounds && actionsBounds.width > 0 &&
                         actionsBounds.left >= 0 && actionsBounds.right <= window.innerWidth &&
                         actionsBounds.bottom <= document.querySelector('.tabbar').getBoundingClientRect().bottom,
@@ -2214,6 +2267,55 @@ mod browser {
                 }
             },
         );
+    }
+
+    #[cfg(debug_assertions)]
+    fn post_fixture_shortcut(window: &BrowserWindow, shortcut: FixtureShortcut, directory: &Path) {
+        use objc2_app_kit::{NSApplication, NSEvent, NSEventModifierFlags, NSEventType};
+        use tao::platform::macos::WindowExtMacOS;
+
+        let (key, code, shifted) = match shortcut {
+            FixtureShortcut::NewTab => ("t", 17, false),
+            FixtureShortcut::CloseTab => ("w", 13, false),
+            FixtureShortcut::ReopenTab => ("T", 17, true),
+            FixtureShortcut::FirstTab => ("1", 18, false),
+            FixtureShortcut::LastTab => ("9", 25, false),
+            FixtureShortcut::SearchTabs => ("A", 0, true),
+            FixtureShortcut::Downloads => ("J", 38, true),
+        };
+        let mut modifiers = NSEventModifierFlags::Command;
+        if shifted {
+            modifiers |= NSEventModifierFlags::Shift;
+        }
+        let native = window
+            .window
+            .ns_window()
+            .cast::<objc2::runtime::AnyObject>();
+        let number: isize = unsafe { objc2::msg_send![native, windowNumber] };
+        let responder: *mut objc2::runtime::AnyObject =
+            unsafe { objc2::msg_send![native, firstResponder] };
+        let is_view: bool =
+            unsafe { objc2::msg_send![responder, isKindOfClass: objc2::class!(NSView)] };
+        let within = |view: &WebView| -> bool {
+            let parent = view.webview();
+            is_view && unsafe { objc2::msg_send![responder, isDescendantOf: &*parent] }
+        };
+        let owner = if within(&window.chrome) {
+            "chrome"
+        } else if window.selected_view().is_some_and(within) {
+            "content"
+        } else {
+            "other"
+        };
+        let _ = fs::write(directory.join("shortcut-first-responder.txt"), owner);
+        let key = NSString::from_str(key);
+        let event = NSEvent::keyEventWithType_location_modifierFlags_timestamp_windowNumber_context_characters_charactersIgnoringModifiers_isARepeat_keyCode(
+            NSEventType::KeyDown, objc2_foundation::NSPoint::ZERO, modifiers, 0.0, number,
+            None, &key, &key, false, code,
+        );
+        if let (Some(event), Some(mtm)) = (event, MainThreadMarker::new()) {
+            NSApplication::sharedApplication(mtm).postEvent_atStart(&event, false);
+        }
     }
 
     #[cfg(debug_assertions)]
@@ -2351,11 +2453,22 @@ mod browser {
         use std::{ffi::CStr, ptr};
         let monitor = RcBlock::new(move |event: *mut AnyObject| -> *mut AnyObject {
             unsafe {
+                let app: *mut AnyObject = msg_send![class!(NSApplication), sharedApplication];
+                let modal: *mut AnyObject = msg_send![app, modalWindow];
+                if !modal.is_null() {
+                    return event;
+                }
+                let event_window: *mut AnyObject = msg_send![event, window];
+                let is_sheet: bool = !event_window.is_null() && msg_send![event_window, isSheet];
+                if is_sheet {
+                    return event;
+                }
                 let flags: usize = msg_send![event, modifierFlags];
                 const CONTROL: usize = 1 << 18;
                 const OPTION: usize = 1 << 19;
                 const COMMAND: usize = 1 << 20;
-                if flags & (CONTROL | OPTION | COMMAND) != COMMAND || flags & (1 << 17) != 0 {
+                const SHIFT: usize = 1 << 17;
+                if flags & (CONTROL | OPTION) != 0 || flags & COMMAND == 0 {
                     return event;
                 }
                 let chars: *mut AnyObject = msg_send![event, charactersIgnoringModifiers];
@@ -2363,53 +2476,21 @@ mod browser {
                 if bytes.is_null() {
                     return event;
                 }
-                let action = match CStr::from_ptr(bytes).to_bytes() {
-                    [letter] if letter.eq_ignore_ascii_case(&b'l') => {
-                        Action::FocusAddress { version: 1 }
-                    }
-                    [letter] if letter.eq_ignore_ascii_case(&b'r') => Action::Reload { version: 1 },
-                    [letter] if letter.eq_ignore_ascii_case(&b'f') => {
-                        Action::FocusFind { version: 1 }
-                    }
-                    [letter] if letter.eq_ignore_ascii_case(&b'p') => {
-                        Action::PrintPage { version: 1 }
-                    }
-                    b"=" | b"+" => Action::ZoomPage {
-                        version: 1,
-                        value: ZoomStep::In,
-                    },
-                    b"-" => Action::ZoomPage {
-                        version: 1,
-                        value: ZoomStep::Out,
-                    },
-                    b"0" => Action::ZoomPage {
-                        version: 1,
-                        value: ZoomStep::Reset,
-                    },
-                    [letter] if letter.eq_ignore_ascii_case(&b'd') => {
-                        Action::BookmarkCurrent { version: 1 }
-                    }
-                    [letter] if letter.eq_ignore_ascii_case(&b'y') => Action::ShowSurface {
-                        version: 1,
-                        value: Surface::Library,
-                    },
-                    b"," => Action::ShowSurface {
-                        version: 1,
-                        value: Surface::Settings,
-                    },
-
-                    [letter] if letter.eq_ignore_ascii_case(&b't') => Action::NewTab { version: 1 },
-                    [letter] if letter.eq_ignore_ascii_case(&b'n') => {
-                        Action::NewWindow { version: 1 }
-                    }
-                    [letter] if letter.eq_ignore_ascii_case(&b'w') => {
-                        Action::CloseSelectedTab { version: 1 }
-                    }
-                    b"[" => Action::Back { version: 1 },
-                    b"]" => Action::Forward { version: 1 },
-                    b"." => Action::Stop { version: 1 },
-                    _ => return event,
+                let chord = CStr::from_ptr(bytes).to_bytes();
+                let Some(shortcut) = map_native_shortcut(
+                    true,
+                    flags & SHIFT != 0,
+                    flags & OPTION != 0,
+                    flags & CONTROL != 0,
+                    chord,
+                ) else {
+                    return event;
                 };
+                let repeated: bool = msg_send![event, isARepeat];
+                if repeated && ignore_key_repeat(shortcut) {
+                    return event;
+                }
+                let action = shortcut.action();
                 let number: isize = msg_send![event, windowNumber];
                 let _ = proxy.send_event(Message::NativeAction(number, action));
                 ptr::null_mut()
@@ -2419,6 +2500,214 @@ mod browser {
             msg_send![class!(NSEvent), addLocalMonitorForEventsMatchingMask: 1usize << 10, handler: &*monitor]
         };
         unsafe { Retained::retain(monitor) }.expect("AppKit local keyboard monitor")
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum NativeShortcut {
+        FocusAddress,
+        Reload,
+        FocusFind,
+        Print,
+        ZoomIn,
+        ZoomOut,
+        ZoomReset,
+        Bookmark,
+        Library,
+        Settings,
+        NewTab,
+        NewWindow,
+        CloseSelectedTab,
+        Back,
+        Forward,
+        Stop,
+        ReopenTab,
+        TabSearch,
+        Downloads,
+        TabPosition(u8),
+        LastTab,
+    }
+
+    impl NativeShortcut {
+        fn action(self) -> Action {
+            match self {
+                Self::FocusAddress => Action::FocusAddress { version: 1 },
+                Self::Reload => Action::Reload { version: 1 },
+                Self::FocusFind => Action::FocusFind { version: 1 },
+                Self::Print => Action::PrintPage { version: 1 },
+                Self::ZoomIn => Action::ZoomPage {
+                    version: 1,
+                    value: ZoomStep::In,
+                },
+                Self::ZoomOut => Action::ZoomPage {
+                    version: 1,
+                    value: ZoomStep::Out,
+                },
+                Self::ZoomReset => Action::ZoomPage {
+                    version: 1,
+                    value: ZoomStep::Reset,
+                },
+                Self::Bookmark => Action::BookmarkCurrent { version: 1 },
+                Self::Library => Action::ShowSurface {
+                    version: 1,
+                    value: Surface::Library,
+                },
+                Self::Settings => Action::ShowSurface {
+                    version: 1,
+                    value: Surface::Settings,
+                },
+                Self::NewTab => Action::NewTab { version: 1 },
+                Self::NewWindow => Action::NewWindow { version: 1 },
+                Self::CloseSelectedTab => Action::CloseSelectedTab { version: 1 },
+                Self::Back => Action::Back { version: 1 },
+                Self::Forward => Action::Forward { version: 1 },
+                Self::Stop => Action::Stop { version: 1 },
+                Self::ReopenTab => Action::ReopenTab { version: 1 },
+                Self::TabSearch => Action::TabSearch { version: 1 },
+                Self::Downloads => Action::ShowSurface {
+                    version: 1,
+                    value: Surface::Downloads,
+                },
+                Self::TabPosition(position) => Action::SelectTabPosition {
+                    version: 1,
+                    position: position + 1,
+                },
+                Self::LastTab => Action::SelectTabPosition {
+                    version: 1,
+                    position: 9,
+                },
+            }
+        }
+    }
+
+    fn ignore_key_repeat(shortcut: NativeShortcut) -> bool {
+        matches!(
+            shortcut,
+            NativeShortcut::NewTab
+                | NativeShortcut::NewWindow
+                | NativeShortcut::CloseSelectedTab
+                | NativeShortcut::ReopenTab
+        )
+    }
+
+    fn map_native_shortcut(
+        command: bool,
+        shift: bool,
+        option: bool,
+        control: bool,
+        key: &[u8],
+    ) -> Option<NativeShortcut> {
+        if !command || option || control {
+            return None;
+        }
+        if shift {
+            return match key.to_ascii_lowercase().as_slice() {
+                b"t" => Some(NativeShortcut::ReopenTab),
+                b"a" => Some(NativeShortcut::TabSearch),
+                b"j" => Some(NativeShortcut::Downloads),
+                _ => None,
+            };
+        }
+        match key {
+            [b'1'..=b'8'] => Some(NativeShortcut::TabPosition(key[0] - b'1')),
+            b"9" => Some(NativeShortcut::LastTab),
+            _ => map_legacy_shortcut(key),
+        }
+    }
+
+    fn map_legacy_shortcut(key: &[u8]) -> Option<NativeShortcut> {
+        Some(match key {
+            [letter] if letter.eq_ignore_ascii_case(&b'l') => NativeShortcut::FocusAddress,
+            [letter] if letter.eq_ignore_ascii_case(&b'r') => NativeShortcut::Reload,
+            [letter] if letter.eq_ignore_ascii_case(&b'f') => NativeShortcut::FocusFind,
+            [letter] if letter.eq_ignore_ascii_case(&b'p') => NativeShortcut::Print,
+            b"=" | b"+" => NativeShortcut::ZoomIn,
+            b"-" => NativeShortcut::ZoomOut,
+            b"0" => NativeShortcut::ZoomReset,
+            [letter] if letter.eq_ignore_ascii_case(&b'd') => NativeShortcut::Bookmark,
+            [letter] if letter.eq_ignore_ascii_case(&b'y') => NativeShortcut::Library,
+            b"," => NativeShortcut::Settings,
+            [letter] if letter.eq_ignore_ascii_case(&b't') => NativeShortcut::NewTab,
+            [letter] if letter.eq_ignore_ascii_case(&b'n') => NativeShortcut::NewWindow,
+            [letter] if letter.eq_ignore_ascii_case(&b'w') => NativeShortcut::CloseSelectedTab,
+            b"[" => NativeShortcut::Back,
+            b"]" => NativeShortcut::Forward,
+            b"." => NativeShortcut::Stop,
+            _ => return None,
+        })
+    }
+
+    #[cfg(test)]
+    mod native_shortcut_tests {
+        use super::*;
+
+        #[test]
+        fn maps_requested_shifted_commands_and_tab_positions() {
+            assert_eq!(
+                map_native_shortcut(true, true, false, false, b"t"),
+                Some(NativeShortcut::ReopenTab)
+            );
+            assert_eq!(
+                map_native_shortcut(true, true, false, false, b"A"),
+                Some(NativeShortcut::TabSearch)
+            );
+            assert_eq!(
+                map_native_shortcut(true, true, false, false, b"j"),
+                Some(NativeShortcut::Downloads)
+            );
+            for (key, position) in [(b"1".as_slice(), 0), (b"8".as_slice(), 7)] {
+                assert_eq!(
+                    map_native_shortcut(true, false, false, false, key),
+                    Some(NativeShortcut::TabPosition(position))
+                );
+            }
+            assert_eq!(
+                map_native_shortcut(true, false, false, false, b"9"),
+                Some(NativeShortcut::LastTab)
+            );
+        }
+
+        #[test]
+        fn preserves_existing_shortcuts_and_passes_unrecognized_chords() {
+            assert_eq!(
+                map_native_shortcut(true, false, false, false, b"t"),
+                Some(NativeShortcut::NewTab)
+            );
+            assert_eq!(
+                map_native_shortcut(true, false, false, false, b"l"),
+                Some(NativeShortcut::FocusAddress)
+            );
+            for (key, expected) in [
+                (b"r".as_slice(), NativeShortcut::Reload),
+                (b"f".as_slice(), NativeShortcut::FocusFind),
+                (b"p".as_slice(), NativeShortcut::Print),
+                (b"d".as_slice(), NativeShortcut::Bookmark),
+                (b"y".as_slice(), NativeShortcut::Library),
+                (b",".as_slice(), NativeShortcut::Settings),
+                (b"n".as_slice(), NativeShortcut::NewWindow),
+                (b"w".as_slice(), NativeShortcut::CloseSelectedTab),
+                (b"[".as_slice(), NativeShortcut::Back),
+                (b"]".as_slice(), NativeShortcut::Forward),
+                (b".".as_slice(), NativeShortcut::Stop),
+            ] {
+                assert_eq!(
+                    map_native_shortcut(true, false, false, false, key),
+                    Some(expected)
+                );
+            }
+            assert_eq!(map_native_shortcut(false, false, false, false, b"t"), None);
+            assert_eq!(map_native_shortcut(true, true, false, false, b"x"), None);
+            assert_eq!(map_native_shortcut(true, true, false, false, b"1"), None);
+            assert_eq!(map_native_shortcut(true, false, true, false, b"t"), None);
+            assert_eq!(map_native_shortcut(true, false, false, true, b"t"), None);
+        }
+
+        #[test]
+        fn ignores_repeats_only_for_tab_mutations() {
+            assert!(ignore_key_repeat(NativeShortcut::NewTab));
+            assert!(ignore_key_repeat(NativeShortcut::CloseSelectedTab));
+            assert!(ignore_key_repeat(NativeShortcut::ReopenTab));
+            assert!(!ignore_key_repeat(NativeShortcut::FocusAddress));
+        }
     }
 
     pub fn run() -> Result<(), String> {

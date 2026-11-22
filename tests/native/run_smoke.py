@@ -614,6 +614,7 @@ def exercise_chrome_layout(process, control, steps, capture):
                     and layout["address_width"] >= min_address_width
                     and layout["tab_strip_width"] >= min_tab_strip
                     and layout["new_tab_visible"] and layout["selected_tab_visible"]
+                    and layout["new_tab_gap"] is not None and 0 <= layout["new_tab_gap"] <= 12
                     and (not tab_overflow or layout["tab_strip_scroll_width"] > layout["tab_strip_width"])):
                 return layout
             return None
@@ -634,7 +635,7 @@ def exercise_chrome_layout(process, control, steps, capture):
             capture(process, control, command, label)
 
     command("show_surface", value="start")
-    inspect("native-chrome-regular", 1100, 550, 850)
+    inspect("native-chrome-regular", 1100, 550, 180)
     command("compact_fixture_window")
     path = control / "chrome-layout.json"
     path.unlink(missing_ok=True)
@@ -679,6 +680,60 @@ def contrast_ratio(foreground, background):
 
     dark, light = sorted((luminance(foreground), luminance(background)))
     return (light + 0.05) / (dark + 0.05)
+
+
+def exercise_native_shortcuts(process, control, first, steps):
+    def expect(label, predicate):
+        return until(process, label, lambda: (state if predicate(state := observation(control)) else None), timeout=8)
+
+    focus_receipt = control / "shortcut-first-responder.txt"
+
+    def press(shortcut, label, predicate):
+        focus_receipt.unlink(missing_ok=True)
+        send_command(control, "press_fixture_shortcut", shortcut=shortcut)
+        state = expect(label, predicate)
+        steps.append({"appkit_shortcut": shortcut, "case": label, "first_responder_before": focus_receipt.read_text(),
+                      "selected_tab": state["selected_tab"], "surface": state["surface"]})
+        return state
+
+    def expect_chrome_field(field):
+        layout = control / "chrome-layout.json"
+        layout.unlink(missing_ok=True)
+
+        def read():
+            if layout.exists():
+                current = json.loads(layout.read_text())
+                layout.unlink()
+                if current and current["focused_control"] == field:
+                    return current
+            send_command(control, "inspect_chrome")
+            return None
+
+        until(process, f"WebKit focuses {field}", read, timeout=6)
+        steps.append({"focused_chrome_field": field})
+
+    address = first.origin + "/first?keyboard"
+    send_command(control, "navigate", value=address)
+    initial = expect("keyboard page is ready", lambda s: s.get("url") == address and s.get("status") == "ready")
+    initial_count = len(initial["tabs"])
+    first_id = initial["tabs"][0]["id"]
+    send_command(control, "focus_page")
+    opened = press("new_tab", "Command+T opens Start", lambda s: (
+        len(s.get("tabs", [])) == initial_count + 1 and s.get("surface") == "start"
+    ))
+    if steps[-1]["first_responder_before"] != "content":
+        raise AssertionError("the AppKit New Tab shortcut was not sent from the content responder")
+    expect_chrome_field("address")
+    new_id = opened["selected_tab"]
+    press("first_tab", "Command+1 selects the first tab", lambda s: s.get("selected_tab") == first_id)
+    press("last_tab", "Command+9 selects the last tab", lambda s: s.get("selected_tab") == new_id)
+    press("close_tab", "Command+W closes the selected tab", lambda s: len(s.get("tabs", [])) == initial_count)
+    press("reopen_tab", "Shift+Command+T reopens the closed tab", lambda s: (
+        len(s.get("tabs", [])) == initial_count + 1 and s.get("surface") == "start" and s.get("selected_tab") != new_id
+    ))
+    press("search_tabs", "Shift+Command+A opens tab search", lambda _s: focus_receipt.exists())
+    expect_chrome_field("tab-search")
+    press("downloads", "Shift+Command+J opens Downloads", lambda s: s.get("surface") == "downloads")
 
 
 def exercise_chrome_themes(process, control, first, steps, capture):
@@ -730,6 +785,7 @@ def main():
     parser.add_argument("--page-tools", action="store_true", help="verify native find, zoom and downloads")
     parser.add_argument("--chrome-layout", action="store_true", help="verify default and compact native chrome geometry")
     parser.add_argument("--chrome-themes", action="store_true", help="verify light and dark native chrome palettes")
+    parser.add_argument("--native-shortcuts", action="store_true", help="verify AppKit shortcut routing and chrome focus")
     visual = parser.add_mutually_exclusive_group()
     visual.add_argument("--capture-window", action="store_true", help="attempt a capture of the fixture window")
     visual.add_argument("--capture-chrome", action="store_true", help="capture the native trusted chrome view")
@@ -834,6 +890,8 @@ def main():
                         )
                     if args.chrome_themes:
                         exercise_chrome_themes(process, control, servers[0], result["steps"], capture)
+                    if args.native_shortcuts:
+                        exercise_native_shortcuts(process, control, servers[0], result["steps"])
                     if args.chrome_layout:
                         exercise_chrome_layout(process, control, result["steps"], capture)
                 except Exception:

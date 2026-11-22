@@ -82,6 +82,74 @@ describe('browser chrome controls', () => {
     expect(input.value).toBe(oldAddress);
   });
 
+  it.each(['browse', 'start'] as const)('selects address suggestions by keyboard on %s and Escape preserves the draft', async (surface) => {
+    const snapshot = makeSnapshot({
+      surface, url: surface === 'start' ? 'about:blank' : 'https://current.test',
+      suggestions: [
+        { url: 'https://one.test', title: 'First result', bookmarked: false },
+        { url: 'https://two.test', title: 'Second result', bookmarked: true }
+      ]
+    });
+    bridgeState.bridge.render(snapshot);
+    await tick();
+    const input = document.querySelector<HTMLInputElement>('#address')!;
+    const press = (key: string) => input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    input.focus();
+    input.value = 'result';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    while (bridgeState.bridge.take() !== null) {}
+    await tick();
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(document.querySelector('.start-suggestions')).toBeNull();
+    press('ArrowDown');
+    press('ArrowDown');
+    await tick();
+    const option = document.getElementById(input.getAttribute('aria-activedescendant')!);
+    expect(option?.textContent).toContain('Second result');
+    expect(option?.getAttribute('aria-selected')).toBe('true');
+    const composition = new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true, cancelable: true });
+    input.dispatchEvent(composition);
+    expect(composition.defaultPrevented).toBe(false);
+    expect(bridgeState.bridge.take()).toBeNull();
+    press('Escape');
+    await tick();
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(input.value).toBe('result');
+    expect(document.activeElement).toBe(input);
+
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    while (bridgeState.bridge.take() !== null) {}
+    await tick();
+    press('ArrowUp');
+    press('Enter');
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'show_surface', value: 'browse' });
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'navigate', value: 'https://two.test' });
+    expect(bridgeState.bridge.take()).toBeNull();
+    input.blur();
+  });
+
+  it('clears an address draft when a keyboard shortcut switches tabs', async () => {
+    const tabs = [
+      { id: 20, title: 'Current', pinned: false, loading: false, discarded: false },
+      { id: 40, title: 'New Tab', pinned: false, loading: false, discarded: false }
+    ];
+    bridgeState.bridge.render(makeSnapshot({ tabs, selected_tab: 20, url: 'https://current.test' }));
+    await tick();
+    const input = document.querySelector<HTMLInputElement>('#address')!;
+    input.focus();
+    input.value = 'unfinished search';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    while (bridgeState.bridge.take() !== null) {}
+    bridgeState.bridge.render(makeSnapshot({ tabs, selected_tab: 40, url: 'about:blank', surface: 'start' }));
+    await tick();
+    expect(document.activeElement).toBe(input);
+    expect(input.value).toBe('');
+    input.value = 'next search';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'query_omnibox', value: 'next search' });
+    input.blur();
+  });
+
   it('routes tab lifecycle actions through the typed queue', async () => {
     const tabs = [
       { id: 10, title: 'Mail', pinned: true, loading: false, discarded: false },
@@ -102,7 +170,10 @@ describe('browser chrome controls', () => {
     }));
     await tick();
 
-    document.querySelector<HTMLButtonElement>('.new-tab-button')!.click();
+    const newTab = document.querySelector<HTMLButtonElement>('.new-tab-button')!;
+    expect(newTab.previousElementSibling?.classList.contains('tab-list-scroll')).toBe(true);
+    expect(newTab.getAttribute('aria-keyshortcuts')).toBe('Meta+T');
+    newTab.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'new_tab' });
     const openMore = async () => {
       document.querySelector<HTMLButtonElement>('[aria-label="More browser actions"]')!.click();
@@ -131,6 +202,11 @@ describe('browser chrome controls', () => {
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'close_tab', id: 20 });
     document.querySelector<HTMLButtonElement>('[data-tab-id="10"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'select_tab', id: 10 });
+
+    document.querySelector<HTMLButtonElement>('[data-tab-id="20"]')!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true })
+    );
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'select_tab', id: 30 });
   });
 
   it('keeps More actions contained, dismisses on Escape, and restores focus', async () => {

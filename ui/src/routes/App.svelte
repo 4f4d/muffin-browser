@@ -35,6 +35,8 @@
   let snapshot = $state(window.muffinChrome?.snapshot ?? initial);
   let address = $state('');
   let editing = $state(false);
+  let suggestionsDismissed = $state(false);
+  let activeSuggestionUrl = $state<string | null>(null);
   let submitted: string | null = null;
   let tabSearchOpen = $state(false);
   let tabSearch = $state('');
@@ -45,7 +47,10 @@
   let selectedTabId = $derived(snapshot.selected_tab);
   let visibleTabs = $derived(snapshot.tabs.filter((tab) => tab.title.toLocaleLowerCase().includes(tabSearch.trim().toLocaleLowerCase())));
   let visibleSuggestions = $derived(snapshot.suggestions.slice(0, 5));
-  let tabStripVisible = $derived(!moreOpen && !pageToolsOpen && !(snapshot.surface === 'browse' && editing && visibleSuggestions.length > 0));
+  let showingPageTools = $derived(pageToolsOpen && snapshot.surface === 'browse');
+  let suggestionsOpen = $derived((snapshot.surface === 'browse' || snapshot.surface === 'start') && !showingPageTools && editing && !suggestionsDismissed && visibleSuggestions.length > 0);
+  let activeSuggestionIndex = $derived(visibleSuggestions.findIndex((suggestion) => suggestion.url === activeSuggestionUrl));
+  let tabStripVisible = $derived(!moreOpen && !showingPageTools && !suggestionsOpen);
 
   const bridge = window.muffinChrome;
 
@@ -64,6 +69,8 @@
   }
 
   function queryAddress() {
+    activeSuggestionUrl = null;
+    suggestionsDismissed = false;
     if (editing) send({ version: 1, action: 'query_omnibox', value: address });
   }
 
@@ -72,6 +79,7 @@
     send({ version: 1, action: 'navigate', value: suggestion.url });
     address = suggestion.url;
     editing = false;
+    activeSuggestionUrl = null;
   }
 
   function applySurfaceLayout(surface: ChromeSnapshot['surface']) {
@@ -86,6 +94,31 @@
   }
 
   function onAddressKeydown(event: KeyboardEvent) {
+    if (event.isComposing) return;
+    if (suggestionsOpen) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        suggestionsDismissed = true;
+        activeSuggestionUrl = null;
+        return;
+      }
+      if (event.key === 'Enter' && activeSuggestionIndex >= 0) {
+        event.preventDefault();
+        openSuggestion(visibleSuggestions[activeSuggestionIndex]);
+        return;
+      }
+      if (!event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+        event.preventDefault();
+        const last = visibleSuggestions.length - 1;
+        const next = activeSuggestionIndex < 0
+          ? (event.key === 'ArrowDown' ? 0 : last)
+          : Math.max(0, Math.min(last, activeSuggestionIndex + (event.key === 'ArrowDown' ? 1 : -1)));
+        activeSuggestionUrl = visibleSuggestions[next].url;
+        document.getElementById(`address-suggestion-${next}`)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+        return;
+      }
+    }
     if (event.key === 'Escape') {
       address = displayedAddress(snapshot.url);
       editing = false;
@@ -95,6 +128,7 @@
   }
 
   function onGlobalKeydown(event: KeyboardEvent) {
+    if (event.defaultPrevented || event.isComposing) return;
     if (event.key === 'Escape' && moreOpen) {
       event.preventDefault();
       closeMore();
@@ -160,6 +194,8 @@
   }
 
   async function openTabSearch(announce = true) {
+    moreOpen = false;
+    pageToolsOpen = false;
     tabSearchOpen = true;
     if (announce) send({ version: 1, action: 'tab_search' });
     await tick();
@@ -190,9 +226,11 @@
       if (nextIndex !== index) send({ version: 1, action: 'move_tab', id: tabId, index: nextIndex });
       return;
     }
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    if (!event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
       event.preventDefault();
-      const nextIndex = Math.max(0, Math.min(snapshot.tabs.length - 1, index + (event.key === 'ArrowLeft' ? -1 : 1)));
+      const last = snapshot.tabs.length - 1;
+      const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? last
+        : Math.max(0, Math.min(last, index + (event.key === 'ArrowLeft' ? -1 : 1)));
       const nextTab = snapshot.tabs[nextIndex];
       if (nextTab) {
         send({ version: 1, action: 'select_tab', id: nextTab.id });
@@ -222,8 +260,21 @@
       editing = false;
       submitted = null;
     }
+    if (detail.selected_tab !== snapshot.selected_tab) {
+      address = displayedAddress(detail.url);
+      editing = document.activeElement?.id === 'address';
+      submitted = null;
+      activeSuggestionUrl = null;
+      suggestionsDismissed = true;
+      moreOpen = false;
+      pageToolsOpen = false;
+    }
     if (detail.selected_tab !== snapshot.selected_tab || detail.url !== snapshot.url) {
       findQuery = '';
+    }
+    if (detail.surface !== snapshot.surface && detail.surface !== 'browse' && detail.surface !== 'start') {
+      tabSearchOpen = false;
+      tabSearch = '';
     }
     snapshot = detail;
     if (!editing) address = displayedAddress(detail.url);
@@ -294,10 +345,17 @@
         spellcheck="false"
         placeholder="Search or enter address"
         bind:value={address}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={suggestionsOpen}
+        aria-controls={suggestionsOpen ? 'address-suggestions' : undefined}
+        aria-activedescendant={suggestionsOpen && activeSuggestionIndex >= 0 ? `address-suggestion-${activeSuggestionIndex}` : undefined}
+        aria-keyshortcuts="Meta+L"
         onfocus={() => editing = true}
         oninput={queryAddress}
         onblur={() => {
           editing = false;
+          activeSuggestionUrl = null;
           submitted = null;
           address = displayedAddress(snapshot.url);
         }}
@@ -313,14 +371,17 @@
       {/if}
       <button class="clear-button" type="button" aria-label="Clear address" title="Clear address" onclick={() => {
         address = '';
+        activeSuggestionUrl = null;
+        suggestionsDismissed = true;
         document.getElementById('address')?.focus();
+        send({ version: 1, action: 'query_omnibox', value: '' });
       }}>
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7" /></svg>
       </button>
     </form>
 
     <div class="toolbar-actions" aria-label="Browser actions">
-      <button class="toolbar-action download-toolbar-button" class:approval-badge={snapshot.download_approval_count > 0} type="button" aria-label={snapshot.download_approval_count > 0 ? `Downloads, ${snapshot.download_approval_count} pending approvals` : 'Downloads'} title="Downloads" aria-pressed={snapshot.surface === 'downloads'} onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
+      <button class="toolbar-action download-toolbar-button" class:approval-badge={snapshot.download_approval_count > 0} type="button" aria-label={snapshot.download_approval_count > 0 ? `Downloads, ${snapshot.download_approval_count} pending approvals` : 'Downloads'} title="Downloads (⇧⌘J)" aria-keyshortcuts="Meta+Shift+J" aria-pressed={snapshot.surface === 'downloads'} onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
         <ChromeIcon name="download" />
         {#if snapshot.download_approval_count > 0}<span class="download-count" aria-hidden="true">{snapshot.download_approval_count}</span>{/if}
       </button>
@@ -331,7 +392,7 @@
   </div>
 
   <div class="tabbar" role="group" aria-label="Open tabs and tab actions">
-    {#if pageToolsOpen && snapshot.surface === 'browse'}
+    {#if showingPageTools}
       <div class="page-tools-strip" role="group" aria-label="Page tools">
         <form class="find-shell" role="search" onsubmit={(event) => event.preventDefault()}>
           <label class="visually-hidden" for="page-find">Find on page</label>
@@ -351,10 +412,10 @@
         {#if snapshot.notice}<span class="find-result" role="status">{snapshot.notice}</span>{/if}
         <button class="mini-action" type="button" aria-label="Close page tools" onclick={closePageTools}>×</button>
       </div>
-    {:else if snapshot.surface === 'browse' && editing && visibleSuggestions.length > 0}
-      <div class="browser-suggestions" role="listbox" aria-label="Local suggestions">
-        {#each visibleSuggestions as suggestion (suggestion.url)}
-          <button class="browser-suggestion" role="option" aria-selected="false" type="button" onpointerdown={(event) => event.preventDefault()} onclick={() => openSuggestion(suggestion)}>
+    {:else if suggestionsOpen}
+      <div class="browser-suggestions" id="address-suggestions" role="listbox" aria-label="Local suggestions">
+        {#each visibleSuggestions as suggestion, index (suggestion.url)}
+          <button class="browser-suggestion" id={`address-suggestion-${index}`} role="option" aria-selected={index === activeSuggestionIndex} tabindex="-1" type="button" onpointerdown={(event) => event.preventDefault()} onclick={() => openSuggestion(suggestion)}>
             <span>{suggestion.title}</span><small>{suggestion.url}</small>{#if suggestion.bookmarked}<span class="suggestion-saved">Saved</span>{/if}
           </button>
         {/each}
@@ -413,6 +474,10 @@
     </div>
     {/if}
 
+    <button class="mini-action new-tab-button" type="button" aria-label="Open new tab" title="New tab (⌘T)" aria-keyshortcuts="Meta+T" onclick={() => send({ version: 1, action: 'new_tab' })}>
+      <ChromeIcon name="plus" />
+    </button>
+
     <div class="tab-actions" aria-label="Tab actions">
       {#if tabSearchOpen}
         <form class="tab-search-shell" role="search" onsubmit={(event) => event.preventDefault()}>
@@ -423,22 +488,19 @@
           </button>
         </form>
       {:else}
-        <button class="mini-action" aria-label="Search tabs" title="Search tabs" onclick={() => void openTabSearch()}>
-          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5" /><path d="m12.2 12.2 4.2 4.2" /></svg>
+        <button class="mini-action" aria-label="Search tabs" title="Search tabs (⇧⌘A)" aria-keyshortcuts="Meta+Shift+A" onclick={() => void openTabSearch()}>
+          <ChromeIcon name="search" />
         </button>
       {/if}
       <span class="tab-action-divider" aria-hidden="true"></span>
-      <button class="mini-action" aria-label="Page tools" title="Page tools" aria-pressed={pageToolsOpen} disabled={snapshot.surface !== 'browse'} onclick={() => void openFind()}>
+      <button class="mini-action" aria-label="Page tools" title="Page tools (⌘F)" aria-keyshortcuts="Meta+F" aria-pressed={pageToolsOpen} disabled={snapshot.surface !== 'browse'} onclick={() => void openFind()}>
         <ChromeIcon name="page-tools" />
-      </button>
-      <button class="mini-action new-tab-button" aria-label="Open new tab" title="New tab" onclick={() => send({ version: 1, action: 'new_tab' })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
       </button>
     </div>
   </div>
 
   {#if snapshot.surface === 'start'}
-    <StartPage {snapshot} {send} />
+    <StartPage {snapshot} {send} addressEditing={editing} />
   {:else if snapshot.surface === 'library'}
     <Library {snapshot} {send} />
   {:else if snapshot.surface === 'settings'}

@@ -3,6 +3,18 @@
 
   let { snapshot, send }: { snapshot: ChromeSnapshot; send: (action: ChromeAction) => void } = $props();
 
+  const shortcuts = [
+    { action: 'Focus address field', keys: '⌘L' },
+    { action: 'New tab', keys: '⌘T' },
+    { action: 'Close tab', keys: '⌘W' },
+    { action: 'Reopen closed tab', keys: '⇧⌘T' },
+    { action: 'Search open tabs', keys: '⇧⌘A' },
+    { action: 'Switch to tabs 1–8', keys: '⌘1–8' },
+    { action: 'Switch to last tab', keys: '⌘9' },
+    { action: 'Find on page', keys: '⌘F' },
+    { action: 'Open Downloads', keys: '⇧⌘J' }
+  ];
+
   function setTheme(value: ThemePreference) {
     send({ version: 1, action: 'set_theme', value });
   }
@@ -45,6 +57,14 @@
           <input id="clear-history-on-exit" type="checkbox" checked={snapshot.settings.clear_history_on_exit} onchange={(event) => send({ version: 1, action: 'set_clear_history_on_exit', enabled: event.currentTarget.checked })} />
         </label>
       </fieldset>
+    </section>
+    <section class="settings-section" aria-labelledby="keyboard-heading">
+      <div class="settings-copy"><h2 id="keyboard-heading">Common keyboard shortcuts</h2><p>⌘ Command · ⇧ Shift</p></div>
+      <dl class="settings-shortcuts">
+        {#each shortcuts as shortcut (shortcut.action)}
+          <div><dt>{shortcut.action}</dt><dd><kbd>{shortcut.keys}</kbd></dd></div>
+        {/each}
+      </dl>
     </section>
     {#if snapshot.notice}<p class="surface-notice" role="status" aria-live="polite">{snapshot.notice}</p>{/if}
   </div>

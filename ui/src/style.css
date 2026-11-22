@@ -107,7 +107,7 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .tabbar { display: flex; flex: 0 0 40px; align-items: center; gap: 8px; height: 40px; min-width: 0; }
-.tab-list-scroll { height: 36px; min-width: 0; flex: 1 1 auto; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.tab-list-scroll { height: 36px; min-width: 0; flex: 0 1 auto; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .tab-list-scroll::-webkit-scrollbar { display: none; }
 .tab-list { display: flex; align-items: center; gap: 4px; width: max-content; min-width: 100%; height: 36px; }
 .tab-item { display: flex; align-items: center; width: clamp(132px, 20vw, 230px); min-width: 0; height: 30px; padding: 2px 4px 2px 6px; border-radius: 8px; color: var(--ink-muted); }
@@ -128,7 +128,7 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .tab-discard-mark { width: 7px; height: 7px; flex: 0 0 auto; border: 1px solid currentColor; border-radius: 50%; opacity: .62; }
 .tab-loading { width: 11px; height: 11px; flex: 0 0 auto; border: 1.5px solid var(--focus); border-right-color: transparent; border-radius: 50%; animation: tab-spin 900ms linear infinite; }
 @keyframes tab-spin { to { transform: rotate(360deg); } }
-.tab-actions { display: flex; align-items: center; gap: 1px; height: 30px; flex: 0 0 auto; }
+.tab-actions { display: flex; align-items: center; gap: 1px; height: 30px; flex: 0 0 auto; margin-inline-start: auto; }
 .mini-action { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 8px; color: var(--ink-muted); background: transparent; cursor: default; }
 .mini-action:hover:not(:disabled) { color: var(--ink); background: var(--hover); }
 .mini-action:disabled { color: var(--disabled); opacity: .7; }
@@ -162,6 +162,7 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .browser-suggestions::-webkit-scrollbar { display: none; }
 .browser-suggestion { display: flex; align-items: center; gap: 7px; min-width: 100px; max-width: 230px; height: 28px; padding: 0 9px; overflow: hidden; border: 0; border-radius: 8px; color: var(--ink-muted); background: transparent; font: inherit; font-size: 11px; text-align: left; white-space: nowrap; }
 .browser-suggestion:hover, .browser-suggestion:focus-visible { background: var(--hover); }
+.browser-suggestion[aria-selected="true"] { color: var(--ink); background: var(--tab-active); }
 .browser-suggestion > span:first-child, .browser-suggestion small { overflow: hidden; text-overflow: ellipsis; }
 .browser-suggestion small { color: var(--placeholder); font-size: 10px; }
 .suggestion-saved { flex: 0 0 auto; color: var(--secure); font-size: 10px; }
@@ -283,6 +284,10 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .settings-checks strong { color: var(--ink); font-size: 13px; font-weight: 520; }
 .settings-checks small { margin-top: 3px; color: var(--ink-muted); font-size: 11px; line-height: 1.4; }
 .settings-checks input { width: 16px; height: 16px; flex: 0 0 auto; accent-color: var(--caramel-ink); }
+.settings-shortcuts { display: grid; gap: 8px; min-width: 0; margin: 0; font-size: 12px; }
+.settings-shortcuts div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.settings-shortcuts dd { margin: 0; }
+.settings-shortcuts kbd { padding: 2px 7px; border-radius: 5px; color: var(--ink); background: var(--tab-active); font: inherit; white-space: nowrap; }
 .settings-checks input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .surface-notice { padding: 10px 0; border-top: 1px solid var(--line); color: var(--secure); font-size: 11px; }
 @media (max-width: 700px) {

@@ -1,6 +1,6 @@
 # M4 — macOS page tools and downloads
 
-The download-consent slice passed independent review and local and hosted verification on `2038bff536c1342a724329b6281dacf7eb52ef5b`. The tested AppKit print engine passed independent review on `8cc3708c38b7216144d4dbe4897f432da954b625`. The full M4 engineering gate remains open for native file selection, print-panel interaction and right-click menus. The target is still the macOS Apple Silicon development build. [Download verifier](../platform/m4/macos-arm64-consent-verifier.json), [print verifier](../platform/m4/macos-arm64-print-verifier.json)
+The download-consent slice passed independent review and local and hosted verification on `2038bff536c1342a724329b6281dacf7eb52ef5b`. The tested AppKit print engine passed independent review on `8cc3708c38b7216144d4dbe4897f432da954b625`. The November 22 native interaction run used the verified debug binary from the latter commit. The target is still the macOS Apple Silicon development build. [Download verifier](../platform/m4/macos-arm64-consent-verifier.json), [print verifier](../platform/m4/macos-arm64-print-verifier.json), [native interaction receipt](../platform/m4/macos-arm64-native-interactions.md)
 
 ## Verified behavior
 
@@ -10,13 +10,21 @@ The download-consent slice passed independent review and local and hosted verifi
 
 ## Print verification rationale
 
-The WebKit PDF export path and AppKit print path are separate. The print fixture uses the same window-based WebKit operation as the browser's Print control. It selects AppKit's Save Job disposition with a destination inside the disposable control directory, rechecks that disposition on the operation, and disables the print and progress panels. The test waits for a PDF trailer before examining the file. This covers actual local print output and leaves native print-panel interaction open. The two earlier print attempts produced an incomplete stream or timed out. [Print adapter](../../../crates/muffin/src/pdf.rs), [fixture check](../../../tests/native/run_smoke.py), [attempts](../../BLOCKERS.md#m4-integration-attempts), [Apple print operation](https://developer.apple.com/documentation/appkit/nsprintoperation)
+The WebKit PDF export path and AppKit print path are separate. The print fixture uses the same window-based WebKit operation as the browser's Print control. It selects AppKit's Save Job disposition with a destination inside the disposable control directory, rechecks that disposition on the operation, and disables the print and progress panels. The test waits for a PDF trailer before examining the file. Native print-panel interaction was exercised in the later follow-up below. The two earlier print attempts produced an incomplete stream or timed out. [Print adapter](../../../crates/muffin/src/pdf.rs), [fixture check](../../../tests/native/run_smoke.py), [attempts](../../BLOCKERS.md#m4-integration-attempts), [Apple print operation](https://developer.apple.com/documentation/appkit/nsprintoperation)
 
 On the clean print commit, the local and hosted full verifiers passed. The local print job yielded a 28,653-byte one-page PDF. Poppler extracted the expected fixture phrase, and the independent reviewer rechecked the page count, text, source identity, and file hash. [Local receipt](../platform/m4/macos-arm64-print-smoke.json), [printed PDF](../platform/m4/macos-arm64-native-print.pdf), [hosted verifier](https://github.com/4f4d/muffin-browser/actions/runs/44772363394), [hosted fixture](../ci/m4/macos-arm64-44772363394-native.json)
 
-## Open before the M4 exit review
+## Native interaction follow-up
 
-- Computer Use denied access to the isolated fixture app. Native file selection requires choosing the generated test file and matching the fixture's received digest, then cancelling a second selection and observing that no additional upload arrives. Native print-panel display and dismissal and the engine's right-click page menu also need an observed interaction.
+- The approved retry selected the generated file in the native picker and the loopback server recorded one matching payload. Cancelling a second selection added no upload. The system print sheet displayed a one-page preview and dismissed with Cancel. WebKit's link context menu opened with native menu identifiers and dismissed with Escape. Page text input continued to work. The earlier denied Computer Use attempt remains in the attempt log. [Interaction observations](../platform/m4/macos-arm64-native-interactions.md), [raw server receipt](../platform/m4/macos-arm64-native-interactions-upload.json), [attempts](../../BLOCKERS.md#m4-integration-attempts)
+
+## Remaining M4 requirements
+
+- The independent review confirmed the native interaction evidence. It withheld M4 exit sign-off while download progress, in-transfer cancellation, safe retry, opening completed files, changing the destination, and clearing the list remain outstanding. [Plan](../../PLAN.md#downloads-and-page-tools), [download implementation](../../../crates/muffin/src/downloads.rs)
+- The content view currently denies media permission requests. M4 still needs an evidence-backed decision about which prompts and media controls the target engine can support. [Milestone scope](../../PLAN.md#m4--core-page-tools-and-downloads), [content WebView](../../../crates/muffin/src/main.rs)
+
+## Qualification limits
+
 - macOS media permissions currently deny unsupported grants. Live oversized transfers can temporarily exceed the publication limit before the staging check runs. The store's final size rejection has automated coverage. [Download decisions](../../adr/0004-macos-download-consent.md), [store tests](../../../crates/muffin/src/downloads.rs)
 
-The generated status remains at M4. [Project status](../../STATUS.json)
+For the active milestone and qualification state, see the [generated project status](../../STATUS.json).

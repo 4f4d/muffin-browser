@@ -16,7 +16,7 @@
       <h2 id="toolbar-heading">Navigation toolbar</h2>
       <span>Light surface</span>
     </div>
-    <div class="sample-stage light-stage">
+    <div class="sample-stage">
       <div class="toolbar sample-toolbar">
         <nav class="history" aria-label="Page history">
           <button class="icon-button" aria-label="Go back" disabled>
@@ -42,11 +42,11 @@
   <section class="gallery-section" aria-labelledby="tokens-heading">
     <div class="section-heading"><h2 id="tokens-heading">Material and states</h2><span>System appearance</span></div>
     <div class="swatches">
-      <div class="swatch"><i class="swatch-cream"></i><span>Warm cream</span><code>#F7F3EC</code></div>
-      <div class="swatch"><i class="swatch-ivory"></i><span>Soft ivory</span><code>#FFFDF9</code></div>
-      <div class="swatch"><i class="swatch-espresso"></i><span>Espresso</span><code>#342820</code></div>
-      <div class="swatch"><i class="swatch-cocoa"></i><span>Cocoa</span><code>#655044</code></div>
-      <div class="swatch"><i class="swatch-caramel"></i><span>Caramel</span><code>#C58B55</code></div>
+      <div class="swatch"><i class="swatch-porcelain"></i><span>Porcelain</span><code>#F5F6F7</code></div>
+      <div class="swatch"><i class="swatch-frost"></i><span>Frost</span><code>#FBFCFD</code></div>
+      <div class="swatch"><i class="swatch-graphite"></i><span>Graphite</span><code>#202327</code></div>
+      <div class="swatch"><i class="swatch-slate"></i><span>Slate</span><code>#353A40</code></div>
+      <div class="swatch"><i class="swatch-amber"></i><span>Amber</span><code>#C58B35</code></div>
     </div>
     <div class="state-row"><span class="state-chip"><i class="dot ready"></i>Ready</span><span class="state-chip"><i class="dot loading"></i>Loading</span><span class="state-chip"><i class="dot blocked"></i>Blocked</span><span class="state-chip secure-chip">Secure connection</span></div>
   </section>

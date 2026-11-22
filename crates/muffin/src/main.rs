@@ -2169,6 +2169,8 @@ mod browser {
                 panel.scrollTop = start;
                 const selected = document.querySelector('.tab-item.selected');
                 const selectedTabFill = selected ? getComputedStyle(selected).backgroundColor : '';
+                const palette = getComputedStyle(document.documentElement);
+                const panelStyle = getComputedStyle(panel);
                 const strip = document.querySelector('.tab-list-scroll');
                 const stripBounds = strip?.getBoundingClientRect();
                 const selectedBounds = selected?.getBoundingClientRect();
@@ -2184,6 +2186,11 @@ mod browser {
                     client_height: panel.clientHeight, scroll_height: panel.scrollHeight,
                     scroll_probe: scrollProbe, theme: document.documentElement.dataset.theme,
                     selected_tab_fill: selectedTabFill,
+                    selected_tab_ink: selected ? getComputedStyle(selected).color : '',
+                    surface_fill: panelStyle.backgroundColor,
+                    surface_ink: panelStyle.color,
+                    muted_ink: palette.getPropertyValue('--ink-muted').trim(),
+                    focus_ink: palette.getPropertyValue('--focus').trim(),
                     address_width: Math.round(address?.width ?? 0),
                     tab_strip_width: strip?.clientWidth ?? 0,
                     tab_strip_scroll_width: strip?.scrollWidth ?? 0,

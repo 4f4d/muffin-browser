@@ -16,6 +16,11 @@ from fixture import (
     DOWNLOAD_PAYLOADS, SLOW_DOWNLOAD, SLOW_DOWNLOAD_CHUNK, UNREQUESTED_DOWNLOAD, browser_fixture,
 )
 
+THEME_BASE_COLORS = {
+    "light": {"selected_tab_fill": "rgb(232, 235, 238)", "surface_fill": "rgb(245, 246, 247)"},
+    "dark": {"selected_tab_fill": "rgb(53, 58, 64)", "surface_fill": "rgb(32, 35, 39)"},
+}
+
 
 def until(process, description, read, timeout=18):
     deadline = time.monotonic() + timeout
@@ -265,8 +270,8 @@ def exercise_profile(process, control, first, second, steps, capture):
             raise AssertionError(f"{heading} does not scroll with an overflowing list: {layout}")
         if theme is not None and layout["theme"] != theme:
             raise AssertionError(f"{heading} did not apply {theme} theme: {layout}")
-        if theme == "light" and layout["selected_tab_fill"] != "rgb(234, 227, 217)":
-            raise AssertionError(f"{heading} shows a tab fill outside the light palette: {layout}")
+        if theme in THEME_BASE_COLORS and layout["selected_tab_fill"] != THEME_BASE_COLORS[theme]["selected_tab_fill"]:
+            raise AssertionError(f"{heading} shows a tab fill outside the {theme} palette: {layout}")
         steps.append({"native_chrome_layout": layout})
 
     for index in range(16):
@@ -660,6 +665,61 @@ def exercise_chrome_layout(process, control, steps, capture):
         raise AssertionError(f"browser actions do not fit the compact toolbar: {layout}")
 
 
+def contrast_ratio(foreground, background):
+    def luminance(color):
+        if color.startswith("#") and len(color) == 7:
+            channels = [int(color[index:index + 2], 16) for index in (1, 3, 5)]
+        elif color.startswith("rgb(") and color.endswith(")"):
+            channels = [int(channel) for channel in color[4:-1].split(",")]
+        else:
+            raise AssertionError(f"expected an opaque sRGB color, got {color!r}")
+        normalized = [channel / 255 for channel in channels]
+        linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4 for value in normalized]
+        return sum(value * weight for value, weight in zip(linear, (0.2126, 0.7152, 0.0722), strict=True))
+
+    dark, light = sorted((luminance(foreground), luminance(background)))
+    return (light + 0.05) / (dark + 0.05)
+
+
+def exercise_chrome_themes(process, control, first, steps, capture):
+    def command(action, **fields):
+        send_command(control, action, **fields)
+
+    path = control / "chrome-layout.json"
+    for theme, expected in THEME_BASE_COLORS.items():
+        command("set_theme", value=theme)
+        address = f"{first.origin}/first?theme={theme}"
+        command("navigate", value=address)
+        until(process, f"browse toolbar in explicit {theme}", lambda: (
+            (state := observation(control)).get("url") == address and state.get("status") == "ready"
+            and state.get("surface") == "browse" and state.get("settings", {}).get("theme") == theme
+        ))
+        if capture is not None:
+            capture(process, control, command, f"native-chrome-toolbar-{theme}")
+        command("show_surface", value="start")
+        path.unlink(missing_ok=True)
+        command("inspect_chrome")
+        until(process, f"{theme} native theme observation", path.is_file)
+        layout = json.loads(path.read_text(encoding="utf-8"))
+        if (not layout or layout["theme"] != theme or layout["heading"] != "Muffin"
+                or any(layout[key] != value for key, value in expected.items())):
+            raise AssertionError(f"wrong palette painted for {theme}: {layout}")
+
+        contrast = {
+            "surface_text": contrast_ratio(layout["surface_ink"], layout["surface_fill"]),
+            "muted_surface_text": contrast_ratio(layout["muted_ink"], layout["surface_fill"]),
+            "active_tab_text": contrast_ratio(layout["selected_tab_ink"], layout["selected_tab_fill"]),
+            "focus_on_active_tab": contrast_ratio(layout["focus_ink"], layout["selected_tab_fill"]),
+        }
+        if (min(contrast[key] for key in ("surface_text", "muted_surface_text", "active_tab_text")) < 4.5
+                or contrast["focus_on_active_tab"] < 3):
+            raise AssertionError(f"{theme} palette contrast below the fixture minimum: {contrast}")
+        label = f"native-chrome-theme-{theme}"
+        steps.append({label: {"layout": layout, "base_color_contrast": contrast}})
+        if capture is not None:
+            capture(process, control, command, label)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, default=Path("target/debug/muffin"))
@@ -669,6 +729,7 @@ def main():
     parser.add_argument("--profile", action="store_true", help="exercise the disposable local profile")
     parser.add_argument("--page-tools", action="store_true", help="verify native find, zoom and downloads")
     parser.add_argument("--chrome-layout", action="store_true", help="verify default and compact native chrome geometry")
+    parser.add_argument("--chrome-themes", action="store_true", help="verify light and dark native chrome palettes")
     visual = parser.add_mutually_exclusive_group()
     visual.add_argument("--capture-window", action="store_true", help="attempt a capture of the fixture window")
     visual.add_argument("--capture-chrome", action="store_true", help="capture the native trusted chrome view")
@@ -771,6 +832,8 @@ def main():
                             process, control, *servers, result["steps"], capture,
                             args.out / "native-fixture.pdf" if args.capture_chrome else None,
                         )
+                    if args.chrome_themes:
+                        exercise_chrome_themes(process, control, servers[0], result["steps"], capture)
                     if args.chrome_layout:
                         exercise_chrome_layout(process, control, result["steps"], capture)
                 except Exception:

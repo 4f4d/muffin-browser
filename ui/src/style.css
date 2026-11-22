@@ -75,7 +75,7 @@ body { background: transparent; }
   border: 1px solid var(--address-edge);
   border-radius: 10px;
   background: var(--address);
-  box-shadow: inset 0 1px 1px rgb(40 32 25 / 3%);
+  box-shadow: inset 0 1px 1px var(--inset-shadow);
   -webkit-app-region: no-drag;
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
@@ -171,9 +171,9 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .page-width { width: min(100% - 64px, 940px); margin: 0 auto; padding: 30px 0 54px; }
 .start-inner { width: min(100% - 48px, 650px); margin: clamp(34px, 9vh, 92px) auto 56px; }
 .brand-line { display: flex; align-items: center; gap: 13px; margin-bottom: 25px; }
-.brand-mark { width: 44px; height: 44px; border-radius: 14px; background: var(--new-tab); fill: rgb(197 139 85 / 20%); stroke: var(--caramel-ink); stroke-width: 1.35; stroke-linejoin: round; stroke-linecap: round; }
+.brand-mark { width: 44px; height: 44px; border-radius: 14px; background: var(--new-tab); fill: var(--new-tab); stroke: var(--caramel-ink); stroke-width: 1.35; stroke-linejoin: round; stroke-linecap: round; }
 .brand-line h1 { margin: 0; font-size: 31px; font-weight: 620; letter-spacing: -.035em; }
-.start-search { display: flex; align-items: center; gap: 11px; height: 49px; padding: 0 15px; border: 1px solid var(--address-edge); border-radius: 15px; background: var(--field); box-shadow: 0 2px 7px rgb(45 34 25 / 4%); }
+.start-search { display: flex; align-items: center; gap: 11px; height: 49px; padding: 0 15px; border: 1px solid var(--address-edge); border-radius: 15px; background: var(--field); box-shadow: 0 2px 7px var(--surface-shadow); }
 .start-search:focus-within { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus-ring); }
 .start-search > svg, .library-search svg { width: 17px; height: 17px; flex: 0 0 auto; fill: none; stroke: var(--icon-muted); stroke-width: 1.5; stroke-linecap: round; }
 .start-search input, .library-search input { min-width: 0; flex: 1 1 auto; }
@@ -263,7 +263,7 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .bookmark-list .library-open { gap: 11px; }
 .folder-row .library-item-title { font-weight: 550; }
 .folder-symbol { display: grid; place-items: center; width: 19px; height: 19px; flex: 0 0 auto; color: var(--caramel-ink); }
-.folder-symbol svg { width: 18px; height: 18px; fill: rgb(197 139 85 / 16%); stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
+.folder-symbol svg { width: 18px; height: 18px; fill: var(--new-tab); stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
 .folder-count { color: var(--ink-muted); font-size: 10px; }
 .move-bookmark { flex: 0 0 auto; }
 .move-bookmark select { max-width: 150px; min-height: 28px; color: var(--ink-muted); font-size: 11px; }

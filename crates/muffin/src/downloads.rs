@@ -35,6 +35,7 @@ pub struct DownloadItem {
     pub host: String,
     pub status: DownloadStatus,
     pub bytes: u64,
+    pub retryable: bool,
 }
 
 #[derive(Debug)]
@@ -44,6 +45,7 @@ struct Record {
     stage: Option<TempDir>,
     destination_root: Option<PathBuf>,
     completed_path: Option<PathBuf>,
+    completed_identity: Option<(u64, u64)>,
 }
 
 pub struct Downloads {
@@ -115,11 +117,13 @@ impl Downloads {
                 host: safe_host(url),
                 status: DownloadStatus::AwaitingApproval,
                 bytes: 0,
+                retryable: false,
             },
             staged_path: None,
             stage: None,
             destination_root: None,
             completed_path: None,
+            completed_identity: None,
         });
         self.trim_recent();
         Some(id)
@@ -180,7 +184,7 @@ impl Downloads {
             return;
         };
         let published = success.then(|| self.publish_file(index)).flatten();
-        if let Some((path, bytes)) = published {
+        if let Some((path, bytes, identity)) = published {
             let record = &mut self.records[index];
             record.item.status = DownloadStatus::Finished;
             record.item.bytes = bytes;
@@ -188,11 +192,37 @@ impl Downloads {
                 record.item.name = name.to_owned();
             }
             record.completed_path = Some(path);
+            record.completed_identity = Some(identity);
             record.stage.take();
         } else {
             self.fail_at(index);
         }
         self.trim_recent();
+    }
+
+    pub fn mark_retryable(&mut self, id: u32, retryable: bool) -> bool {
+        let Some(record) = self
+            .records
+            .iter_mut()
+            .find(|record| record.item.id == id && record.item.status == DownloadStatus::Failed)
+        else {
+            return false;
+        };
+        record.item.retryable = retryable;
+        true
+    }
+
+    /// Consume the user's one-shot retry capability before starting a new request.
+    pub fn consume_retry(&mut self, id: u32) -> bool {
+        let Some(record) = self.records.iter_mut().find(|record| {
+            record.item.id == id
+                && record.item.status == DownloadStatus::Failed
+                && record.item.retryable
+        }) else {
+            return false;
+        };
+        record.item.retryable = false;
+        true
     }
 
     pub fn items(&self) -> Vec<DownloadItem> {
@@ -238,6 +268,13 @@ impl Downloads {
             .and_then(|r| r.completed_path.as_deref())
     }
 
+    pub fn completed_identity(&self, id: u32) -> Option<(u64, u64)> {
+        self.records
+            .iter()
+            .find(|record| record.item.id == id && record.item.status == DownloadStatus::Finished)
+            .and_then(|record| record.completed_identity)
+    }
+
     fn root_for_approval(&mut self) -> Option<PathBuf> {
         if let Some(custom) = &self.custom_root {
             return Self::canonical_folder(custom);
@@ -270,7 +307,7 @@ impl Downloads {
         }
     }
 
-    fn publish_file(&self, index: usize) -> Option<(PathBuf, u64)> {
+    fn publish_file(&self, index: usize) -> Option<(PathBuf, u64, (u64, u64))> {
         let record = &self.records[index];
         let root = record.destination_root.as_deref()?;
         let stage = record.stage.as_ref()?;
@@ -288,20 +325,26 @@ impl Downloads {
         if !canonical_dir.starts_with(root) || staged_path.parent() != Some(stage_path) {
             return None;
         }
-        let Ok(meta) = fs::symlink_metadata(staged_path) else {
+        let Ok(link_meta) = fs::symlink_metadata(staged_path) else {
             return None;
         };
-        if !meta.is_file() || meta.file_type().is_symlink() {
+        if !link_meta.is_file() || link_meta.file_type().is_symlink() {
+            return None;
+        }
+        let file = fs::File::open(staged_path).ok()?;
+        let meta = file.metadata().ok()?;
+        if !meta.is_file() {
             return None;
         }
         let bytes = meta.len();
         if bytes > MAX_FILE_BYTES {
             return None;
         }
+        let identity = file_identity(&file)?;
         for suffix in 0..10_000u32 {
             let visible = root.join(collision_name(&record.item.name, suffix));
             match fs::hard_link(staged_path, &visible) {
-                Ok(()) => return Some((visible, bytes)),
+                Ok(()) => return Some((visible, bytes, identity)),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
                 Err(_) => return None,
             }
@@ -325,6 +368,64 @@ impl Downloads {
             }
         }
     }
+}
+
+#[cfg(unix)]
+fn file_identity(file: &fs::File) -> Option<(u64, u64)> {
+    use std::os::unix::fs::MetadataExt;
+    let metadata = file.metadata().ok()?;
+    Some((metadata.dev(), metadata.ino()))
+}
+
+#[cfg(windows)]
+fn file_identity(file: &fs::File) -> Option<(u64, u64)> {
+    use std::{ffi::c_void, os::windows::io::AsRawHandle};
+
+    #[repr(C)]
+    struct FileTime {
+        low: u32,
+        high: u32,
+    }
+    #[repr(C)]
+    struct ByHandleFileInformation {
+        attributes: u32,
+        created: FileTime,
+        accessed: FileTime,
+        written: FileTime,
+        volume_serial: u32,
+        size_high: u32,
+        size_low: u32,
+        links: u32,
+        file_index_high: u32,
+        file_index_low: u32,
+    }
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetFileInformationByHandle(
+            file: *mut c_void,
+            information: *mut ByHandleFileInformation,
+        ) -> i32;
+    }
+
+    let mut information = std::mem::MaybeUninit::<ByHandleFileInformation>::uninit();
+    // SAFETY: `file` is an open handle and `information` points to the Win32
+    // structure required by GetFileInformationByHandle.
+    let success =
+        unsafe { GetFileInformationByHandle(file.as_raw_handle(), information.as_mut_ptr()) };
+    if success == 0 {
+        return None;
+    }
+    // SAFETY: Win32 reported success and initialized the complete structure.
+    let information = unsafe { information.assume_init() };
+    Some((
+        u64::from(information.volume_serial),
+        (u64::from(information.file_index_high) << 32) | u64::from(information.file_index_low),
+    ))
+}
+
+#[cfg(not(any(unix, windows)))]
+fn file_identity(_: &fs::File) -> Option<(u64, u64)> {
+    None
 }
 
 fn safe_name(path: &Path) -> String {
@@ -449,6 +550,10 @@ mod tests {
         fs::write(complete, b"keep").unwrap();
         downloads.finish(finished, true);
         let published = downloads.completed_path(finished).unwrap().to_path_buf();
+        assert_eq!(
+            downloads.completed_identity(finished),
+            file_identity(&File::open(&published).unwrap())
+        );
 
         assert!(downloads.clear_terminal());
         assert_eq!(downloads.items().len(), 2);
@@ -716,6 +821,34 @@ mod tests {
                 .status,
             DownloadStatus::Downloading
         );
+    }
+
+    #[test]
+    fn retryability_is_failure_only_and_consumed_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut downloads = Downloads::new(dir.path().join("downloads"));
+        let failed = downloads
+            .offer(&url("https://example.test/fail"), Path::new("fail"))
+            .unwrap();
+        let staged = downloads.approve(failed).unwrap();
+        fs::write(staged, b"partial").unwrap();
+        downloads.finish(failed, false);
+        assert!(downloads.mark_retryable(failed, true));
+        assert!(downloads.items()[0].retryable);
+        assert!(downloads.consume_retry(failed));
+        assert!(!downloads.consume_retry(failed));
+        assert!(!downloads.items()[0].retryable);
+
+        let success = downloads
+            .offer(&url("https://example.test/success"), Path::new("ok"))
+            .unwrap();
+        let staged = downloads.approve(success).unwrap();
+        fs::write(staged, b"ok").unwrap();
+        downloads.finish(success, true);
+        assert!(!downloads.mark_retryable(success, true));
+        assert!(!downloads.items()[1].retryable);
+        assert!(downloads.clear_terminal());
+        assert!(!downloads.items().iter().any(|item| item.id == failed));
     }
 
     #[test]

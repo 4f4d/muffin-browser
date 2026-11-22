@@ -7,17 +7,18 @@ use objc2::{
     define_class, msg_send, rc::Retained, runtime::ProtocolObject, DeclaredClass, MainThreadOnly,
 };
 use objc2_foundation::{
-    MainThreadMarker, NSData, NSError, NSHTTPURLResponse, NSObject, NSObjectProtocol, NSString,
-    NSURLRequest, NSURLResponse, NSURL,
+    MainThreadMarker, NSData, NSError, NSHTTPURLResponse, NSMutableURLRequest, NSObject,
+    NSObjectProtocol, NSString, NSURLRequest, NSURLResponse, NSURL,
 };
 use objc2_web_kit::{
     WKDownload, WKDownloadDelegate, WKDownloadRedirectPolicy, WKNavigation, WKNavigationAction,
     WKNavigationActionPolicy, WKNavigationDelegate, WKNavigationResponse,
     WKNavigationResponsePolicy, WKWebView,
 };
+use std::ptr::NonNull;
 use std::{
-    cell::RefCell,
-    collections::HashMap,
+    cell::{Cell, RefCell},
+    collections::{HashMap, HashSet},
     path::{Path, PathBuf},
     ptr,
     rc::Rc,
@@ -32,6 +33,7 @@ struct Transfer {
     download: Retained<WKDownload>,
     phase: Phase,
     expires: Instant,
+    retry_request: Option<Retained<NSURLRequest>>,
 }
 
 enum Phase {
@@ -43,11 +45,17 @@ enum Phase {
 struct TransferState {
     store: Rc<RefCell<Downloads>>,
     entries: RefCell<HashMap<usize, Transfer>>,
+    retry_requests: RefCell<HashMap<u32, Retained<NSURLRequest>>>,
+    closed: Cell<bool>,
     changed: Rc<dyn Fn()>,
 }
 
 impl TransferState {
     fn adopt(&self, download: &WKDownload, delegate: &TransferDelegate) {
+        if self.closed.get() {
+            unsafe { download.cancel(None) };
+            return;
+        }
         let key = identity(download);
         let entries = self.entries.borrow();
         if entries.contains_key(&key) {
@@ -64,12 +72,15 @@ impl TransferState {
             return;
         };
         unsafe { download.setDelegate(Some(ProtocolObject::from_ref(delegate))) };
+        let retry_request = unsafe { download.originalRequest() }
+            .and_then(|request| sanitized_retry_request(&request));
         self.entries.borrow_mut().insert(
             key,
             Transfer {
                 download,
                 phase: Phase::WaitingForResponse,
                 expires: Instant::now() + APPROVAL_TIMEOUT,
+                retry_request,
             },
         );
     }
@@ -163,18 +174,39 @@ impl TransferState {
     fn complete(&self, download: &WKDownload, success: bool) {
         let transfer = self.entries.borrow_mut().remove(&identity(download));
         let Some(transfer) = transfer else { return };
+        let retry_request = transfer.retry_request;
         match transfer.phase {
             Phase::AwaitingApproval { id, destination } => {
                 self.store.borrow_mut().dismiss(id);
                 destination.call((ptr::null_mut(),));
             }
-            Phase::Saving { id, .. } => self.store.borrow_mut().finish(id, success),
+            Phase::Saving { id, .. } => {
+                self.store.borrow_mut().finish(id, success);
+                if !success {
+                    if let Some(request) = retry_request {
+                        if self.store.borrow_mut().mark_retryable(id, true) {
+                            self.retry_requests.borrow_mut().insert(id, request);
+                        }
+                    }
+                }
+            }
             Phase::WaitingForResponse => return,
         }
         (self.changed)();
     }
 
     fn poll(&self) {
+        let retryable = self
+            .store
+            .borrow()
+            .items()
+            .into_iter()
+            .filter(|item| item.retryable)
+            .map(|item| item.id)
+            .collect::<HashSet<_>>();
+        self.retry_requests
+            .borrow_mut()
+            .retain(|id, _| retryable.contains(id));
         let now = Instant::now();
         let mut changed = false;
         let stopped: Vec<_> = self
@@ -223,6 +255,21 @@ impl TransferState {
     }
 
     fn close(&self) {
+        self.closed.set(true);
+        let retry_ids = self
+            .retry_requests
+            .borrow()
+            .keys()
+            .copied()
+            .collect::<Vec<_>>();
+        let had_retries = !retry_ids.is_empty();
+        self.retry_requests.borrow_mut().clear();
+        for id in retry_ids {
+            self.store.borrow_mut().mark_retryable(id, false);
+        }
+        if had_retries {
+            (self.changed)();
+        }
         let active = std::mem::take(&mut *self.entries.borrow_mut());
         for transfer in active.into_values() {
             self.stop(transfer, false);
@@ -258,6 +305,10 @@ fn identity(download: &WKDownload) -> usize {
     ptr::from_ref(download).addr()
 }
 
+fn view_identity(view: &WKWebView) -> usize {
+    ptr::from_ref(view).addr()
+}
+
 fn http_url(url: Option<&NSURL>) -> Option<url::Url> {
     let address = url?.absoluteString()?.to_string();
     let parsed = url::Url::parse(&address).ok()?;
@@ -266,6 +317,58 @@ fn http_url(url: Option<&NSURL>) -> Option<url::Url> {
         && parsed.username().is_empty()
         && parsed.password().is_none())
     .then_some(parsed)
+}
+
+fn sanitized_retry_request(request: &NSURLRequest) -> Option<Retained<NSURLRequest>> {
+    let url = http_url(request.URL().as_deref())?;
+    let method = request.HTTPMethod()?.to_string();
+    let has_body = request.HTTPBody().is_some();
+    let has_body_stream = request.HTTPBodyStream().is_some();
+    let eligible = replayable_request_parts(Some(url), &method, has_body, has_body_stream);
+    if !eligible {
+        return None;
+    }
+
+    // Construct a fresh request without any original headers, body, or cookie
+    // handling. This keeps the URL while dropping credentials and custom data.
+    let address = request.URL()?;
+    let sanitized = NSMutableURLRequest::requestWithURL(&address);
+    sanitized.setHTTPMethod(&NSString::from_str("GET"));
+    sanitized.setAllHTTPHeaderFields(None);
+    sanitized.setHTTPShouldHandleCookies(false);
+    Some(sanitized.into_super())
+}
+
+fn replayable_request_parts(
+    url: Option<url::Url>,
+    method: &str,
+    has_body: bool,
+    has_body_stream: bool,
+) -> bool {
+    url.is_some_and(|url| {
+        matches!(url.scheme(), "http" | "https")
+            && url.has_host()
+            && url.username().is_empty()
+            && url.password().is_none()
+    }) && method == "GET"
+        && !has_body
+        && !has_body_stream
+}
+
+fn sanitized_request_is_safe(request: &NSURLRequest) -> bool {
+    let Some(url) = http_url(request.URL().as_deref()) else {
+        return false;
+    };
+    request
+        .HTTPMethod()
+        .is_some_and(|method| method.to_string() == "GET")
+        && request.HTTPBody().is_none()
+        && request.HTTPBodyStream().is_none()
+        && !request.HTTPShouldHandleCookies()
+        && request
+            .allHTTPHeaderFields()
+            .is_none_or(|headers| headers.is_empty())
+        && matches!(url.scheme(), "http" | "https")
 }
 
 define_class!(
@@ -432,6 +535,7 @@ define_class!(
 pub struct TabDownloads {
     _navigation: Retained<NavigationDelegate>,
     state: Rc<TransferState>,
+    view_identity: usize,
 }
 
 impl TabDownloads {
@@ -448,6 +552,8 @@ impl TabDownloads {
         let state = Rc::new(TransferState {
             store,
             entries: RefCell::new(HashMap::new()),
+            retry_requests: RefCell::new(HashMap::new()),
+            closed: Cell::new(false),
             changed: Rc::new(changed),
         });
         let downloads = main_thread
@@ -463,6 +569,7 @@ impl TabDownloads {
         Some(Self {
             _navigation: navigation,
             state,
+            view_identity: view_identity(view),
         })
     }
 
@@ -472,6 +579,29 @@ impl TabDownloads {
 
     pub fn cancel_transfer(&self, id: u32) -> bool {
         self.state.cancel_transfer(id)
+    }
+
+    pub fn retry(&self, view: &WKWebView, id: u32) -> bool {
+        if self.state.closed.get() || self.view_identity != view_identity(view) {
+            return false;
+        }
+        let Some(request) = self.state.retry_requests.borrow().get(&id).cloned() else {
+            return false;
+        };
+        if !sanitized_request_is_safe(&request) || !self.state.store.borrow_mut().consume_retry(id)
+        {
+            return false;
+        }
+        self.state.retry_requests.borrow_mut().remove(&id);
+        (self.state.changed)();
+
+        let state = Rc::clone(&self.state);
+        let delegate = self._navigation.ivars().downloads.clone();
+        let completion = RcBlock::new(move |download: NonNull<WKDownload>| {
+            state.adopt(unsafe { download.as_ref() }, &delegate);
+        });
+        unsafe { view.startDownloadUsingRequest_completionHandler(&request, &completion) };
+        true
     }
 
     pub fn poll(&self) {
@@ -486,5 +616,95 @@ impl TabDownloads {
 impl Drop for TabDownloads {
     fn drop(&mut self) {
         self.state.close();
+    }
+}
+
+#[cfg(test)]
+mod retry_tests {
+    use super::{
+        replayable_request_parts, sanitized_request_is_safe, sanitized_retry_request, TransferState,
+    };
+    use objc2_foundation::{NSMutableURLRequest, NSString, NSURLRequest, NSURL};
+    use std::{
+        cell::{Cell, RefCell},
+        collections::HashMap,
+        rc::Rc,
+    };
+    use url::Url;
+
+    fn candidate(address: &str, method: &str, body: bool, stream: bool) -> bool {
+        replayable_request_parts(Url::parse(address).ok(), method, body, stream)
+    }
+
+    #[test]
+    fn retry_requires_body_free_http_get_without_url_credentials() {
+        assert!(candidate("https://example.test/file", "GET", false, false));
+        for (address, method, body, stream) in [
+            ("file:///tmp/file", "GET", false, false),
+            ("https://user@example.test/file", "GET", false, false),
+            ("https://example.test/file", "POST", false, false),
+            ("https://example.test/file", "GET", true, false),
+            ("https://example.test/file", "GET", false, true),
+        ] {
+            assert!(!candidate(address, method, body, stream));
+        }
+    }
+
+    #[test]
+    fn retry_request_is_fresh_and_disables_cookie_and_header_replay() {
+        let address = NSURL::URLWithString(&NSString::from_str("https://example.test/file"))
+            .expect("valid fixture URL");
+        let original = NSMutableURLRequest::requestWithURL(&address);
+        original.setHTTPMethod(&NSString::from_str("GET"));
+        original.setValue_forHTTPHeaderField(
+            Some(&NSString::from_str("test-secret")),
+            &NSString::from_str("Authorization"),
+        );
+        original.setValue_forHTTPHeaderField(
+            Some(&NSString::from_str("test-cookie")),
+            &NSString::from_str("Cookie"),
+        );
+        original.setHTTPShouldHandleCookies(true);
+        assert!(original.HTTPShouldHandleCookies());
+        let retry = sanitized_retry_request(&original).expect("safe GET is replayable");
+        assert_eq!(retry.HTTPMethod().unwrap().to_string(), "GET");
+        assert!(!retry.HTTPShouldHandleCookies());
+        assert!(retry.HTTPBody().is_none());
+        assert!(retry.HTTPBodyStream().is_none());
+        assert!(retry
+            .allHTTPHeaderFields()
+            .is_none_or(|headers| headers.is_empty()));
+        assert!(sanitized_request_is_safe(&retry));
+        let _typed_request: &NSURLRequest = &retry;
+    }
+
+    #[test]
+    fn closing_owner_invalidates_retry_token_and_row() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut downloads = crate::downloads::Downloads::new(directory.path().join("downloads"));
+        let id = downloads
+            .offer(
+                &Url::parse("https://example.test/file").unwrap(),
+                std::path::Path::new("file"),
+            )
+            .unwrap();
+        let staged = downloads.approve(id).unwrap();
+        std::fs::write(staged, b"partial").unwrap();
+        downloads.finish(id, false);
+        downloads.mark_retryable(id, true);
+        let address = NSURL::URLWithString(&NSString::from_str("https://example.test/file"))
+            .expect("valid fixture URL");
+        let request = NSMutableURLRequest::requestWithURL(&address).into_super();
+        let state = TransferState {
+            store: Rc::new(RefCell::new(downloads)),
+            entries: RefCell::new(HashMap::new()),
+            retry_requests: RefCell::new(HashMap::from([(id, request)])),
+            closed: Cell::new(false),
+            changed: Rc::new(|| {}),
+        };
+        state.close();
+        assert!(state.closed.get());
+        assert!(state.retry_requests.borrow().is_empty());
+        assert!(!state.store.borrow().items()[0].retryable);
     }
 }

@@ -18,7 +18,7 @@ use objc2_web_kit::{
 use std::ptr::NonNull;
 use std::{
     cell::{Cell, RefCell},
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     path::{Path, PathBuf},
     ptr,
     rc::Rc,
@@ -196,17 +196,12 @@ impl TransferState {
     }
 
     fn poll(&self) {
-        let retryable = self
-            .store
-            .borrow()
-            .items()
-            .into_iter()
-            .filter(|item| item.retryable)
-            .map(|item| item.id)
-            .collect::<HashSet<_>>();
-        self.retry_requests
-            .borrow_mut()
-            .retain(|id, _| retryable.contains(id));
+        {
+            let store = self.store.borrow();
+            self.retry_requests
+                .borrow_mut()
+                .retain(|id, _| store.is_retryable(*id));
+        }
         let now = Instant::now();
         let mut changed = false;
         let stopped: Vec<_> = self

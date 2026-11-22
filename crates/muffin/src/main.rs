@@ -9,6 +9,8 @@ fn main() {
 #[cfg(target_os = "macos")]
 mod download_delegate;
 #[cfg(target_os = "macos")]
+mod download_open;
+#[cfg(target_os = "macos")]
 mod downloads;
 #[cfg(target_os = "macos")]
 mod instance;
@@ -33,7 +35,7 @@ mod browser {
         tabs::{SavedWindow, SessionDocument, TabSet},
     };
     use objc2::MainThreadMarker;
-    use objc2_foundation::NSString;
+    use objc2_foundation::{NSBundle, NSString};
     use objc2_web_kit::{
         WKFindConfiguration, WKFindResult, WKWebViewConfiguration, WKWebsiteDataStore,
     };
@@ -62,14 +64,31 @@ mod browser {
         window::{Fullscreen, Window, WindowBuilder, WindowId},
     };
     use wry::{
-        PageLoadEvent, PermissionResponse, WebView, WebViewBuilder, WebViewBuilderExtDarwin,
-        WebViewBuilderExtMacos, WebViewExtMacOS,
+        PageLoadEvent, PermissionKind, PermissionResponse, WebView, WebViewBuilder,
+        WebViewBuilderExtDarwin, WebViewBuilderExtMacos, WebViewExtMacOS,
     };
 
     const CHROME: &str = include_str!("../../../ui/dist/index.html");
     const CHROME_HEIGHT: u32 = 96;
     const MAX_MESSAGE_BYTES: usize = 64 * 1024;
     type SharedDownloads = Rc<RefCell<Downloads>>;
+
+    fn capture_permission(kind: PermissionKind) -> PermissionResponse {
+        let usage_key = match kind {
+            PermissionKind::Camera => "NSCameraUsageDescription",
+            PermissionKind::Microphone => "NSMicrophoneUsageDescription",
+            _ => return PermissionResponse::Deny,
+        };
+        let has_usage_description = NSBundle::mainBundle()
+            .objectForInfoDictionaryKey(&NSString::from_str(usage_key))
+            .and_then(|value| value.downcast::<NSString>().ok())
+            .is_some_and(|value| !value.to_string().trim().is_empty());
+        if has_usage_description {
+            PermissionResponse::Default
+        } else {
+            PermissionResponse::Deny
+        }
+    }
 
     #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
     #[serde(rename_all = "snake_case")]
@@ -95,6 +114,7 @@ mod browser {
         zoom_percent: u16,
         find_found: Option<bool>,
         fullscreen: bool,
+        media_suspended: bool,
     }
 
     #[derive(Clone, Default, Serialize)]
@@ -128,8 +148,14 @@ mod browser {
         PrintPage { version: u8 },
         #[serde(rename = "save_pdf")]
         SavePdf { version: u8 },
+        #[serde(rename = "set_media_suspended")]
+        SetMediaSuspended { version: u8, enabled: bool },
         #[serde(rename = "reveal_download")]
         RevealDownload { version: u8, id: u32 },
+        #[serde(rename = "open_download")]
+        OpenDownload { version: u8, id: u32 },
+        #[serde(rename = "retry_download")]
+        RetryDownload { version: u8, id: u32 },
         #[serde(rename = "decide_download")]
         DecideDownload { version: u8, id: u32, approve: bool },
         #[serde(rename = "cancel_download")]
@@ -259,6 +285,8 @@ mod browser {
         CaptureFixtureContent { version: u8 },
         #[serde(rename = "print_fixture_pdf")]
         PrintFixturePdf { version: u8 },
+        #[serde(rename = "inspect_fixture_playback")]
+        InspectFixturePlayback { version: u8 },
     }
 
     #[cfg(debug_assertions)]
@@ -298,7 +326,8 @@ mod browser {
                 | ChromeTestAction::CapturePdf { version: 1 }
                 | ChromeTestAction::ClickFixtureLink { version: 1 }
                 | ChromeTestAction::CaptureFixtureContent { version: 1 }
-                | ChromeTestAction::PrintFixturePdf { version: 1 },
+                | ChromeTestAction::PrintFixturePdf { version: 1 }
+                | ChromeTestAction::InspectFixturePlayback { version: 1 },
             ) => Some(command),
             TestCommand::Native(action) if action.version() == 1 => Some(command),
             TestCommand::Quit { version: 1, action } if action == "quit_test" => Some(command),
@@ -315,7 +344,10 @@ mod browser {
                 | Self::ToggleFullscreen { version }
                 | Self::PrintPage { version }
                 | Self::SavePdf { version }
+                | Self::SetMediaSuspended { version, .. }
                 | Self::RevealDownload { version, .. }
+                | Self::OpenDownload { version, .. }
+                | Self::RetryDownload { version, .. }
                 | Self::DecideDownload { version, .. }
                 | Self::CancelDownload { version, .. }
                 | Self::ClearDownloads { version }
@@ -526,6 +558,7 @@ mod browser {
         discard_ticket: Option<u64>,
         find_ticket: u64,
         find_found: Option<bool>,
+        media_suspended: bool,
     }
 
     struct BrowserWindow {
@@ -566,6 +599,7 @@ mod browser {
                 .with_navigation_handler(|url| url == "about:blank")
                 .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
                 .with_download_started_handler(|_, _| false)
+                .with_permission_handler(|_| PermissionResponse::Deny)
                 .with_bounds(bounds(&window, 0, CHROME_HEIGHT))
                 .build_as_child(&window)
                 .map_err(|error| error.to_string())?;
@@ -646,7 +680,7 @@ mod browser {
                     wry::NewWindowResponse::Deny
                 })
                 .with_download_started_handler(|_, _| false)
-                .with_permission_handler(|_| PermissionResponse::Deny)
+                .with_permission_handler(capture_permission)
                 .with_on_page_load_handler(move |event, url| {
                     let _ = loaded_proxy
                         .send_event(Message::Loaded(window_id, tab_id, generation, event, url));
@@ -688,6 +722,7 @@ mod browser {
                     discard_ticket: None,
                     find_ticket: 0,
                     find_found: None,
+                    media_suspended: false,
                 },
             );
             if start_url != "about:blank" {
@@ -978,6 +1013,35 @@ mod browser {
                         }
                     }
                 }
+                Action::OpenDownload { id, .. } => {
+                    if self.profile_state.surface == Surface::Downloads {
+                        let store = self.downloads.borrow();
+                        let result = store
+                            .completed_path(id)
+                            .zip(store.completed_identity(id))
+                            .ok_or("This download is no longer available.")
+                            .and_then(|(path, identity)| {
+                                super::download_open::open(path, identity)
+                            });
+                        self.profile_state.notice = result.err().unwrap_or("").into();
+                    }
+                }
+                Action::SetMediaSuspended { enabled, .. } => {
+                    if self.profile_state.surface == Surface::Browse {
+                        if let Some(view) = self.views.get_mut(&self.tabs.selected()) {
+                            if view.media_suspended != enabled {
+                                unsafe {
+                                    view.webview
+                                        .webview()
+                                        .setAllMediaPlaybackSuspended_completionHandler(
+                                            enabled, None,
+                                        );
+                                }
+                                view.media_suspended = enabled;
+                            }
+                        }
+                    }
+                }
                 Action::OpenHome { .. } => self.navigate(self.tabs.selected(), "about:blank"),
                 Action::NewTab { .. } => {
                     if self.tabs.can_create() {
@@ -1208,6 +1272,7 @@ mod browser {
                     }),
                     find_found: self.views.get(&id).and_then(|view| view.find_found),
                     fullscreen: self.window.fullscreen().is_some(),
+                    media_suspended: self.views.get(&id).is_some_and(|view| view.media_suspended),
                 },
                 profile: self.profile_state.clone(),
             }
@@ -1592,13 +1657,19 @@ mod browser {
                 if self.settings_visible(id) {
                     if matches!(action, Action::ResetDownloadFolder { .. }) {
                         self.change_download_folder(id, None);
-                    } else if self.test_control.is_none() {
+                    } else {
                         let current = self.downloads.borrow().root().to_owned();
                         let chosen = rfd::FileDialog::new()
                             .set_title("Choose a download folder")
                             .set_directory(current)
                             .pick_folder();
-                        if let Some(folder) = chosen {
+                        if let Some(folder) = chosen.filter(|folder| {
+                            self.test_control.as_ref().is_none_or(|control| {
+                                Downloads::canonical_folder(folder).is_some_and(|selected| {
+                                    selected == control.directory.join("alternate-downloads")
+                                })
+                            })
+                        }) {
                             self.change_download_folder(id, Some(folder));
                         }
                     }
@@ -1609,6 +1680,7 @@ mod browser {
                 action,
                 Action::DecideDownload { .. }
                     | Action::CancelDownload { .. }
+                    | Action::RetryDownload { .. }
                     | Action::ClearDownloads { .. }
             ) {
                 let visible = self.windows.iter().any(|window| {
@@ -1625,13 +1697,23 @@ mod browser {
                     self.windows
                         .iter()
                         .flat_map(|window| window.views.values())
-                        .filter_map(|view| view.downloads.as_ref())
-                        .any(|downloads| match action {
-                            Action::DecideDownload { id, approve, .. } => {
-                                downloads.decide(id, approve)
-                            }
-                            Action::CancelDownload { id, .. } => downloads.cancel_transfer(id),
-                            _ => unreachable!("only download transfers are dispatched here"),
+                        .any(|view| {
+                            view.downloads
+                                .as_ref()
+                                .is_some_and(|downloads| match action {
+                                    Action::DecideDownload { id, approve, .. } => {
+                                        downloads.decide(id, approve)
+                                    }
+                                    Action::CancelDownload { id, .. } => {
+                                        downloads.cancel_transfer(id)
+                                    }
+                                    Action::RetryDownload { id, .. } => {
+                                        downloads.retry(&view.webview.webview(), id)
+                                    }
+                                    _ => {
+                                        unreachable!("only download transfers are dispatched here")
+                                    }
+                                })
                         });
                 }
                 self.write_test_state();
@@ -2180,6 +2262,35 @@ mod browser {
                         if let Some(view) = fixture_content(window) {
                             if !super::pdf::print_fixture(view, &path) {
                                 eprintln!("fixture_print_failed");
+                            }
+                        }
+                    }
+                }
+                TestCommand::Chrome(ChromeTestAction::InspectFixturePlayback { .. }) => {
+                    use objc2_web_kit::WKMediaPlaybackState;
+                    let path = self
+                        .test_control
+                        .as_ref()
+                        .map(|control| control.directory.join("fixture-playback.txt"));
+                    if let (Some(window), Some(path)) = (self.window_mut(active), path) {
+                        if let Some(view) = fixture_content(window) {
+                            let callback =
+                                block2::RcBlock::new(move |state: WKMediaPlaybackState| {
+                                    let state = match state {
+                                        WKMediaPlaybackState::None => "none",
+                                        WKMediaPlaybackState::Playing => "playing",
+                                        WKMediaPlaybackState::Paused => "paused",
+                                        WKMediaPlaybackState::Suspended => "suspended",
+                                        _ => "unknown",
+                                    };
+                                    let temporary = path.with_extension("tmp");
+                                    if fs::write(&temporary, state).is_ok() {
+                                        let _ = fs::rename(temporary, &path);
+                                    }
+                                });
+                            unsafe {
+                                view.webview()
+                                    .requestMediaPlaybackStateWithCompletionHandler(&callback);
                             }
                         }
                     }

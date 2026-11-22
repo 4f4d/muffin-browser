@@ -30,7 +30,7 @@
     downloads: [],
     download_approval_count: 0,
     download_folder: null,
-    page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
+    page_tools: { zoom_percent: 100, find_found: null, fullscreen: false, media_suspended: false }
   };
 
   let snapshot = $state(window.muffinChrome?.snapshot ?? initial);
@@ -410,6 +410,7 @@
         <button class="quiet-button" type="button" aria-pressed={snapshot.page_tools.fullscreen} onclick={() => send({ version: 1, action: 'toggle_fullscreen' })}>{snapshot.page_tools.fullscreen ? 'Exit full screen' : 'Full screen'}</button>
         <button class="quiet-button" type="button" aria-label="Print page" onclick={() => send({ version: 1, action: 'print_page' })}>Print</button>
         <button class="quiet-button" type="button" aria-label="Save page as PDF" onclick={() => send({ version: 1, action: 'save_pdf' })}>Save PDF</button>
+        <button class="quiet-button" type="button" onclick={() => send({ version: 1, action: 'set_media_suspended', enabled: !snapshot.page_tools.media_suspended })}>{snapshot.page_tools.media_suspended ? 'Resume all media' : 'Pause all media'}</button>
         {#if snapshot.notice}<span class="find-result" role="status">{snapshot.notice}</span>{/if}
         <button class="mini-action" type="button" aria-label="Close page tools" onclick={closePageTools}>×</button>
       </div>

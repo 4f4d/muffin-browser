@@ -425,11 +425,11 @@ describe('browser chrome controls', () => {
       surface: 'downloads',
       download_approval_count: 2,
       downloads: [
-        { id: 90, name: '<img src=x onerror=alert(1)>', host: '<script>evil.test</script>', status: 'awaiting_approval', bytes: 0 },
-        { id: 94, name: 'Later file', host: 'download.example', status: 'awaiting_approval', bytes: 0 },
-        { id: 91, name: 'Annual report.pdf', host: 'reports.example', status: 'finished', bytes: 1250000 },
-        { id: 92, name: 'Large archive.zip', host: 'files.example', status: 'downloading', bytes: 2048 },
-        { id: 93, name: 'Cancelled item', host: 'files.example', status: 'cancelled', bytes: 0 }
+        { id: 90, name: '<img src=x onerror=alert(1)>', host: '<script>evil.test</script>', status: 'awaiting_approval', bytes: 0, retryable: false },
+        { id: 94, name: 'Later file', host: 'download.example', status: 'awaiting_approval', bytes: 0, retryable: false },
+        { id: 91, name: 'Annual report.pdf', host: 'reports.example', status: 'finished', bytes: 1250000, retryable: false },
+        { id: 92, name: 'Large archive.zip', host: 'files.example', status: 'downloading', bytes: 2048, retryable: false },
+        { id: 93, name: 'Cancelled item', host: 'files.example', status: 'cancelled', bytes: 0, retryable: false }
       ]
     }));
     await tick();
@@ -450,22 +450,27 @@ describe('browser chrome controls', () => {
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'decide_download', id: 94, approve: false });
     document.querySelector<HTMLButtonElement>('[aria-label="Show Annual report.pdf in folder"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'reveal_download', id: 91 });
+    document.querySelector<HTMLButtonElement>('[aria-label="Open Annual report.pdf"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'open_download', id: 91 });
   });
 
   it('shows live transferred bytes without a false percentage and clears only terminal rows', async () => {
     bridgeState.bridge.render(makeSnapshot({
       surface: 'downloads',
       downloads: [
-        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0 },
-        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 2048 },
-        { id: 112, name: 'Done.pdf', host: 'files.example', status: 'finished', bytes: 4096 },
-        { id: 113, name: 'Broken.bin', host: 'files.example', status: 'failed', bytes: 10 },
-        { id: 114, name: 'Stopped.bin', host: 'files.example', status: 'cancelled', bytes: 10 }
+        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0, retryable: false },
+        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 2048, retryable: false },
+        { id: 112, name: 'Done.pdf', host: 'files.example', status: 'finished', bytes: 4096, retryable: false },
+        { id: 113, name: 'Broken.bin', host: 'files.example', status: 'failed', bytes: 10, retryable: true },
+        { id: 114, name: 'Stopped.bin', host: 'files.example', status: 'cancelled', bytes: 10, retryable: false }
       ]
     }));
     await tick();
     expect(document.querySelector('[aria-label="Transferred 2.0 kB"]')).not.toBeNull();
     expect(document.querySelector('.download-progress[aria-valuenow]')).toBeNull();
+    document.querySelector<HTMLButtonElement>('[aria-label="Retry Broken.bin"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'retry_download', id: 113 });
+    expect(document.querySelector('[aria-label="Retry Stopped.bin"]')).toBeNull();
     document.querySelector<HTMLButtonElement>('[aria-label="Cancel download Active.zip"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'cancel_download', id: 111 });
     document.querySelector<HTMLButtonElement>('[aria-label="Clear completed and stopped downloads"]')!.click();
@@ -474,8 +479,8 @@ describe('browser chrome controls', () => {
     bridgeState.bridge.render(makeSnapshot({
       surface: 'downloads',
       downloads: [
-        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0 },
-        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 0 }
+        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0, retryable: false },
+        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 0, retryable: false }
       ]
     }));
     await tick();
@@ -483,7 +488,7 @@ describe('browser chrome controls', () => {
   });
 
   it('handles native Find focus, match navigation, page tools, and Escape', async () => {
-    bridgeState.bridge.render(makeSnapshot({ surface: 'browse', page_tools: { zoom_percent: 125, find_found: null, fullscreen: false } }));
+    bridgeState.bridge.render(makeSnapshot({ surface: 'browse', page_tools: { zoom_percent: 125, find_found: null, fullscreen: false, media_suspended: false } }));
     await tick();
     bridgeState.bridge.focusFind();
     await tick();
@@ -498,7 +503,7 @@ describe('browser chrome controls', () => {
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'find_page', value: 'muffin', backwards: true });
     await tick();
     expect(document.querySelector('.find-result')?.textContent).toBe('Searching…');
-    bridgeState.bridge.render(makeSnapshot({ surface: 'browse', page_tools: { zoom_percent: 125, find_found: true, fullscreen: false } }));
+    bridgeState.bridge.render(makeSnapshot({ surface: 'browse', page_tools: { zoom_percent: 125, find_found: true, fullscreen: false, media_suspended: false } }));
     await tick();
     expect(document.querySelector('.find-result')?.textContent).toBe('Match found');
     document.querySelector<HTMLButtonElement>('[aria-label="Zoom in"]')!.click();
@@ -509,6 +514,18 @@ describe('browser chrome controls', () => {
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'print_page' });
     document.querySelector<HTMLButtonElement>('[aria-label="Save page as PDF"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'save_pdf' });
+    const mediaButton = () => [...document.querySelectorAll<HTMLButtonElement>('.page-tools-strip button')]
+      .find((button) => button.textContent?.includes('all media'))!;
+    expect(mediaButton().textContent).toBe('Pause all media');
+    mediaButton().click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'set_media_suspended', enabled: true });
+    bridgeState.bridge.render(makeSnapshot({ surface: 'browse', page_tools: {
+      zoom_percent: 125, find_found: true, fullscreen: false, media_suspended: true,
+    } }));
+    await tick();
+    expect(mediaButton().textContent).toBe('Resume all media');
+    mediaButton().click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'set_media_suspended', enabled: false });
     find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await tick();
     await tick();

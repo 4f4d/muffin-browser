@@ -3,6 +3,7 @@
 use serde::Serialize;
 use std::{
     fs,
+    os::unix::fs::MetadataExt,
     path::{Path, PathBuf},
 };
 use tempfile::TempDir;
@@ -225,6 +226,12 @@ impl Downloads {
         true
     }
 
+    pub fn is_retryable(&self, id: u32) -> bool {
+        self.records
+            .iter()
+            .any(|record| record.item.id == id && record.item.retryable)
+    }
+
     pub fn items(&self) -> Vec<DownloadItem> {
         self.records.iter().map(|r| r.item.clone()).collect()
     }
@@ -325,14 +332,9 @@ impl Downloads {
         if !canonical_dir.starts_with(root) || staged_path.parent() != Some(stage_path) {
             return None;
         }
-        let Ok(link_meta) = fs::symlink_metadata(staged_path) else {
+        let Ok(meta) = fs::symlink_metadata(staged_path) else {
             return None;
         };
-        if !link_meta.is_file() || link_meta.file_type().is_symlink() {
-            return None;
-        }
-        let file = fs::File::open(staged_path).ok()?;
-        let meta = file.metadata().ok()?;
         if !meta.is_file() {
             return None;
         }
@@ -340,7 +342,7 @@ impl Downloads {
         if bytes > MAX_FILE_BYTES {
             return None;
         }
-        let identity = file_identity(&file)?;
+        let identity = (meta.dev(), meta.ino());
         for suffix in 0..10_000u32 {
             let visible = root.join(collision_name(&record.item.name, suffix));
             match fs::hard_link(staged_path, &visible) {
@@ -368,64 +370,6 @@ impl Downloads {
             }
         }
     }
-}
-
-#[cfg(unix)]
-fn file_identity(file: &fs::File) -> Option<(u64, u64)> {
-    use std::os::unix::fs::MetadataExt;
-    let metadata = file.metadata().ok()?;
-    Some((metadata.dev(), metadata.ino()))
-}
-
-#[cfg(windows)]
-fn file_identity(file: &fs::File) -> Option<(u64, u64)> {
-    use std::{ffi::c_void, os::windows::io::AsRawHandle};
-
-    #[repr(C)]
-    struct FileTime {
-        low: u32,
-        high: u32,
-    }
-    #[repr(C)]
-    struct ByHandleFileInformation {
-        attributes: u32,
-        created: FileTime,
-        accessed: FileTime,
-        written: FileTime,
-        volume_serial: u32,
-        size_high: u32,
-        size_low: u32,
-        links: u32,
-        file_index_high: u32,
-        file_index_low: u32,
-    }
-    #[link(name = "kernel32")]
-    unsafe extern "system" {
-        fn GetFileInformationByHandle(
-            file: *mut c_void,
-            information: *mut ByHandleFileInformation,
-        ) -> i32;
-    }
-
-    let mut information = std::mem::MaybeUninit::<ByHandleFileInformation>::uninit();
-    // SAFETY: `file` is an open handle and `information` points to the Win32
-    // structure required by GetFileInformationByHandle.
-    let success =
-        unsafe { GetFileInformationByHandle(file.as_raw_handle(), information.as_mut_ptr()) };
-    if success == 0 {
-        return None;
-    }
-    // SAFETY: Win32 reported success and initialized the complete structure.
-    let information = unsafe { information.assume_init() };
-    Some((
-        u64::from(information.volume_serial),
-        (u64::from(information.file_index_high) << 32) | u64::from(information.file_index_low),
-    ))
-}
-
-#[cfg(not(any(unix, windows)))]
-fn file_identity(_: &fs::File) -> Option<(u64, u64)> {
-    None
 }
 
 fn safe_name(path: &Path) -> String {
@@ -550,9 +494,10 @@ mod tests {
         fs::write(complete, b"keep").unwrap();
         downloads.finish(finished, true);
         let published = downloads.completed_path(finished).unwrap().to_path_buf();
+        let metadata = fs::symlink_metadata(&published).unwrap();
         assert_eq!(
             downloads.completed_identity(finished),
-            file_identity(&File::open(&published).unwrap())
+            Some((metadata.dev(), metadata.ino()))
         );
 
         assert!(downloads.clear_terminal());

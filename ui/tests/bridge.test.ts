@@ -49,7 +49,7 @@ describe('chrome IPC bridge', () => {
       downloads: [],
       download_approval_count: 0,
       download_folder: null,
-      page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
+      page_tools: { zoom_percent: 100, find_found: null, fullscreen: false, media_suspended: false }
     };
     state.bridge.render(snapshot);
     expect(state.bridge.snapshot).toEqual(snapshot);
@@ -105,6 +105,10 @@ describe('chrome IPC bridge', () => {
     expect(isAction({ version: 1, action: 'print_page' })).toBe(true);
     expect(isAction({ version: 1, action: 'reveal_download', id: 9 })).toBe(true);
     expect(isAction({ version: 1, action: 'reveal_download', id: 0 })).toBe(false);
+    expect(isAction({ version: 1, action: 'open_download', id: 9 })).toBe(true);
+    expect(isAction({ version: 1, action: 'open_download', id: 9, path: '/tmp/a' })).toBe(false);
+    expect(isAction({ version: 1, action: 'retry_download', id: 9 })).toBe(true);
+    expect(isAction({ version: 1, action: 'retry_download', id: 9, url: 'https://example.test/' })).toBe(false);
     expect(isAction({ version: 1, action: 'cancel_download', id: 42 })).toBe(true);
     expect(isAction({ version: 1, action: 'cancel_download', id: -1 })).toBe(false);
     expect(isAction({ version: 1, action: 'cancel_download', id: 42, path: '/tmp/a' })).toBe(false);
@@ -129,10 +133,10 @@ describe('chrome IPC bridge', () => {
       history: [{ id: 1, url: 'https://visited.test', title: 'Visited', visited_at_ms: 1_700_000_000_000 }],
       bookmarks: [{ id: 2, parent_id: null, url: 'https://saved.test', title: 'Saved' }],
       shortcuts: [{ id: 3, url: 'https://docs.test', title: 'Docs' }], bookmarked: true, notice: '',
-      downloads: [{ id: 9, name: 'report.pdf', host: 'example.test', status: 'finished', bytes: 1250 }],
+      downloads: [{ id: 9, name: 'report.pdf', host: 'example.test', status: 'finished', bytes: 1250, retryable: false }],
       download_approval_count: 1,
       download_folder: null,
-      page_tools: { zoom_percent: 125, find_found: true, fullscreen: false }
+      page_tools: { zoom_percent: 125, find_found: true, fullscreen: false, media_suspended: false }
     };
     state.bridge.render(snapshot);
     expect(state.bridge.snapshot).toEqual(snapshot);
@@ -143,9 +147,9 @@ describe('chrome IPC bridge', () => {
     expect(state.bridge.snapshot.surface).toBe('downloads');
     state.bridge.render({ ...snapshot, settings: { ...snapshot.settings, search_engine: 'unknown' } } as unknown as ChromeSnapshot);
     expect(state.bridge.snapshot.settings.search_engine).toBe('duckduckgo');
-    state.bridge.render({ ...snapshot, downloads: [{ id: 9, name: 'bad', host: 'example.test', status: 'unknown', bytes: 0 }] } as unknown as ChromeSnapshot);
+    state.bridge.render({ ...snapshot, downloads: [{ id: 9, name: 'bad', host: 'example.test', status: 'unknown', bytes: 0, retryable: false }] } as unknown as ChromeSnapshot);
     expect(state.bridge.snapshot.downloads[0].status).toBe('finished');
-    state.bridge.render({ ...snapshot, downloads: [{ id: 9, name: 'bad', host: 'x'.repeat(256), status: 'finished', bytes: 1 }] });
+    state.bridge.render({ ...snapshot, downloads: [{ id: 9, name: 'bad', host: 'x'.repeat(256), status: 'finished', bytes: 1, retryable: false }] });
     expect(state.bridge.snapshot.downloads[0].host).toBe('example.test');
     state.bridge.render({ ...snapshot, download_approval_count: 17 });
     expect(state.bridge.snapshot.download_approval_count).toBe(1);

@@ -3,7 +3,11 @@
 from contextlib import contextmanager
 from hashlib import sha256
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from io import BytesIO
 from threading import Event, Thread
+from urllib.parse import parse_qs, urlsplit
+import wave
+import re
 
 
 PAGE_ONE = """<!doctype html>
@@ -80,6 +84,60 @@ def make_inline_pdf():
 
 INLINE_PDF = make_inline_pdf()
 
+MEDIA_PAGE = """<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Muffin media fixture</title>
+<audio id="fixture-audio" src="/media.wav" controls muted autoplay></audio>
+<script>
+  const audio = document.getElementById('fixture-audio');
+  const tab = new URLSearchParams(location.search).get('tab');
+  setInterval(() => {
+    fetch('/media-state?' + new URLSearchParams({
+      tab, time: audio.currentTime.toFixed(3), paused: String(audio.paused),
+    }), {cache: 'no-store'});
+  }, 100);
+</script></html>
+"""
+
+CAPTURE_PAGE = """<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Muffin capture permission fixture</title>
+<h1>Capture permission fixture</h1>
+<button id="camera">Request camera</button>
+<button id="microphone">Request microphone</button>
+<p id="result" role="status">No request made</p>
+<script>
+  let active = false;
+  async function request(kind) {
+    if (active) return;
+    active = true;
+    const report = document.getElementById('result');
+    report.textContent = 'Waiting for a permission decision';
+    let result;
+    try {
+      const media = await navigator.mediaDevices.getUserMedia(
+        kind === 'camera' ? {video: true} : {audio: true}
+      );
+      for (const track of media.getTracks()) track.stop();
+      result = 'stream_returned_then_stopped';
+    } catch (error) {
+      result = error.name;
+    } finally {
+      active = false;
+    }
+    report.textContent = result;
+    await fetch('/capture-result?' + new URLSearchParams({kind, result}), {method: 'POST'});
+  }
+  for (const kind of ['camera', 'microphone']) {
+    document.getElementById(kind).addEventListener('click', () => request(kind));
+  }
+</script></html>
+"""
+
+with BytesIO() as media:
+    with wave.open(media, "wb") as audio:
+        audio.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
+        audio.writeframes(bytes(2 * 8000 * 30))
+    MEDIA_WAV = media.getvalue()
+
 DOWNLOAD_PAYLOADS = {
     "/download/alpha": b"Muffin fixture alpha\x00\x87\xee" * 64,
     "/download/beta": b"Muffin fixture beta\x01\x19\xff" * 48,
@@ -88,6 +146,8 @@ DOWNLOAD_PAYLOADS = {
 UNREQUESTED_DOWNLOAD = "/download/unrequested"
 SLOW_DOWNLOAD = "/download/slow"
 SLOW_DOWNLOAD_CHUNK = b"muffin-transfer" * 32768
+RETRY_DOWNLOAD = "/download/retry.txt"
+RETRY_PAYLOAD = b"Muffin recoverable download fixture\n" * 16384
 
 
 class FixtureServer(ThreadingHTTPServer):
@@ -102,6 +162,9 @@ class FixtureServer(ThreadingHTTPServer):
         self.redirect_download_to = ""
         self.release_slow_page = Event()
         self.release_slow_download = Event()
+        self.break_retry_download = Event()
+        self.media_states = {}
+        self.capture_results = []
 
     @property
     def origin(self):
@@ -112,11 +175,61 @@ class FixtureHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.server.requests.append(("GET", self.path))
         self.server.user_agents[self.path] = self.headers.get("User-Agent", "")
+        if self.path.startswith("/media-state?"):
+            state = parse_qs(urlsplit(self.path).query)
+            try:
+                self.server.media_states[state["tab"][0]] = (
+                    float(state["time"][0]), state["paused"][0] == "true",
+                )
+            except (KeyError, ValueError):
+                self.send_error(400)
+                return
+            self.send_response(204)
+            self.end_headers()
+            return
+        if self.path == "/media.wav":
+            requested = self.headers.get("Range")
+            byte_range = re.fullmatch(r"bytes=(\d+)-(\d*)", requested) if requested else None
+            if byte_range:
+                start = int(byte_range[1])
+                end = min(int(byte_range[2] or len(MEDIA_WAV) - 1), len(MEDIA_WAV) - 1)
+                if start > end:
+                    self.send_error(416)
+                    return
+                self.send_response(206)
+                self.send_header("Content-Range", f"bytes {start}-{end}/{len(MEDIA_WAV)}")
+                body = MEDIA_WAV[start:end + 1]
+            else:
+                self.send_response(200)
+                body = MEDIA_WAV
+            self.send_header("Content-Type", "audio/wav")
+            self.send_header("Accept-Ranges", "bytes")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if self.path == "/slow":
             self.send_slow_page()
             return
         if self.path == SLOW_DOWNLOAD:
             self.send_slow_download()
+            return
+        if self.path == RETRY_DOWNLOAD:
+            first = self.server.requests.count(("GET", RETRY_DOWNLOAD)) == 1
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Disposition", 'attachment; filename="retry.txt"')
+            self.send_header("Content-Length", str(len(RETRY_PAYLOAD) * (2 if first else 1)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            try:
+                self.wfile.write(RETRY_PAYLOAD)
+                self.wfile.flush()
+                if first:
+                    self.server.break_retry_download.wait(timeout=20)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            self.close_connection = True
             return
         if self.path == "/redirect":
             self.send_response(302)
@@ -144,6 +257,8 @@ class FixtureHandler(BaseHTTPRequestHandler):
             "/first": PAGE_ONE,
             "/second": PAGE_TWO,
             "/upload": UPLOAD_PAGE,
+            "/media": MEDIA_PAGE,
+            "/capture-permission": CAPTURE_PAGE,
             "/attempt-download": (
                 "<!doctype html><title>Automatic download fixture</title>"
                 f"<script>location.assign('{UNREQUESTED_DOWNLOAD}');</script>"
@@ -172,6 +287,11 @@ class FixtureHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self.server.requests.append(("POST", self.path))
+        if self.path.startswith("/capture-result?"):
+            result = parse_qs(urlsplit(self.path).query)
+            self.server.capture_results.append({
+                key: result.get(key, [""])[0] for key in ("kind", "result")
+            })
         if self.path == "/upload":
             length = int(self.headers.get("Content-Length", "0"))
             if length < 0 or length > 1024 * 1024:

@@ -13,7 +13,8 @@ import time
 import tomllib
 
 from fixture import (
-    DOWNLOAD_PAYLOADS, SLOW_DOWNLOAD, SLOW_DOWNLOAD_CHUNK, UNREQUESTED_DOWNLOAD, browser_fixture,
+    DOWNLOAD_PAYLOADS, RETRY_DOWNLOAD, RETRY_PAYLOAD, SLOW_DOWNLOAD, SLOW_DOWNLOAD_CHUNK,
+    UNREQUESTED_DOWNLOAD, browser_fixture,
 )
 
 THEME_BASE_COLORS = {
@@ -593,6 +594,98 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
         "retained_published_file_count": len(published_paths),
     }})
 
+    failed_id = approve_download(
+        "interrupted attachment",
+        lambda: command("chrome_navigate", value=first.origin + RETRY_DOWNLOAD),
+        first,
+        RETRY_DOWNLOAD,
+    )
+    expect("initial retry fixture transfers bytes before the network breaks", lambda s: any(
+        item["id"] == failed_id and item["status"] == "downloading" and item["bytes"] > 0
+        for item in s.get("downloads", [])
+    ))
+    first.break_retry_download.set()
+    expect("broken response exposes retry for the original GET", lambda s: any(
+        item["id"] == failed_id and item["status"] == "failed" and item.get("retryable") is True
+        for item in s.get("downloads", [])
+    ))
+    if file_set() != published_paths or any(directory.glob(".muffin-download-*")):
+        raise AssertionError("a failed transfer retained its partial file")
+    if first.requests.count(("GET", RETRY_DOWNLOAD)) != 1:
+        raise AssertionError("the failed native transfer retried without a chrome action")
+    command("retry_download", id=failed_id)
+    restarted = expect("Retry creates a fresh approval row", lambda s: any(
+        item["id"] != failed_id and item["status"] == "awaiting_approval"
+        for item in s.get("downloads", [])
+    ))
+    new_id = next(item["id"] for item in restarted["downloads"] if item["status"] == "awaiting_approval")
+    if first.requests.count(("GET", RETRY_DOWNLOAD)) != 2 or file_set() != published_paths:
+        raise AssertionError("Retry did not issue exactly one fresh request without writing files")
+    command("decide_download", id=new_id, approve=True)
+    expect("fresh approval finishes the restarted native download", lambda s: any(
+        item["id"] == new_id and item["status"] == "finished" for item in s.get("downloads", [])
+    ))
+    digest = sha256((directory / "retry.txt").read_bytes()).hexdigest()
+    if digest != sha256(RETRY_PAYLOAD).hexdigest():
+        raise AssertionError("retry file did not match the original fixture")
+    steps.append({"native_download_retry": {
+        "failed_download_id": failed_id, "approval_download_id": new_id,
+        "get_requests": 2, "unapproved_filesystem_writes": False, "sha256": digest,
+    }})
+
+
+def exercise_media(process, control, server, steps):
+    state_path = control / "fixture-playback.txt"
+
+    def expect_native_state(expected):
+        sent_at = 0
+        state_path.unlink(missing_ok=True)
+
+        def read():
+            nonlocal sent_at
+            if state_path.exists() and state_path.read_text() == expected:
+                return True
+            if time.monotonic() - sent_at > 0.3:
+                send_command(control, "inspect_fixture_playback")
+                sent_at = time.monotonic()
+            return None
+
+        until(process, f"WebKit playback state {expected}", read)
+
+    first_url = server.origin + "/media?tab=one"
+    send_command(control, "navigate", value=first_url)
+    first = until(process, "first media fixture view", lambda: (
+        state if (state := observation(control)).get("url") == first_url
+        and state.get("status") == "ready" else None
+    ))["selected_tab"]
+    until(process, "first fixture tab plays", lambda: server.media_states.get("one", (0, True))[0] > 0.2)
+    expect_native_state("playing")
+    send_command(control, "set_media_suspended", enabled=True)
+    expect_native_state("suspended")
+    paused_at = server.media_states["one"][0]
+    send_command(control, "new_tab")
+    until(process, "second tab selected", lambda: observation(control)["selected_tab"] != first)
+    second_url = server.origin + "/media?tab=two"
+    send_command(control, "navigate", value=second_url)
+    until(process, "second fixture tab plays independently", lambda: (
+        server.media_states.get("two", (0, True))[0] > 0.2
+    ))
+    if abs(server.media_states["one"][0] - paused_at) > 0.1:
+        raise AssertionError("the first tab advanced while suspended")
+    send_command(control, "select_tab", id=first)
+    until(process, "suspension is retained by the first tab", lambda: (
+        (state := observation(control))["selected_tab"] == first
+        and state["page_tools"]["media_suspended"] is True
+    ))
+    send_command(control, "set_media_suspended", enabled=False)
+    until(process, "first fixture tab resumes", lambda: server.media_states["one"][0] > paused_at + 0.2)
+    expect_native_state("playing")
+    steps.append({"native_media": {
+        "first_tab_played": True, "first_tab_suspended_at_seconds": paused_at,
+        "native_playback_states": ["playing", "suspended", "playing"],
+        "other_tab_played_while_first_suspended": True, "first_tab_resumed": True,
+    }})
+
 
 def exercise_chrome_layout(process, control, steps, capture):
     def command(action, **fields):
@@ -947,6 +1040,7 @@ def main():
                             process, control, *servers, result["steps"], capture,
                             args.out / "native-fixture.pdf" if args.capture_chrome else None,
                         )
+                        exercise_media(process, control, servers[0], result["steps"])
                     if args.chrome_themes:
                         exercise_chrome_themes(process, control, servers[0], result["steps"], capture)
                     if args.native_shortcuts:

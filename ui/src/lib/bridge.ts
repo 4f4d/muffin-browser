@@ -19,7 +19,8 @@ export type ChromeAction =
   | { version: 1; action: 'find_page'; value: string; backwards: boolean }
   | { version: 1; action: 'zoom_page'; value: 'in' | 'out' | 'reset' }
   | { version: 1; action: 'toggle_fullscreen' | 'print_page' | 'save_pdf' }
-  | { version: 1; action: 'reveal_download' | 'cancel_download'; id: number }
+  | { version: 1; action: 'set_media_suspended'; enabled: boolean }
+  | { version: 1; action: 'reveal_download' | 'open_download' | 'retry_download' | 'cancel_download'; id: number }
   | { version: 1; action: 'clear_downloads' | 'choose_download_folder' | 'reset_download_folder' }
   | { version: 1; action: 'decide_download'; id: number; approve: boolean };
 
@@ -32,8 +33,8 @@ export type TabSnapshot = {
 };
 
 export type BrowserSurface = 'browse' | 'start' | 'library' | 'settings' | 'downloads';
-export type DownloadEntry = { id: number; name: string; host: string; status: 'awaiting_approval' | 'downloading' | 'finished' | 'failed' | 'cancelled'; bytes: number };
-export type PageToolsState = { zoom_percent: number; find_found: boolean | null; fullscreen: boolean };
+export type DownloadEntry = { id: number; name: string; host: string; status: 'awaiting_approval' | 'downloading' | 'finished' | 'failed' | 'cancelled'; bytes: number; retryable: boolean };
+export type PageToolsState = { zoom_percent: number; find_found: boolean | null; fullscreen: boolean; media_suspended: boolean };
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type SearchEngine = 'duckduckgo' | 'google' | 'bing';
 export type LocalSuggestion = { url: string; title: string; bookmarked: boolean };
@@ -122,7 +123,7 @@ const initialSnapshot: ChromeSnapshot = {
   downloads: [],
   download_approval_count: 0,
   download_folder: null,
-  page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
+  page_tools: { zoom_percent: 100, find_found: null, fullscreen: false, media_suspended: false }
 };
 
 export function createChromeBridge(
@@ -222,7 +223,8 @@ export function isAction(value: unknown): value is ChromeAction {
   }
   if (value.action === 'zoom_page' && hasExactKeys(value, ['version', 'action', 'value'])) return ['in', 'out', 'reset'].includes(value.value as string);
   if (hasExactKeys(value, ['version', 'action']) && ['toggle_fullscreen', 'print_page', 'save_pdf'].includes(value.action)) return true;
-  if (hasExactKeys(value, ['version', 'action', 'id']) && ['reveal_download', 'cancel_download'].includes(value.action)) return validId(value.id);
+  if (value.action === 'set_media_suspended' && hasExactKeys(value, ['version', 'action', 'enabled'])) return typeof value.enabled === 'boolean';
+  if (hasExactKeys(value, ['version', 'action', 'id']) && ['reveal_download', 'open_download', 'retry_download', 'cancel_download'].includes(value.action)) return validId(value.id);
   if (hasExactKeys(value, ['version', 'action']) && ['clear_downloads', 'choose_download_folder', 'reset_download_folder'].includes(value.action)) return true;
   if (value.action === 'decide_download' && hasExactKeys(value, ['version', 'action', 'id', 'approve'])) {
     return validId(value.id) && typeof value.approve === 'boolean';
@@ -268,16 +270,18 @@ function isSnapshot(value: unknown): value is ChromeSnapshot {
 
 function isDownload(value: unknown): value is DownloadEntry {
   if (!isObject(value)) return false;
-  return hasExactKeys(value, ['id', 'name', 'host', 'status', 'bytes']) && validId(value.id)
+  return hasExactKeys(value, ['id', 'name', 'host', 'status', 'bytes', 'retryable']) && validId(value.id)
     && validText(value.name) && typeof value.host === 'string' && new TextEncoder().encode(value.host).length < 256
     && ['awaiting_approval', 'downloading', 'finished', 'failed', 'cancelled'].includes(value.status as string)
+    && typeof value.retryable === 'boolean' && (!value.retryable || value.status === 'failed')
     && Number.isSafeInteger(value.bytes) && (value.bytes as number) >= 0;
 }
 
 function isPageTools(value: unknown): value is PageToolsState {
-  if (!isObject(value) || !hasExactKeys(value, ['zoom_percent', 'find_found', 'fullscreen'])) return false;
+  if (!isObject(value) || !hasExactKeys(value, ['zoom_percent', 'find_found', 'fullscreen', 'media_suspended'])) return false;
   return Number.isSafeInteger(value.zoom_percent) && (value.zoom_percent as number) >= 25 && (value.zoom_percent as number) <= 500
-    && (value.find_found === null || typeof value.find_found === 'boolean') && typeof value.fullscreen === 'boolean';
+    && (value.find_found === null || typeof value.find_found === 'boolean') && typeof value.fullscreen === 'boolean'
+    && typeof value.media_suspended === 'boolean';
 }
 
 function isSettings(value: unknown): value is BrowserSettings {

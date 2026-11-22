@@ -39,8 +39,14 @@
             {:else if item.status === 'downloading'}
               <div class="download-progress" role="progressbar" aria-label={`Download progress for ${item.name}`} aria-valuetext="Progress is indeterminate"><span></span></div>
               <button class="quiet-button" type="button" aria-label={`Cancel download ${item.name}`} onclick={() => send({ version: 1, action: 'cancel_download', id: item.id })}>Cancel</button>
-            {:else if item.status === 'finished'}<button class="quiet-button" type="button" aria-label={`Show ${item.name} in folder`} onclick={() => send({ version: 1, action: 'reveal_download', id: item.id })}>Show in folder</button>
-            {:else if item.status === 'failed'}<span class="download-failed">Couldn’t finish</span>{/if}
+            {:else if item.status === 'finished'}
+              <div class="download-consent" role="group" aria-label={`Actions for ${item.name}`}>
+                <button class="quiet-button" type="button" aria-label={`Open ${item.name}`} onclick={() => send({ version: 1, action: 'open_download', id: item.id })}>Open</button>
+                <button class="quiet-button" type="button" aria-label={`Show ${item.name} in folder`} onclick={() => send({ version: 1, action: 'reveal_download', id: item.id })}>Show in folder</button>
+              </div>
+            {:else if item.retryable}
+              <button class="quiet-button" type="button" aria-label={`Retry ${item.name}`} onclick={() => send({ version: 1, action: 'retry_download', id: item.id })}>Retry</button>
+            {/if}
           </li>
         {/each}
       </ul>

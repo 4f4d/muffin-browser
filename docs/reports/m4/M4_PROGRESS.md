@@ -26,6 +26,19 @@ The clean `abfd1a4646202b079336d8004054cdc51e6fe1a4` build passed the full local
 
 The hosted verifier also passed on that source commit. The CI build receipt identifies the arm64 release binary and the matching verifier log. [Hosted run](https://github.com/4f4d/muffin-browser/actions/runs/45052670923), [build receipt](../ci/macos-arm64-build-00000000045052670923-0001.json), [hosted native fixture](../ci/m4/macos-arm64-45052670923-native.json)
 
+## Light and dark palette refinement
+
+The light theme uses a soft neutral canvas and the dark theme uses graphite. Honey accents distinguish the brand, New Tab and keyboard focus. The chrome and internal surfaces share the palette, with a solid toolbar fallback for reduced transparency. The gallery uses the same theme tokens and toolbar icons.
+
+Clean source `01068c8e8ab18125a93dc88538be83f7fcaaaa18` passed the complete local macOS verifier. The separate native check captured both explicit themes and repeated the 640-point layout check on that build. The selected-tab fill expectation in the profile smoke moved to the new exact color because the intended palette changed. The new theme smoke checks both the tab and canvas paint, and measures four selected base-color pairs. Composited-surface contrast and app-wide accessibility qualification remain open. The independent reviewer passed the portable verifier on palette commit `f8bdb7b` and reviewed the gallery follow-up. [Native palette receipt](../platform/m4/macos-arm64-chrome-palette.json), [light toolbar](../platform/m4/macos-arm64-palette-light-toolbar.png), [dark toolbar](../platform/m4/macos-arm64-palette-dark-toolbar.png), [light Start](../platform/m4/macos-arm64-palette-light-start.png), [dark Start](../platform/m4/macos-arm64-palette-dark-start.png), [compact actions](../platform/m4/macos-arm64-palette-compact-actions.png)
+
+| Theme | Primary text on canvas | Muted text on canvas | Active tab text | Focus color on active tab |
+|---|---:|---:|---:|---:|
+| Light | 12.80:1 | 5.82:1 | 11.58:1 | 5.26:1 |
+| Dark | 14.18:1 | 9.36:1 | 10.31:1 | 6.71:1 |
+
+The hosted macOS verifier passed on the palette commit. The gallery check used a 640-pixel Chromium viewport in both appearances. It confirmed the expected canvas colors, the Home button's icon size and address reset, and that the layout fit the viewport. [Hosted run](https://github.com/4f4d/muffin-browser/actions/runs/45053669006), [hosted build receipt](../ci/macos-arm64-build-00000000045053669006-0001.json), [hosted native fixture](../ci/m4/macos-arm64-45053669006-native.json)
+
 ## Remaining M4 requirements
 
 - The independently reviewed download-management slice passed the complete local verifier on clean source `c77ca85ce44799b99c7659f006fce8c2f5376245`. The loopback fixture observed 491,520 staged bytes with the response held open, cleared terminal rows while keeping the transfer active, and cancelled the native transfer. No staging files remained and all three previously completed files were retained. The verifier ran 83 tool tests, the Python loopback fixture test, 18 UI tests, 33 Rust tests, the dependency audits, the release control check and the native smoke. [Exact native receipt](../platform/m4/macos-arm64-download-management-smoke.json), [download implementation](../../../crates/muffin/src/downloads.rs)

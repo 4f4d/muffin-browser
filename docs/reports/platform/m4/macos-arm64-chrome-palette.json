@@ -1,0 +1,237 @@
+{
+  "source_commit": "01068c8e8ab18125a93dc88538be83f7fcaaaa18",
+  "source_worktree_clean": true,
+  "binary_sha256": "828d053afc903ae8dc12140b12a67ef473211676fee0f11c1778cafc498abf4c",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_loopback",
+  "steps": [
+    {
+      "version": 1,
+      "status": "home",
+      "chrome_ready": true
+    },
+    {
+      "url": "http://127.0.0.1:65251/first",
+      "status": "ready",
+      "title": "Muffin fixture | First page",
+      "secure": false
+    },
+    {
+      "navigation_input": "trusted chrome address form"
+    },
+    {
+      "webkit_user_agent_token": true,
+      "browser_product_token": "Muffin/0.1.0"
+    },
+    {
+      "url": "http://127.0.0.1:65252/second",
+      "status": "ready",
+      "title": "Muffin fixture | Second page",
+      "can_back": true
+    },
+    {
+      "url": "http://127.0.0.1:65252/second",
+      "status": "ready"
+    },
+    {
+      "remote_page_executed": true,
+      "remote_chrome_state_received": false
+    },
+    {
+      "url": "http://127.0.0.1:65251/first",
+      "status": "ready",
+      "can_forward": true
+    },
+    {
+      "url": "http://127.0.0.1:65252/second",
+      "status": "ready"
+    },
+    {
+      "status": "blocked",
+      "url": "http://127.0.0.1:65252/second"
+    },
+    {
+      "distinct_loopback_origins": true,
+      "redirect_requested": true
+    },
+    {
+      "loading": true
+    },
+    {
+      "loading": false,
+      "native_loading": false
+    },
+    {
+      "unsolicited_popup_requested": false
+    },
+    {
+      "native-chrome-theme-light": {
+        "layout": {
+          "more_actions_fit": false,
+          "more_actions_width": 0,
+          "more_actions_scroll_width": 0,
+          "more_actions_visible": false,
+          "more_action_count": 0,
+          "scroll_height": 672,
+          "new_tab_visible": true,
+          "selected_tab_fill": "rgb(232, 235, 238)",
+          "surface_ink": "rgb(41, 45, 50)",
+          "surface_fill": "rgb(245, 246, 247)",
+          "heading": "Muffin",
+          "heading_visible": true,
+          "scroll_probe": 0,
+          "height": 672,
+          "selected_tab_ink": "rgb(41, 45, 50)",
+          "address_width": 899,
+          "theme": "light",
+          "muted_ink": "#58616A",
+          "focus_ink": "#87550E",
+          "tab_strip_width": 984,
+          "width": 1100,
+          "tab_strip_scroll_width": 984,
+          "selected_tab_visible": true,
+          "client_height": 672
+        },
+        "base_color_contrast": {
+          "surface_text": 12.804603740947208,
+          "muted_surface_text": 5.823050822192279,
+          "active_tab_text": 11.578249522635808,
+          "focus_on_active_tab": 5.2606478802931775
+        }
+      }
+    },
+    {
+      "native-chrome-theme-dark": {
+        "layout": {
+          "more_actions_fit": false,
+          "more_actions_width": 0,
+          "more_actions_scroll_width": 0,
+          "more_actions_visible": false,
+          "more_action_count": 0,
+          "scroll_height": 672,
+          "new_tab_visible": true,
+          "selected_tab_fill": "rgb(53, 58, 64)",
+          "surface_ink": "rgb(241, 243, 245)",
+          "surface_fill": "rgb(32, 35, 39)",
+          "heading": "Muffin",
+          "heading_visible": true,
+          "scroll_probe": 0,
+          "height": 672,
+          "selected_tab_ink": "rgb(241, 243, 245)",
+          "address_width": 899,
+          "theme": "dark",
+          "muted_ink": "#C2C8CF",
+          "focus_ink": "#F1BE62",
+          "tab_strip_width": 984,
+          "width": 1100,
+          "tab_strip_scroll_width": 984,
+          "selected_tab_visible": true,
+          "client_height": 672
+        },
+        "base_color_contrast": {
+          "surface_text": 14.18267347950661,
+          "muted_surface_text": 9.357933969334912,
+          "active_tab_text": 10.31277862346052,
+          "focus_on_active_tab": 6.709105407026975
+        }
+      }
+    },
+    {
+      "native-chrome-regular": {
+        "more_actions_fit": false,
+        "more_actions_width": 0,
+        "more_actions_scroll_width": 0,
+        "more_actions_visible": false,
+        "more_action_count": 0,
+        "scroll_height": 672,
+        "new_tab_visible": true,
+        "selected_tab_fill": "rgb(53, 58, 64)",
+        "surface_ink": "rgb(241, 243, 245)",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 672,
+        "selected_tab_ink": "rgb(241, 243, 245)",
+        "address_width": 899,
+        "theme": "dark",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 984,
+        "width": 1100,
+        "tab_strip_scroll_width": 984,
+        "selected_tab_visible": true,
+        "client_height": 672
+      }
+    },
+    {
+      "native-chrome-compact": {
+        "more_actions_fit": false,
+        "more_actions_width": 0,
+        "more_actions_scroll_width": 0,
+        "more_actions_visible": false,
+        "more_action_count": 0,
+        "scroll_height": 432,
+        "new_tab_visible": true,
+        "selected_tab_fill": "rgb(53, 58, 64)",
+        "surface_ink": "rgb(241, 243, 245)",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 432,
+        "selected_tab_ink": "rgb(241, 243, 245)",
+        "address_width": 439,
+        "theme": "dark",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 524,
+        "width": 640,
+        "tab_strip_scroll_width": 1220,
+        "selected_tab_visible": true,
+        "client_height": 432
+      }
+    },
+    {
+      "native-chrome-compact-actions": {
+        "more_actions_fit": true,
+        "more_actions_width": 524,
+        "more_actions_scroll_width": 524,
+        "more_actions_visible": true,
+        "more_action_count": 7,
+        "scroll_height": 432,
+        "new_tab_visible": true,
+        "selected_tab_fill": "",
+        "surface_ink": "rgb(241, 243, 245)",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 432,
+        "selected_tab_ink": "",
+        "address_width": 439,
+        "theme": "dark",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 0,
+        "width": 640,
+        "tab_strip_scroll_width": 0,
+        "selected_tab_visible": false,
+        "client_height": 432
+      }
+    }
+  ],
+  "chrome_image_sha256": "9554fa4c6f14ac7bf95e2c375ce0792906c9c8c68ec704699cdb43caf760f281",
+  "additional_capture_sha256": {
+    "native-chrome-toolbar-light": "01e2a988fa64c371f4d296f66053b251b385a5a852dd7b677ff83bde58797acc",
+    "native-chrome-theme-light": "35bda216ab398c5b0a3fd6eae88fb7fad019085d6aab3ef89df64975a79da385",
+    "native-chrome-toolbar-dark": "dfc7e499ff82c61faa5dba8bcb2751d4d948fd69e5781eae12d292db5fea392f",
+    "native-chrome-theme-dark": "46f42327b39312ab4cdad75b8a9487002b81906696f81767bf99842dead87574",
+    "native-chrome-regular": "46f42327b39312ab4cdad75b8a9487002b81906696f81767bf99842dead87574",
+    "native-chrome-compact": "80f35f35582bf6034085f4f94a40a25022b59c3ef139f271c933bb2696da469a",
+    "native-chrome-compact-actions": "37237c2f4d9557c977f4a6063f3ac88fa19e087c5bc3c5192ec190f1a949f04f"
+  },
+  "outcome": "passed"
+}

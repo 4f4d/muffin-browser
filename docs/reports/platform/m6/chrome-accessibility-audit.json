@@ -1,0 +1,215 @@
+{
+  "scope": "bundled chrome DOM in Chromium",
+  "axe": "4.13.0",
+  "pa11y": "9.1.1",
+  "states": [
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "start",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "private",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "settings",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "downloads",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "connection_error",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "start",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "private",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "settings",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "downloads",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "connection_error",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "start",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "private",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "settings",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "downloads",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "connection_error",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "start",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "private",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "settings",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "downloads",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "connection_error",
+      "violations": [],
+      "incomplete_rules": [
+        "aria-prohibited-attr"
+      ]
+    }
+  ],
+  "source_commit": "60772c5ca3c85fd5328f412301b7a9fa49369059",
+  "source_worktree_clean": true,
+  "chrome_bundle_sha256": "e34a452c5580ad42133d53b21a3b5d25e1f7f4077dcc401744b46f219ccc1711",
+  "browser": "157.0.8103.80",
+  "address_enter_submitted": true,
+  "htmlcs_initial_chrome": [
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_2.H32.2",
+      "type": "error",
+      "selector": "#app > main > div:nth-child(1) > form"
+    }
+  ]
+}

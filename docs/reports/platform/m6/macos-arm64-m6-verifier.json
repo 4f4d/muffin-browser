@@ -1,0 +1,24 @@
+{
+  "source_commit": "60772c5ca3c85fd5328f412301b7a9fa49369059",
+  "source_worktree_clean": true,
+  "macos_version": "15.8.3",
+  "host_arch": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "command": "python3 tools/verify.py --artifacts /private/tmp/muffin-m6-checkpoint-verifier",
+  "exit_code": 0,
+  "tool_tests": 83,
+  "loopback_fixture_unit_tests": 1,
+  "ui_tests": 27,
+  "rust_tests": 45,
+  "debug_binary_sha256": "1751ed3478029dfd21396eebc7a46215f84c6c6169ba6027ae1d3cf9c7e7ae36",
+  "release_binary_sha256": "7d6f4680808d244df6eabf749cb0cc5c2ab56b4bd27b1c94d1f828cadfec14ce",
+  "verification_log_sha256": "455f7f18020a03b601a8c0ee7e51208eb2780752705a79d7e1d51a2b22797871",
+  "local_native_receipt_sha256": "f72f7f431e78af0002d381affd7b3d33d24c4f621bec42c5ba9df1307e3163c3",
+  "native_capture_receipt_sha256": "28700b7da71ae9dc65ded271eb2171095ddf6fb135fdbc7827b08299fb7c9863",
+  "chromium_accessibility_receipt_sha256": "3822e801d1c0cff88dc8f378ea224197372c1ed0895f3638bf436d7d27e22812",
+  "release_rejected_debug_test_control": true,
+  "rustsec_allowed_warnings": [
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2024-0429"
+  ]
+}

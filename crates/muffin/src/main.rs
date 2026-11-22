@@ -234,6 +234,10 @@ mod browser {
         Capture { version: u8 },
         #[serde(rename = "inspect_chrome")]
         Inspect { version: u8 },
+        #[serde(rename = "compact_fixture_window")]
+        CompactWindow { version: u8 },
+        #[serde(rename = "open_fixture_browser_actions")]
+        OpenBrowserActions { version: u8 },
         #[serde(rename = "capture_pdf")]
         CapturePdf { version: u8 },
         #[serde(rename = "click_fixture_link")]
@@ -261,6 +265,8 @@ mod browser {
                 ChromeTestAction::Navigate { version: 1, .. }
                 | ChromeTestAction::Capture { version: 1 }
                 | ChromeTestAction::Inspect { version: 1 }
+                | ChromeTestAction::CompactWindow { version: 1 }
+                | ChromeTestAction::OpenBrowserActions { version: 1 }
                 | ChromeTestAction::CapturePdf { version: 1 }
                 | ChromeTestAction::ClickFixtureLink { version: 1 }
                 | ChromeTestAction::CaptureFixtureContent { version: 1 }
@@ -1958,6 +1964,26 @@ mod browser {
                         inspect_chrome_view(&window.chrome, &directory);
                     }
                 }
+                TestCommand::Chrome(ChromeTestAction::CompactWindow { .. }) => {
+                    if let Some(window) = self.window_mut(active) {
+                        use tao::platform::macos::WindowExtMacOS;
+                        let native = window
+                            .window
+                            .ns_window()
+                            .cast::<objc2::runtime::AnyObject>();
+                        let _: () = unsafe {
+                            objc2::msg_send![native, setContentSize: objc2_foundation::NSSize::new(640.0, 520.0)]
+                        };
+                        window.layout();
+                    }
+                }
+                TestCommand::Chrome(ChromeTestAction::OpenBrowserActions { .. }) => {
+                    if let Some(window) = self.window_mut(active) {
+                        let _ = window.chrome.evaluate_script(
+                            "document.querySelector('button.more-button')?.click()",
+                        );
+                    }
+                }
                 TestCommand::Chrome(ChromeTestAction::CapturePdf { .. }) => {
                     let path = self
                         .test_control
@@ -2143,6 +2169,13 @@ mod browser {
                 panel.scrollTop = start;
                 const selected = document.querySelector('.tab-item.selected');
                 const selectedTabFill = selected ? getComputedStyle(selected).backgroundColor : '';
+                const strip = document.querySelector('.tab-list-scroll');
+                const stripBounds = strip?.getBoundingClientRect();
+                const selectedBounds = selected?.getBoundingClientRect();
+                const address = document.querySelector('.address-shell')?.getBoundingClientRect();
+                const newTab = document.querySelector('button[aria-label="Open new tab"]')?.getBoundingClientRect();
+                const actions = document.querySelector('#more-actions');
+                const actionsBounds = actions?.getBoundingClientRect();
                 return {
                     width: Math.round(bounds.width), height: Math.round(bounds.height),
                     heading: heading.textContent.trim(),
@@ -2151,6 +2184,21 @@ mod browser {
                     client_height: panel.clientHeight, scroll_height: panel.scrollHeight,
                     scroll_probe: scrollProbe, theme: document.documentElement.dataset.theme,
                     selected_tab_fill: selectedTabFill,
+                    address_width: Math.round(address?.width ?? 0),
+                    tab_strip_width: strip?.clientWidth ?? 0,
+                    tab_strip_scroll_width: strip?.scrollWidth ?? 0,
+                    selected_tab_visible: !!stripBounds && !!selectedBounds &&
+                        selectedBounds.left >= stripBounds.left - 1 &&
+                        selectedBounds.right <= stripBounds.right + 1,
+                    new_tab_visible: !!newTab && newTab.width > 0 &&
+                        newTab.left >= 0 && newTab.right <= window.innerWidth,
+                    more_actions_visible: !!actionsBounds && actionsBounds.width > 0 &&
+                        actionsBounds.left >= 0 && actionsBounds.right <= window.innerWidth &&
+                        actionsBounds.bottom <= document.querySelector('.tabbar').getBoundingClientRect().bottom,
+                    more_actions_fit: !!actions && actions.scrollWidth <= actions.clientWidth,
+                    more_actions_width: actions?.clientWidth ?? 0,
+                    more_actions_scroll_width: actions?.scrollWidth ?? 0,
+                    more_action_count: actions?.querySelectorAll('button').length ?? 0,
                 };
             })()"#,
             move |json| {

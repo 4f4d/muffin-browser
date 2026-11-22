@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount, tick, unmount } from 'svelte';
 import App from '../src/routes/App.svelte';
 import { installChromeBridge } from '../src/lib/bridge';
@@ -104,14 +104,23 @@ describe('browser chrome controls', () => {
 
     document.querySelector<HTMLButtonElement>('.new-tab-button')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'new_tab' });
+    const openMore = async () => {
+      document.querySelector<HTMLButtonElement>('[aria-label="More browser actions"]')!.click();
+      await tick();
+    };
+    await openMore();
     document.querySelector<HTMLButtonElement>('[aria-label="Open new window"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'new_window' });
+    await openMore();
     document.querySelector<HTMLButtonElement>('[aria-label="Restore recently closed tab"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'reopen_tab' });
+    await openMore();
     document.querySelector<HTMLButtonElement>('[aria-label="Pin selected tab"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'pin_tab', id: 20, pinned: true });
+    await openMore();
     document.querySelector<HTMLButtonElement>('[aria-label="Duplicate selected tab"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'duplicate_tab', id: 20 });
+    await tick();
     document.querySelector<HTMLButtonElement>('[aria-label="Unload Mail; may lose unsaved in-page state"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'discard_tab', id: 10 });
     const activeTabUnload = document.querySelector<HTMLButtonElement>('[aria-label="Unload Reading list; may lose unsaved in-page state"]')!;
@@ -122,6 +131,42 @@ describe('browser chrome controls', () => {
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'close_tab', id: 20 });
     document.querySelector<HTMLButtonElement>('[data-tab-id="10"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'select_tab', id: 10 });
+  });
+
+  it('keeps More actions contained, dismisses on Escape, and restores focus', async () => {
+    bridgeState.bridge.render(makeSnapshot({
+      tabs: [{ id: 20, title: 'Reading', pinned: false, loading: false, discarded: false }],
+      selected_tab: 20
+    }));
+    await tick();
+    const more = document.querySelector<HTMLButtonElement>('[aria-label="More browser actions"]')!;
+    more.click();
+    await tick();
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    expect(document.querySelector('#more-actions [aria-label="Library"]')).not.toBeNull();
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await tick();
+    expect(more.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(more);
+  });
+
+  it('reveals the selected tab without moving keyboard focus', async () => {
+    const scroll = vi.fn();
+    const previous = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scroll });
+    try {
+      const address = document.querySelector<HTMLInputElement>('#address')!;
+      address.focus();
+      const tabs = Array.from({ length: 9 }, (_, index) => ({ id: 20 + index, title: `Tab ${index + 1}`, pinned: false, loading: false, discarded: false }));
+      bridgeState.bridge.render(makeSnapshot({ tabs, selected_tab: 28 }));
+      await tick();
+      await tick();
+      expect(scroll).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+      expect(document.activeElement).toBe(address);
+    } finally {
+      if (previous) Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', previous);
+      else delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
   });
 
   it('supports keyboard tab reorder and inline tab search', async () => {

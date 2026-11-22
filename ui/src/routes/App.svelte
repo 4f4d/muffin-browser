@@ -5,6 +5,7 @@
   import Library from './Library.svelte';
   import Settings from './Settings.svelte';
   import Downloads from './Downloads.svelte';
+  import ChromeIcon from '../lib/ChromeIcon.svelte';
 
   const initial: ChromeSnapshot = {
     version: 1,
@@ -37,11 +38,14 @@
   let submitted: string | null = null;
   let tabSearchOpen = $state(false);
   let tabSearch = $state('');
+  let moreOpen = $state(false);
   let pageToolsOpen = $state(false);
   let findQuery = $state('');
   let activeTab = $derived(snapshot.tabs.find((tab) => tab.id === snapshot.selected_tab));
+  let selectedTabId = $derived(snapshot.selected_tab);
   let visibleTabs = $derived(snapshot.tabs.filter((tab) => tab.title.toLocaleLowerCase().includes(tabSearch.trim().toLocaleLowerCase())));
   let visibleSuggestions = $derived(snapshot.suggestions.slice(0, 5));
+  let tabStripVisible = $derived(!moreOpen && !pageToolsOpen && !(snapshot.surface === 'browse' && editing && visibleSuggestions.length > 0));
 
   const bridge = window.muffinChrome;
 
@@ -91,14 +95,36 @@
   }
 
   function onGlobalKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && moreOpen) {
+      event.preventDefault();
+      closeMore();
+      return;
+    }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'l') {
       event.preventDefault();
       bridge?.focusAddress();
     }
   }
 
+  function toggleMore() {
+    pageToolsOpen = false;
+    moreOpen = !moreOpen;
+    if (moreOpen) tabSearchOpen = false;
+  }
+
+  function closeMore() {
+    moreOpen = false;
+    void tick().then(() => document.querySelector<HTMLButtonElement>('[aria-label="More browser actions"]')?.focus());
+  }
+
+  function runMore(action: ChromeAction) {
+    send(action);
+    closeMore();
+  }
+
   async function openFind() {
     if (snapshot.surface !== 'browse') return;
+    moreOpen = false;
     pageToolsOpen = true;
     await tick();
     const input = document.querySelector<HTMLInputElement>('#page-find');
@@ -179,6 +205,11 @@
     void openTabSearch(false);
   }
 
+  function revealSelectedTab(id = selectedTabId) {
+    const selected = document.querySelector(`[data-tab-id="${id}"]`)?.closest('.tab-item');
+    selected?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }
+
   function syncSnapshot(event: Event) {
     const detail = (event as CustomEvent<ChromeSnapshot>).detail;
     if (!detail || detail.version !== 1) return;
@@ -211,6 +242,15 @@
     };
   });
 
+  $effect(() => {
+    const selectedId = selectedTabId;
+    if (!tabStripVisible) return;
+    void tick().then(() => {
+      if (selectedId !== snapshot.selected_tab || !tabStripVisible) return;
+      revealSelectedTab(selectedId);
+    });
+  });
+
   onMount(() => {
     window.addEventListener('muffin:focus-find', openFind);
     return () => window.removeEventListener('muffin:focus-find', openFind);
@@ -221,16 +261,16 @@
   <div class="toolbar">
     <nav class="history" aria-label="Page history">
       <button class="icon-button" aria-label="Go back" title="Go back" disabled={!snapshot.can_back} onclick={() => send({ version: 1, action: 'back' })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4 2.8 9.2 8 14.4M3.2 9.2h8.1a5.1 5.1 0 0 1 0 10.2H8.8" /></svg>
+        <ChromeIcon name="back" />
       </button>
       <button class="icon-button" aria-label="Go forward" title="Go forward" disabled={!snapshot.can_forward} onclick={() => send({ version: 1, action: 'forward' })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 4 5.2 5.2-5.2 5.2m4.8-5.2H8.7a5.1 5.1 0 0 0 0 10.2h2.5" /></svg>
+        <ChromeIcon name="forward" />
       </button>
       <button class="icon-button reload" aria-label={snapshot.loading ? 'Stop loading' : 'Reload page'} title={snapshot.loading ? 'Stop' : 'Reload'} onclick={() => send({ version: 1, action: snapshot.loading ? 'stop' : 'reload' })}>
         {#if snapshot.loading}
           <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5.7" y="5.7" width="8.6" height="8.6" rx="1.8" /></svg>
         {:else}
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.3 8a6.4 6.4 0 1 0 .1 3.2M16.2 3.8v4.5h-4.5" /></svg>
+          <ChromeIcon name="reload" />
         {/if}
       </button>
     </nav>
@@ -279,9 +319,15 @@
       </button>
     </form>
 
-    <button class="home-button" aria-label="Open start page" title="Open start page" onclick={() => send({ version: 1, action: 'show_surface', value: 'start' })}>
-      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m3.5 9 6.5-5.5L16.5 9v7a1.5 1.5 0 0 1-1.5 1.5h-3.2v-5h-3.6v5H5A1.5 1.5 0 0 1 3.5 16z" /></svg>
-    </button>
+    <div class="toolbar-actions" aria-label="Browser actions">
+      <button class="toolbar-action download-toolbar-button" class:approval-badge={snapshot.download_approval_count > 0} type="button" aria-label={snapshot.download_approval_count > 0 ? `Downloads, ${snapshot.download_approval_count} pending approvals` : 'Downloads'} title="Downloads" aria-pressed={snapshot.surface === 'downloads'} onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
+        <ChromeIcon name="download" />
+        {#if snapshot.download_approval_count > 0}<span class="download-count" aria-hidden="true">{snapshot.download_approval_count}</span>{/if}
+      </button>
+      <button class="toolbar-action more-button" type="button" aria-label="More browser actions" title="More actions" aria-expanded={moreOpen} aria-controls={moreOpen ? 'more-actions' : undefined} onclick={toggleMore}>
+        <ChromeIcon name="more" />
+      </button>
+    </div>
   </div>
 
   <div class="tabbar" role="group" aria-label="Open tabs and tab actions">
@@ -312,6 +358,17 @@
             <span>{suggestion.title}</span><small>{suggestion.url}</small>{#if suggestion.bookmarked}<span class="suggestion-saved">Saved</span>{/if}
           </button>
         {/each}
+      </div>
+    {:else if moreOpen}
+      <div class="more-actions" id="more-actions" role="group" aria-label="More browser actions">
+        <button type="button" class="more-menu-action" aria-label="Open start page" onclick={() => runMore({ version: 1, action: 'show_surface', value: 'start' })}><ChromeIcon name="home" /><span>Start</span></button>
+        <button type="button" class="more-menu-action" aria-label={activeTab?.pinned ? 'Unpin selected tab' : 'Pin selected tab'} disabled={!activeTab} onclick={() => activeTab && runMore({ version: 1, action: 'pin_tab', id: activeTab.id, pinned: !activeTab.pinned })}><ChromeIcon name={activeTab?.pinned ? 'unpin' : 'pin'} /><span>{activeTab?.pinned ? 'Unpin' : 'Pin'}</span></button>
+        <button type="button" class="more-menu-action" aria-label="Duplicate selected tab" disabled={!activeTab} onclick={() => activeTab && runMore({ version: 1, action: 'duplicate_tab', id: activeTab.id })}><ChromeIcon name="duplicate" /><span>Duplicate</span></button>
+        <button type="button" class="more-menu-action" aria-label="Restore recently closed tab" disabled={!snapshot.can_restore} onclick={() => runMore({ version: 1, action: 'reopen_tab' })}><ChromeIcon name="restore" /><span>Restore</span></button>
+        <span class="more-divider" aria-hidden="true"></span>
+        <button type="button" class="more-menu-action" aria-label="Open new window" onclick={() => runMore({ version: 1, action: 'new_window' })}><ChromeIcon name="window" /><span>Window</span></button>
+        <button type="button" class="more-menu-action" aria-label="Library" aria-pressed={snapshot.surface === 'library'} onclick={() => runMore({ version: 1, action: 'show_surface', value: 'library' })}><ChromeIcon name="library" /><span>Library</span></button>
+        <button type="button" class="more-menu-action" aria-label="Settings" aria-pressed={snapshot.surface === 'settings'} onclick={() => runMore({ version: 1, action: 'show_surface', value: 'settings' })}><ChromeIcon name="settings" /><span>Settings</span></button>
       </div>
     {:else}
     <div class="tab-list-scroll">
@@ -371,39 +428,11 @@
         </button>
       {/if}
       <span class="tab-action-divider" aria-hidden="true"></span>
-      <button class="mini-action" aria-label={activeTab?.pinned ? 'Unpin selected tab' : 'Pin selected tab'} title={activeTab?.pinned ? 'Unpin tab' : 'Pin tab'} disabled={!activeTab} onclick={() => activeTab && send({ version: 1, action: 'pin_tab', id: activeTab.id, pinned: !activeTab.pinned })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 3 6 0-1 4 3 3v1H5v-1l3-3zM10 11v6" /></svg>
-      </button>
-      {#if snapshot.download_approval_count > 0}
-        <button class="approval-badge" type="button" aria-label={`${snapshot.download_approval_count} downloads need approval`} title="Review downloads" onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
-          <span aria-hidden="true">↓</span><span>{snapshot.download_approval_count}</span>
-        </button>
-      {/if}
       <button class="mini-action" aria-label="Page tools" title="Page tools" aria-pressed={pageToolsOpen} disabled={snapshot.surface !== 'browse'} onclick={() => void openFind()}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5"/><path d="m12.2 12.2 4.2 4.2M6.5 8.5h4"/></svg>
-      </button>
-      <button class="mini-action" aria-label="Duplicate selected tab" title="Duplicate tab" disabled={!activeTab} onclick={() => activeTab && send({ version: 1, action: 'duplicate_tab', id: activeTab.id })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="6" width="10" height="10" rx="2" /><path d="M13 6V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v7.5A1.5 1.5 0 0 0 4 13h2" /></svg>
-      </button>
-      <button class="mini-action" aria-label="Restore recently closed tab" title="Restore closed tab" disabled={!snapshot.can_restore} onclick={() => send({ version: 1, action: 'reopen_tab' })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5V2.8M4 5.5h2.8M4.2 5.7a6.7 6.7 0 1 1-1 5.5" /><path d="M10 6.5v4l2.5 1.5" /></svg>
-      </button>
-      <span class="tab-action-divider" aria-hidden="true"></span>
-      <button class="mini-action" aria-label="Open new window" title="New window" onclick={() => send({ version: 1, action: 'new_window' })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="12" height="11" rx="2" /><path d="M7 16.5h7.5A2.5 2.5 0 0 0 17 14V7.5" /></svg>
+        <ChromeIcon name="page-tools" />
       </button>
       <button class="mini-action new-tab-button" aria-label="Open new tab" title="New tab" onclick={() => send({ version: 1, action: 'new_tab' })}>
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
-      </button>
-      <span class="tab-action-divider" aria-hidden="true"></span>
-      <button class="mini-action surface-nav-button" aria-label="Library" title="Library" aria-pressed={snapshot.surface === 'library'} onclick={() => send({ version: 1, action: 'show_surface', value: 'library' })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3.5h10A1.5 1.5 0 0 1 15.5 5v12L9 13.5 2.5 17V5A1.5 1.5 0 0 1 4 3.5ZM5.5 6.5h6M5.5 9h5" /></svg>
-      </button>
-      <button class="mini-action surface-nav-button" aria-label="Settings" title="Settings" aria-pressed={snapshot.surface === 'settings'} onclick={() => send({ version: 1, action: 'show_surface', value: 'settings' })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3" /><path d="m10 2.5.7 1.7 1.8.7 1.7-.6 1.2 1.2-.6 1.7.7 1.8 1.7.7v1.7l-1.7.7-.7 1.8.6 1.7-1.2 1.2-1.7-.6-1.8.7-.7 1.7H8.3l-.7-1.7-1.8-.7-1.7.6-1.2-1.2.6-1.7-.7-1.8-1.7-.7V9.7l1.7-.7.7-1.8-.6-1.7 1.2-1.2 1.7.6 1.8-.7.7-1.7z" /></svg>
-      </button>
-      <button class="mini-action surface-nav-button" aria-label="Downloads" title="Downloads" aria-pressed={snapshot.surface === 'downloads'} onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v9m-3.5-3.5L10 11.5l3.5-3.5M3.5 13.5v2A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-2"/></svg>
       </button>
     </div>
   </div>

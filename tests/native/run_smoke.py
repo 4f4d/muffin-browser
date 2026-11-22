@@ -589,6 +589,77 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
     }})
 
 
+def exercise_chrome_layout(process, control, steps, capture):
+    def command(action, **fields):
+        send_command(control, action, **fields)
+
+    def inspect(label, width, min_address_width, min_tab_strip, *, tab_overflow=False):
+        path = control / "chrome-layout.json"
+        last_layout = None
+
+        def read():
+            nonlocal last_layout
+            if not path.exists():
+                command("inspect_chrome")
+                return None
+            layout = json.loads(path.read_text(encoding="utf-8"))
+            path.unlink()
+            last_layout = layout
+            if (layout and abs(layout["width"] - width) <= 2
+                    and layout["address_width"] >= min_address_width
+                    and layout["tab_strip_width"] >= min_tab_strip
+                    and layout["new_tab_visible"] and layout["selected_tab_visible"]
+                    and (not tab_overflow or layout["tab_strip_scroll_width"] > layout["tab_strip_width"])):
+                return layout
+            return None
+
+        # Let a resize or selection settle before measuring the rendered WebKit view.
+        path.unlink(missing_ok=True)
+        command("inspect_chrome")
+        until(process, f"{label} native chrome", lambda: path.is_file())
+        try:
+            layout = until(process, f"{label} navigation and tab geometry", read, timeout=5)
+        except TimeoutError:
+            steps.append({label: last_layout})
+            if capture is not None:
+                capture(process, control, command, label)
+            raise AssertionError(f"{label} did not fit the native chrome: {last_layout}") from None
+        steps.append({label: layout})
+        if capture is not None:
+            capture(process, control, command, label)
+
+    command("show_surface", value="start")
+    inspect("native-chrome-regular", 1100, 550, 850)
+    command("compact_fixture_window")
+    path = control / "chrome-layout.json"
+    path.unlink(missing_ok=True)
+
+    def compact_rendered():
+        if not path.exists():
+            command("inspect_chrome")
+            return False
+        layout = json.loads(path.read_text(encoding="utf-8"))
+        path.unlink()
+        return layout and abs(layout["width"] - 640) <= 2
+
+    until(process, "native WebKit compact resize before creating tabs", compact_rendered, timeout=6)
+    for _ in range(8):
+        command("new_tab")
+    until(process, "nine tabs in compact native chrome", lambda: len(observation(control).get("tabs", [])) >= 9)
+    inspect("native-chrome-compact", 640, 280, 420, tab_overflow=True)
+    command("open_fixture_browser_actions")
+    path.unlink(missing_ok=True)
+    command("inspect_chrome")
+    until(process, "compact browser actions layout", path.is_file)
+    layout = json.loads(path.read_text(encoding="utf-8"))
+    steps.append({"native-chrome-compact-actions": layout})
+    if capture is not None:
+        capture(process, control, command, "native-chrome-compact-actions")
+    if (not layout or not layout["more_actions_visible"] or not layout["more_actions_fit"]
+            or layout["more_action_count"] != 7):
+        raise AssertionError(f"browser actions do not fit the compact toolbar: {layout}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, default=Path("target/debug/muffin"))
@@ -597,6 +668,7 @@ def main():
     parser.add_argument("--restart", action="store_true", help="also exercise disposable session restore")
     parser.add_argument("--profile", action="store_true", help="exercise the disposable local profile")
     parser.add_argument("--page-tools", action="store_true", help="verify native find, zoom and downloads")
+    parser.add_argument("--chrome-layout", action="store_true", help="verify default and compact native chrome geometry")
     visual = parser.add_mutually_exclusive_group()
     visual.add_argument("--capture-window", action="store_true", help="attempt a capture of the fixture window")
     visual.add_argument("--capture-chrome", action="store_true", help="capture the native trusted chrome view")
@@ -699,6 +771,8 @@ def main():
                             process, control, *servers, result["steps"], capture,
                             args.out / "native-fixture.pdf" if args.capture_chrome else None,
                         )
+                    if args.chrome_layout:
+                        exercise_chrome_layout(process, control, result["steps"], capture)
                 except Exception:
                     state_path = control / "state.json"
                     if state_path.is_file():

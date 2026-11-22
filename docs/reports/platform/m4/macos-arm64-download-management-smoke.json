@@ -1,0 +1,397 @@
+{
+  "source_commit": "c77ca85ce44799b99c7659f006fce8c2f5376245",
+  "source_worktree_clean": true,
+  "binary_sha256": "e88befc746facda4cbc5c6806a8ab94dd0e45456702daa036d004dc1fbcca7f8",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_loopback",
+  "steps": [
+    {
+      "version": 1,
+      "status": "home",
+      "chrome_ready": true
+    },
+    {
+      "url": "http://127.0.0.1:64165/first",
+      "status": "ready",
+      "title": "Muffin fixture | First page",
+      "secure": false
+    },
+    {
+      "navigation_input": "trusted chrome address form"
+    },
+    {
+      "webkit_user_agent_token": true,
+      "browser_product_token": "Muffin/0.1.0"
+    },
+    {
+      "url": "http://127.0.0.1:64166/second",
+      "status": "ready",
+      "title": "Muffin fixture | Second page",
+      "can_back": true
+    },
+    {
+      "url": "http://127.0.0.1:64166/second",
+      "status": "ready"
+    },
+    {
+      "remote_page_executed": true,
+      "remote_chrome_state_received": false
+    },
+    {
+      "url": "http://127.0.0.1:64165/first",
+      "status": "ready",
+      "can_forward": true
+    },
+    {
+      "url": "http://127.0.0.1:64166/second",
+      "status": "ready"
+    },
+    {
+      "status": "blocked",
+      "url": "http://127.0.0.1:64166/second"
+    },
+    {
+      "distinct_loopback_origins": true,
+      "redirect_requested": true
+    },
+    {
+      "loading": true
+    },
+    {
+      "loading": false,
+      "native_loading": false
+    },
+    {
+      "unsolicited_popup_requested": false
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "http://127.0.0.1:64165/first",
+      "window_count": 1
+    },
+    {
+      "case": "new tab is selected in the same native window",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        2
+      ],
+      "url": "about:blank",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        2
+      ],
+      "url": "http://127.0.0.1:64166/second",
+      "window_count": 1
+    },
+    {
+      "case": "duplicate retains committed URL with a distinct ID",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        2,
+        3
+      ],
+      "url": "http://127.0.0.1:64166/second",
+      "window_count": 1
+    },
+    {
+      "case": "pin moves tab into the pinned segment",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        2,
+        3
+      ],
+      "url": "http://127.0.0.1:64166/second",
+      "window_count": 1
+    },
+    {
+      "case": "unpinned tab reorders within the unpinned segment",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:64166/second",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:64165/first",
+      "window_count": 1
+    },
+    {
+      "case": "inactive tab retains metadata when its native view is discarded",
+      "selected_tab": 1,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:64165/first",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:64166/second",
+      "window_count": 1
+    },
+    {
+      "case": "selection restores the discarded WebView",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:64166/second",
+      "window_count": 1
+    },
+    {
+      "case": "closed tab exposes an undo entry",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        3
+      ],
+      "url": "http://127.0.0.1:64166/second",
+      "window_count": 1
+    },
+    {
+      "case": "reopened tab reloads its committed URL",
+      "selected_tab": 4,
+      "tabs": [
+        1,
+        3,
+        4
+      ],
+      "url": "http://127.0.0.1:64166/second",
+      "window_count": 1
+    },
+    {
+      "case": "second native window has an independent selected tab",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "about:blank",
+      "window_count": 2
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "http://127.0.0.1:64165/first",
+      "window_count": 2
+    },
+    {
+      "case": "second process forwarded a URL and exited",
+      "window_count": 2,
+      "url": "http://127.0.0.1:64166/second"
+    },
+    {
+      "case": "graceful restart restored two windows and a committed fixture tab",
+      "window_count": 2,
+      "selected_tab": 2,
+      "url": "http://127.0.0.1:64166/second"
+    },
+    {
+      "case": "profile fixture committed a browsing page",
+      "surface": "browse"
+    },
+    {
+      "case": "Library shows persisted WebKit visits after restart",
+      "surface": "library"
+    },
+    {
+      "case": "Library history search matches the requested local term",
+      "surface": "library"
+    },
+    {
+      "case": "active committed URL was saved as a bookmark",
+      "surface": "library"
+    },
+    {
+      "case": "Library contains a new bookmark folder",
+      "surface": "library"
+    },
+    {
+      "case": "bookmark moved under its folder",
+      "surface": "library"
+    },
+    {
+      "native_chrome_layout": {
+        "scroll_probe": 64,
+        "height": 672,
+        "selected_tab_fill": "rgb(51, 48, 45)",
+        "width": 1100,
+        "theme": "system",
+        "heading_visible": true,
+        "client_height": 672,
+        "heading": "Library",
+        "scroll_height": 1605
+      }
+    },
+    {
+      "case": "Start opens inside the trusted chrome",
+      "surface": "start"
+    },
+    {
+      "case": "Start shows a native-owned shortcut",
+      "surface": "start"
+    },
+    {
+      "case": "Omnibox returns ranked local suggestions including a saved bookmark",
+      "surface": "start"
+    },
+    {
+      "native_chrome_layout": {
+        "scroll_probe": 0,
+        "height": 672,
+        "selected_tab_fill": "rgb(51, 48, 45)",
+        "width": 1100,
+        "theme": "system",
+        "heading_visible": true,
+        "client_height": 672,
+        "heading": "Muffin",
+        "scroll_height": 672
+      }
+    },
+    {
+      "case": "Preferences reflect the applied theme, search and startup settings",
+      "surface": "settings"
+    },
+    {
+      "native_chrome_layout": {
+        "scroll_probe": 0,
+        "height": 672,
+        "selected_tab_fill": "rgb(234, 227, 217)",
+        "width": 1100,
+        "theme": "light",
+        "heading_visible": true,
+        "client_height": 672,
+        "heading": "Settings",
+        "scroll_height": 672
+      }
+    },
+    {
+      "case": "Library still contains browsing history before clearing it",
+      "surface": "library"
+    },
+    {
+      "case": "Clearing the last hour removed the recent fixture visits",
+      "surface": "library"
+    },
+    {
+      "case": "A new visit is committed before clean exit",
+      "surface": "browse"
+    },
+    {
+      "case": "profile restart retained settings, shortcuts and bookmarks and cleared history"
+    },
+    {
+      "native_webkit_find": {
+        "visible_phrase": true,
+        "missing_phrase": false
+      }
+    },
+    {
+      "native_webkit_zoom_percent": [
+        110,
+        100
+      ]
+    },
+    {
+      "native_pdf_export": {
+        "bytes": 21948,
+        "sha256": "44b60fc2909ba5fbbafbd8c2087eb6a677fac266ca0b061974da165e165b0422"
+      }
+    },
+    {
+      "native_appkit_print_to_file": {
+        "bytes": 28653,
+        "sha256": "43e5b0e3b7bfb45e4b8581ca50c1b504fe050685b5e45b9c094a13d4e1b54646"
+      }
+    },
+    {
+      "remote_attachment": "awaiting_approval_then_cancelled",
+      "published": false
+    },
+    {
+      "native_download_consent": {
+        "denied_remote_attachment": "cancelled",
+        "approved_downloads": [
+          {
+            "name": "shared.bin",
+            "host": "127.0.0.1:64166",
+            "status": "finished"
+          },
+          {
+            "name": "shared (1).bin",
+            "host": "127.0.0.1:64165",
+            "status": "finished"
+          }
+        ],
+        "approved_names": [
+          "shared.bin",
+          "shared (1).bin"
+        ],
+        "approved_payloads": [
+          {
+            "bytes": 1056,
+            "sha256": "fe4daab5eaaa351b10fcbf1ebc36fe74d7ef4286eb6c930b3d65b6924f3de0f3"
+          },
+          {
+            "bytes": 1120,
+            "sha256": "9c85c651d3f245363462849653b6a86ed0109ba64b393d0a18b522597d78ab98"
+          },
+          {
+            "bytes": 1472,
+            "sha256": "bd283d7014f53d55748613b56448380f9a438dbefb4c115118ced3f363ed09a8"
+          }
+        ],
+        "cross_origin_redirect_status": "finished",
+        "cross_origin_redirect_name": "shared (2).bin",
+        "unapproved_filesystem_writes": false
+      }
+    },
+    {
+      "native_download_management": {
+        "live_transferred_bytes": 491520,
+        "file_remainder_withheld": true,
+        "in_flight_cancelled": true,
+        "staging_cleaned": true,
+        "clear_preserves_active_transfer": true,
+        "retained_published_file_count": 3
+      }
+    }
+  ],
+  "outcome": "passed"
+}

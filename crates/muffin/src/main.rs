@@ -132,6 +132,10 @@ mod browser {
         RevealDownload { version: u8, id: u32 },
         #[serde(rename = "decide_download")]
         DecideDownload { version: u8, id: u32, approve: bool },
+        #[serde(rename = "cancel_download")]
+        CancelDownload { version: u8, id: u32 },
+        #[serde(rename = "clear_downloads")]
+        ClearDownloads { version: u8 },
         #[serde(skip)]
         FocusFind { version: u8 },
         #[serde(rename = "query_omnibox")]
@@ -279,6 +283,8 @@ mod browser {
                 | Self::SavePdf { version }
                 | Self::RevealDownload { version, .. }
                 | Self::DecideDownload { version, .. }
+                | Self::CancelDownload { version, .. }
+                | Self::ClearDownloads { version }
                 | Self::FocusFind { version }
                 | Self::QueryOmnibox { version, .. }
                 | Self::QueryLibrary { version, .. }
@@ -1501,21 +1507,34 @@ mod browser {
             true
         }
         fn apply(&mut self, target: &EventLoopWindowTarget<Message>, id: WindowId, action: Action) {
-            if let Action::DecideDownload {
-                id: download_id,
-                approve,
-                ..
-            } = action
-            {
+            if matches!(
+                action,
+                Action::DecideDownload { .. }
+                    | Action::CancelDownload { .. }
+                    | Action::ClearDownloads { .. }
+            ) {
                 let visible = self.windows.iter().any(|window| {
                     window.window.id() == id && window.profile_state.surface == Surface::Downloads
                 });
-                if visible {
+                if !visible {
+                    return;
+                }
+                if matches!(action, Action::ClearDownloads { .. }) {
+                    if self.downloads.borrow_mut().clear_terminal() {
+                        self.handle(target, Message::DownloadChanged);
+                    }
+                } else {
                     self.windows
                         .iter()
                         .flat_map(|window| window.views.values())
                         .filter_map(|view| view.downloads.as_ref())
-                        .any(|downloads| downloads.decide(download_id, approve));
+                        .any(|downloads| match action {
+                            Action::DecideDownload { id, approve, .. } => {
+                                downloads.decide(id, approve)
+                            }
+                            Action::CancelDownload { id, .. } => downloads.cancel_transfer(id),
+                            _ => unreachable!("only download transfers are dispatched here"),
+                        });
                 }
                 self.write_test_state();
                 return;

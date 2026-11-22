@@ -176,14 +176,20 @@ impl TransferState {
 
     fn poll(&self) {
         let now = Instant::now();
+        let mut changed = false;
         let stopped: Vec<_> = self
             .entries
             .borrow()
             .iter()
             .filter(|(_, transfer)| match &transfer.phase {
-                Phase::Saving { staged_path, .. } => staged_path
-                    .metadata()
-                    .is_ok_and(|meta| meta.len() > MAX_FILE_BYTES),
+                Phase::Saving { id, staged_path } => {
+                    let bytes = staged_path.metadata().map_or(0, |meta| meta.len());
+                    if bytes > MAX_FILE_BYTES {
+                        return true;
+                    }
+                    changed |= self.store.borrow_mut().update_progress(*id, bytes);
+                    false
+                }
                 _ => transfer.expires < now,
             })
             .map(|(identity, _)| *identity)
@@ -191,19 +197,39 @@ impl TransferState {
         for key in stopped {
             let transfer = self.entries.borrow_mut().remove(&key);
             if let Some(transfer) = transfer {
-                self.cancel(transfer);
+                self.stop(transfer, false);
             }
         }
+        if changed {
+            (self.changed)();
+        }
+    }
+
+    fn cancel_transfer(&self, id: u32) -> bool {
+        let mut entries = self.entries.borrow_mut();
+        let Some(key) = entries
+            .iter()
+            .find_map(|(key, transfer)| match &transfer.phase {
+                Phase::Saving { id: current, .. } if *current == id => Some(*key),
+                _ => None,
+            })
+        else {
+            return false;
+        };
+        let transfer = entries.remove(&key).expect("download is still present");
+        drop(entries);
+        self.stop(transfer, true);
+        true
     }
 
     fn close(&self) {
         let active = std::mem::take(&mut *self.entries.borrow_mut());
         for transfer in active.into_values() {
-            self.cancel(transfer);
+            self.stop(transfer, false);
         }
     }
 
-    fn cancel(&self, transfer: Transfer) {
+    fn stop(&self, transfer: Transfer, user_cancelled: bool) {
         match transfer.phase {
             Phase::AwaitingApproval { id, destination } => {
                 self.store.borrow_mut().dismiss(id);
@@ -214,7 +240,11 @@ impl TransferState {
                 let store = Rc::clone(&self.store);
                 let changed = Rc::clone(&self.changed);
                 let completion = RcBlock::new(move |_: *mut NSData| {
-                    store.borrow_mut().finish(id, false);
+                    if user_cancelled {
+                        store.borrow_mut().cancel_transfer(id);
+                    } else {
+                        store.borrow_mut().finish(id, false);
+                    }
                     changed();
                 });
                 unsafe { transfer.download.cancel(Some(&completion)) };
@@ -438,6 +468,10 @@ impl TabDownloads {
 
     pub fn decide(&self, id: u32, approve: bool) -> bool {
         self.state.decide(id, approve)
+    }
+
+    pub fn cancel_transfer(&self, id: u32) -> bool {
+        self.state.cancel_transfer(id)
     }
 
     pub fn poll(&self) {

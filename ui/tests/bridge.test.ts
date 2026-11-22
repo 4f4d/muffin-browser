@@ -104,6 +104,11 @@ describe('chrome IPC bridge', () => {
     expect(isAction({ version: 1, action: 'print_page' })).toBe(true);
     expect(isAction({ version: 1, action: 'reveal_download', id: 9 })).toBe(true);
     expect(isAction({ version: 1, action: 'reveal_download', id: 0 })).toBe(false);
+    expect(isAction({ version: 1, action: 'cancel_download', id: 42 })).toBe(true);
+    expect(isAction({ version: 1, action: 'cancel_download', id: -1 })).toBe(false);
+    expect(isAction({ version: 1, action: 'cancel_download', id: 42, path: '/tmp/a' })).toBe(false);
+    expect(isAction({ version: 1, action: 'clear_downloads' })).toBe(true);
+    expect(isAction({ version: 1, action: 'clear_downloads', id: 42 })).toBe(false);
     expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: true })).toBe(true);
     expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: false })).toBe(true);
     expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: 1 })).toBe(false);

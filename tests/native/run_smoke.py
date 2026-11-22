@@ -12,7 +12,9 @@ from tempfile import TemporaryDirectory
 import time
 import tomllib
 
-from fixture import DOWNLOAD_PAYLOADS, UNREQUESTED_DOWNLOAD, browser_fixture
+from fixture import (
+    DOWNLOAD_PAYLOADS, SLOW_DOWNLOAD, SLOW_DOWNLOAD_CHUNK, UNREQUESTED_DOWNLOAD, browser_fixture,
+)
 
 
 def until(process, description, read, timeout=18):
@@ -459,7 +461,7 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
         raise AssertionError("a denied remote attachment left a filesystem artifact")
     steps.append({"remote_attachment": "awaiting_approval_then_cancelled", "published": False})
 
-    def begin_download(label, start, server, requested_path):
+    def approve_download(label, start, server, requested_path):
         before = file_set()
         start()
         until(process, f"fixture received {label}", lambda: ("GET", requested_path) in server.requests)
@@ -474,12 +476,16 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
         if file_set() != before:
             raise AssertionError(f"{label} created a filesystem artifact before approval")
         command("decide_download", id=row["id"], approve=True)
+        return row["id"]
+
+    def begin_download(label, start, server, requested_path):
+        download_id = approve_download(label, start, server, requested_path)
         terminal = expect(f"{label} approval decision reached a terminal state", lambda s: any(
-            item.get("id") == row["id"]
+            item.get("id") == download_id
             and item.get("status") in {"finished", "failed", "cancelled"}
             for item in s.get("downloads", [])
         ))
-        result = next(item for item in terminal["downloads"] if item.get("id") == row["id"])
+        result = next(item for item in terminal["downloads"] if item.get("id") == download_id)
         if result.get("status") != "finished":
             raise AssertionError(f"{label} did not finish after approval: {result.get('status')}")
         return result
@@ -545,6 +551,42 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
     })
     if capture is not None:
         capture(process, control, command, "native-downloads")
+
+    published_paths = file_set()
+    active_id = approve_download(
+        "slow attachment",
+        lambda: command("chrome_navigate", value=first.origin + SLOW_DOWNLOAD),
+        first,
+        SLOW_DOWNLOAD,
+    )
+    progressing = expect("slow download publishes live bytes before EOF", lambda s: any(
+        item["id"] == active_id and item["status"] == "downloading"
+        and 0 < item["bytes"] <= len(SLOW_DOWNLOAD_CHUNK)
+        for item in s.get("downloads", [])
+    ))
+    transferred = next(item["bytes"] for item in progressing["downloads"] if item["id"] == active_id)
+    if capture is not None:
+        capture(process, control, command, "native-download-progress")
+    command("clear_downloads")
+    expect("clearing the list preserves the active transfer", lambda s: [
+        (item["id"], item["status"]) for item in s.get("downloads", [])
+    ] == [(active_id, "downloading")])
+    command("cancel_download", id=active_id)
+    expect("active transfer reaches cancelled state", lambda s: [
+        (item["id"], item["status"]) for item in s.get("downloads", [])
+    ] == [(active_id, "cancelled")])
+    if file_set() != published_paths or any(directory.glob(".muffin-download-*")):
+        raise AssertionError("cancel or clear changed published files or left a staging directory")
+    command("clear_downloads")
+    expect("cancelled transfer can be cleared", lambda s: s.get("downloads") == [])
+    steps.append({"native_download_management": {
+        "live_transferred_bytes": transferred,
+        "file_remainder_withheld": not first.release_slow_download.is_set(),
+        "in_flight_cancelled": True,
+        "staging_cleaned": True,
+        "clear_preserves_active_transfer": True,
+        "retained_published_file_count": len(published_paths),
+    }})
 
 
 def main():

@@ -304,7 +304,7 @@ describe('browser chrome controls', () => {
     expect(document.querySelectorAll('.download-list li')).toHaveLength(5);
     expect(document.querySelector('.download-copy span')?.textContent).toContain('<script>evil.test</script>');
     expect(document.querySelector('.download-copy span')?.textContent).not.toContain('0 B');
-    expect(document.querySelectorAll('.download-copy span')[4]?.textContent).toContain('Cancelled');
+    expect(document.querySelector('.download-list li:nth-child(5) .download-copy')?.textContent).toContain('Cancelled');
     expect(document.querySelector<HTMLButtonElement>('.approval-badge')?.textContent).toContain('2');
     document.querySelector<HTMLButtonElement>('.approval-badge')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'show_surface', value: 'downloads' });
@@ -314,6 +314,36 @@ describe('browser chrome controls', () => {
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'decide_download', id: 94, approve: false });
     document.querySelector<HTMLButtonElement>('[aria-label="Show Annual report.pdf in folder"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'reveal_download', id: 91 });
+  });
+
+  it('shows live transferred bytes without a false percentage and clears only terminal rows', async () => {
+    bridgeState.bridge.render(makeSnapshot({
+      surface: 'downloads',
+      downloads: [
+        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0 },
+        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 2048 },
+        { id: 112, name: 'Done.pdf', host: 'files.example', status: 'finished', bytes: 4096 },
+        { id: 113, name: 'Broken.bin', host: 'files.example', status: 'failed', bytes: 10 },
+        { id: 114, name: 'Stopped.bin', host: 'files.example', status: 'cancelled', bytes: 10 }
+      ]
+    }));
+    await tick();
+    expect(document.querySelector('[aria-label="Transferred 2.0 kB"]')).not.toBeNull();
+    expect(document.querySelector('.download-progress[aria-valuenow]')).toBeNull();
+    document.querySelector<HTMLButtonElement>('[aria-label="Cancel download Active.zip"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'cancel_download', id: 111 });
+    document.querySelector<HTMLButtonElement>('[aria-label="Clear completed and stopped downloads"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'clear_downloads' });
+
+    bridgeState.bridge.render(makeSnapshot({
+      surface: 'downloads',
+      downloads: [
+        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0 },
+        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 0 }
+      ]
+    }));
+    await tick();
+    expect(document.querySelector('[aria-label="Clear completed and stopped downloads"]')).toBeNull();
   });
 
   it('handles native Find focus, match navigation, page tools, and Escape', async () => {

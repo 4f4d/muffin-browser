@@ -22,6 +22,12 @@ pub enum DownloadStatus {
     Cancelled,
 }
 
+impl DownloadStatus {
+    fn is_active(self) -> bool {
+        matches!(self, Self::AwaitingApproval | Self::Downloading)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 pub struct DownloadItem {
     pub id: u32,
@@ -66,12 +72,7 @@ impl Downloads {
             || self
                 .records
                 .iter()
-                .filter(|r| {
-                    matches!(
-                        r.item.status,
-                        DownloadStatus::AwaitingApproval | DownloadStatus::Downloading
-                    )
-                })
+                .filter(|r| r.item.status.is_active())
                 .count()
                 >= MAX_PENDING
         {
@@ -167,6 +168,38 @@ impl Downloads {
         self.records.iter().map(|r| r.item.clone()).collect()
     }
 
+    pub fn update_progress(&mut self, id: u32, bytes: u64) -> bool {
+        let Some(record) = self.records.iter_mut().find(|record| {
+            record.item.id == id && record.item.status == DownloadStatus::Downloading
+        }) else {
+            return false;
+        };
+        let bytes = bytes.min(MAX_FILE_BYTES);
+        if bytes <= record.item.bytes {
+            return false;
+        }
+        record.item.bytes = bytes;
+        true
+    }
+
+    pub fn cancel_transfer(&mut self, id: u32) -> bool {
+        let Some(record) = self.records.iter_mut().find(|record| {
+            record.item.id == id && record.item.status == DownloadStatus::Downloading
+        }) else {
+            return false;
+        };
+        record.stage.take();
+        record.item.status = DownloadStatus::Cancelled;
+        self.trim_recent();
+        true
+    }
+
+    pub fn clear_terminal(&mut self) -> bool {
+        let previous = self.records.len();
+        self.records.retain(|record| record.item.status.is_active());
+        self.records.len() != previous
+    }
+
     pub fn completed_path(&self, id: u32) -> Option<&Path> {
         self.records
             .iter()
@@ -249,11 +282,7 @@ impl Downloads {
 
     fn trim_recent(&mut self) {
         while self.records.len() > MAX_RECENT {
-            if let Some(index) = self
-                .records
-                .iter()
-                .position(|r| r.item.status != DownloadStatus::Downloading)
-            {
+            if let Some(index) = self.records.iter().position(|r| !r.item.status.is_active()) {
                 self.records.remove(index);
             } else {
                 break;
@@ -363,6 +392,40 @@ mod tests {
         assert_eq!(rows[0].host, "example.test:8443");
         assert_eq!(rows[0].name, "bad_name_.txt");
         assert_eq!(rows[0].status, DownloadStatus::AwaitingApproval);
+    }
+
+    #[test]
+    fn progress_cancel_and_clear_preserve_pending_transfers_and_published_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut downloads = Downloads::new(dir.path().join("downloads"));
+        let address = url("https://example.test/download");
+        let pending = downloads.offer(&address, Path::new("review.txt")).unwrap();
+        let cancelled = downloads.offer(&address, Path::new("partial.txt")).unwrap();
+        let finished = downloads.offer(&address, Path::new("keep.txt")).unwrap();
+        let partial = downloads.approve(cancelled).unwrap();
+        fs::write(&partial, b"12").unwrap();
+        assert!(downloads.update_progress(cancelled, 2));
+        assert!(!downloads.update_progress(cancelled, 1));
+        assert!(!downloads.update_progress(pending, 1));
+        assert_eq!(downloads.items()[1].bytes, 2);
+
+        let complete = downloads.approve(finished).unwrap();
+        fs::write(complete, b"keep").unwrap();
+        downloads.finish(finished, true);
+        let published = downloads.completed_path(finished).unwrap().to_path_buf();
+
+        assert!(downloads.clear_terminal());
+        assert_eq!(downloads.items().len(), 2);
+        assert_eq!(fs::read(&published).unwrap(), b"keep");
+        assert!(downloads.cancel_transfer(cancelled));
+        downloads.finish(cancelled, true);
+        assert!(!downloads.cancel_transfer(cancelled));
+        assert!(!downloads.update_progress(cancelled, 3));
+        assert!(!partial.exists());
+        assert_eq!(downloads.items()[1].status, DownloadStatus::Cancelled);
+        assert!(downloads.clear_terminal());
+        assert!(!downloads.clear_terminal());
+        assert_eq!(downloads.items()[0].id, pending);
     }
 
     #[test]

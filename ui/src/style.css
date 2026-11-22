@@ -203,6 +203,11 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .download-copy { display: grid; min-width: 0; flex: 1 1 auto; gap: 4px; }
 .download-copy strong { overflow: hidden; color: var(--ink); font-size: 12px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
 .download-copy span { color: var(--ink-muted); font-size: 10px; }
+.download-transfer { white-space: nowrap; }
+.download-progress { width: 48px; height: 4px; flex: 0 0 auto; overflow: hidden; border-radius: 4px; background: var(--line); }
+.download-progress span { display: block; width: 40%; height: 100%; border-radius: inherit; background: var(--caramel-ink); animation: download-indeterminate 1.4s ease-in-out infinite alternate; }
+@keyframes download-indeterminate { from { transform: translateX(-70%); } to { transform: translateX(180%); } }
+@media (prefers-reduced-motion: reduce) { .download-progress span { animation: none; width: 40%; margin-left: 30%; } }
 .download-failed { flex: 0 0 auto; color: var(--error); font-size: 10px; }
 .download-consent { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
 .download-save { min-height: 28px; padding: 4px 11px; border: 0; border-radius: 8px; color: var(--ink); background: var(--new-tab); font: inherit; font-size: 11px; font-weight: 550; }

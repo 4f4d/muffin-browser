@@ -19,7 +19,8 @@ export type ChromeAction =
   | { version: 1; action: 'find_page'; value: string; backwards: boolean }
   | { version: 1; action: 'zoom_page'; value: 'in' | 'out' | 'reset' }
   | { version: 1; action: 'toggle_fullscreen' | 'print_page' | 'save_pdf' }
-  | { version: 1; action: 'reveal_download'; id: number }
+  | { version: 1; action: 'reveal_download' | 'cancel_download'; id: number }
+  | { version: 1; action: 'clear_downloads' }
   | { version: 1; action: 'decide_download'; id: number; approve: boolean };
 
 export type TabSnapshot = {
@@ -219,7 +220,8 @@ export function isAction(value: unknown): value is ChromeAction {
   }
   if (value.action === 'zoom_page' && hasExactKeys(value, ['version', 'action', 'value'])) return ['in', 'out', 'reset'].includes(value.value as string);
   if (hasExactKeys(value, ['version', 'action']) && ['toggle_fullscreen', 'print_page', 'save_pdf'].includes(value.action)) return true;
-  if (value.action === 'reveal_download' && hasExactKeys(value, ['version', 'action', 'id'])) return validId(value.id);
+  if (hasExactKeys(value, ['version', 'action', 'id']) && ['reveal_download', 'cancel_download'].includes(value.action)) return validId(value.id);
+  if (hasExactKeys(value, ['version', 'action']) && value.action === 'clear_downloads') return true;
   if (value.action === 'decide_download' && hasExactKeys(value, ['version', 'action', 'id', 'approve'])) {
     return validId(value.id) && typeof value.approve === 'boolean';
   }

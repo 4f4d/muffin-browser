@@ -86,6 +86,8 @@ DOWNLOAD_PAYLOADS = {
     "/download/redirect": b"Muffin fixture redirected\x02\x2a\xfe" * 40,
 }
 UNREQUESTED_DOWNLOAD = "/download/unrequested"
+SLOW_DOWNLOAD = "/download/slow"
+SLOW_DOWNLOAD_CHUNK = b"muffin-transfer" * 32768
 
 
 class FixtureServer(ThreadingHTTPServer):
@@ -99,6 +101,7 @@ class FixtureServer(ThreadingHTTPServer):
         self.redirect_to = ""
         self.redirect_download_to = ""
         self.release_slow_page = Event()
+        self.release_slow_download = Event()
 
     @property
     def origin(self):
@@ -111,6 +114,9 @@ class FixtureHandler(BaseHTTPRequestHandler):
         self.server.user_agents[self.path] = self.headers.get("User-Agent", "")
         if self.path == "/slow":
             self.send_slow_page()
+            return
+        if self.path == SLOW_DOWNLOAD:
+            self.send_slow_download()
             return
         if self.path == "/redirect":
             self.send_response(302)
@@ -191,6 +197,21 @@ class FixtureHandler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass
 
+    def send_slow_download(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/octet-stream")
+        self.send_header("Content-Disposition", 'attachment; filename="partial.bin"')
+        self.send_header("Content-Length", str(2 * len(SLOW_DOWNLOAD_CHUNK)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        try:
+            self.wfile.write(SLOW_DOWNLOAD_CHUNK)
+            self.wfile.flush()
+            if self.server.release_slow_download.wait(timeout=20):
+                self.wfile.write(SLOW_DOWNLOAD_CHUNK)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
     def log_message(self, _format, *args):
         pass
 
@@ -207,6 +228,8 @@ def browser_fixture():
             yield first, second
         finally:
             first.release_slow_page.set()
+            first.release_slow_download.set()
+            second.release_slow_download.set()
             first.shutdown()
             second.shutdown()
             for thread in threads:

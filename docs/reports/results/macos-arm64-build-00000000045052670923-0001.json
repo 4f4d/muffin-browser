@@ -1,0 +1,14 @@
+[
+  {
+    "id": "macos-arm64-build-00000000045052670923-0001",
+    "platform": "macos",
+    "level": "build",
+    "result": "pass",
+    "environment": "ci_runner",
+    "date": "2026-11-22",
+    "commit": "abfd1a4646202b079336d8004054cdc51e6fe1a4",
+    "artifact": "docs/reports/ci/macos-arm64-build-00000000045052670923-0001.json",
+    "artifact_sha256": "301fb6f83cb609aa4a533536f7f5f4b649883b4ce8b5ec3a1db16c28f5598377",
+    "run_url": "https://github.com/4f4d/muffin-browser/actions/runs/45052670923/attempts/1"
+  }
+]

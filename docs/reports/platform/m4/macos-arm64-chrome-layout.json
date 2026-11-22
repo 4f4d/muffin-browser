@@ -1,0 +1,146 @@
+{
+  "source_commit": "abfd1a4646202b079336d8004054cdc51e6fe1a4",
+  "source_worktree_clean": true,
+  "binary_sha256": "68d50843138bcef50e7cb62c796362a75a1a3d8b445d45093aea270baeacd9c8",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_loopback",
+  "steps": [
+    {
+      "version": 1,
+      "status": "home",
+      "chrome_ready": true
+    },
+    {
+      "url": "http://127.0.0.1:64794/first",
+      "status": "ready",
+      "title": "Muffin fixture | First page",
+      "secure": false
+    },
+    {
+      "navigation_input": "trusted chrome address form"
+    },
+    {
+      "webkit_user_agent_token": true,
+      "browser_product_token": "Muffin/0.1.0"
+    },
+    {
+      "url": "http://127.0.0.1:64795/second",
+      "status": "ready",
+      "title": "Muffin fixture | Second page",
+      "can_back": true
+    },
+    {
+      "url": "http://127.0.0.1:64795/second",
+      "status": "ready"
+    },
+    {
+      "remote_page_executed": true,
+      "remote_chrome_state_received": false
+    },
+    {
+      "url": "http://127.0.0.1:64794/first",
+      "status": "ready",
+      "can_forward": true
+    },
+    {
+      "url": "http://127.0.0.1:64795/second",
+      "status": "ready"
+    },
+    {
+      "status": "blocked",
+      "url": "http://127.0.0.1:64795/second"
+    },
+    {
+      "distinct_loopback_origins": true,
+      "redirect_requested": true
+    },
+    {
+      "loading": true
+    },
+    {
+      "loading": false,
+      "native_loading": false
+    },
+    {
+      "unsolicited_popup_requested": false
+    },
+    {
+      "native-chrome-regular": {
+        "address_width": 899,
+        "theme": "system",
+        "heading": "Muffin",
+        "tab_strip_width": 984,
+        "new_tab_visible": true,
+        "width": 1100,
+        "more_action_count": 0,
+        "selected_tab_fill": "rgb(51, 48, 45)",
+        "more_actions_fit": false,
+        "scroll_probe": 0,
+        "selected_tab_visible": true,
+        "more_actions_width": 0,
+        "height": 672,
+        "client_height": 672,
+        "heading_visible": true,
+        "scroll_height": 672,
+        "more_actions_scroll_width": 0,
+        "more_actions_visible": false,
+        "tab_strip_scroll_width": 984
+      }
+    },
+    {
+      "native-chrome-compact": {
+        "address_width": 439,
+        "theme": "system",
+        "heading": "Muffin",
+        "tab_strip_width": 524,
+        "new_tab_visible": true,
+        "width": 640,
+        "more_action_count": 0,
+        "selected_tab_fill": "rgb(51, 48, 45)",
+        "more_actions_fit": false,
+        "scroll_probe": 0,
+        "selected_tab_visible": true,
+        "more_actions_width": 0,
+        "height": 432,
+        "client_height": 432,
+        "heading_visible": true,
+        "scroll_height": 432,
+        "more_actions_scroll_width": 0,
+        "more_actions_visible": false,
+        "tab_strip_scroll_width": 1220
+      }
+    },
+    {
+      "native-chrome-compact-actions": {
+        "address_width": 439,
+        "theme": "system",
+        "heading": "Muffin",
+        "tab_strip_width": 0,
+        "new_tab_visible": true,
+        "width": 640,
+        "more_action_count": 7,
+        "selected_tab_fill": "",
+        "more_actions_fit": true,
+        "scroll_probe": 0,
+        "selected_tab_visible": false,
+        "more_actions_width": 524,
+        "height": 432,
+        "client_height": 432,
+        "heading_visible": true,
+        "scroll_height": 432,
+        "more_actions_scroll_width": 524,
+        "more_actions_visible": true,
+        "tab_strip_scroll_width": 0
+      }
+    }
+  ],
+  "chrome_image_sha256": "41a547c6b75ce894cebe82f492737f2a0b0b96f53164ecff9ec8312e9b6cfb6b",
+  "additional_capture_sha256": {
+    "native-chrome-regular": "c7f61d78ff4ca335187aed2447c7be67830101688b99ca6e78e41e6b5c99dc54",
+    "native-chrome-compact": "4d024bfd6bbf08e80b73d89ca0e834b3d475b2b21eef5ca525ff03252dd21173",
+    "native-chrome-compact-actions": "3580506550d6d86db3c9694a2b976b62b5bacfa2445a11598bc7bf302f4ad3d9"
+  },
+  "outcome": "passed"
+}

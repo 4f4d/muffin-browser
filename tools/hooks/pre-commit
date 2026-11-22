@@ -2,7 +2,12 @@
 # Enable with: git config core.hooksPath tools/hooks
 set -eu
 
-python3 -m unittest discover -s tools/tests -v || {
+# Tests create their own Git repositories. The commit's repository-local
+# environment must not leak into their Git subprocesses.
+(
+  unset $(git rev-parse --local-env-vars)
+  python3 -m unittest discover -s tools/tests -v
+) || {
   echo "pre-commit: status-generator regression tests failed (see above)." >&2
   exit 1
 }

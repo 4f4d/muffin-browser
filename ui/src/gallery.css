@@ -3,10 +3,10 @@
 html, body, #app { width: 100%; height: auto; min-height: 100%; overflow: auto; }
 body { background: var(--surface-page); }
 .gallery-page { max-width: 920px; margin: 0 auto; padding: 54px 48px 72px; user-select: text; -webkit-user-select: text; }
-.gallery-header { display: flex; justify-content: space-between; align-items: end; gap: 32px; margin-bottom: 56px; }
+.gallery-header { margin-bottom: 56px; }
 .eyebrow { color: var(--ink-muted); font: 600 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .13em; }
 h1 { margin: 10px 0 0; font: 500 32px/1.1 -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -.035em; }
-.gallery-header p, .section-heading span { color: var(--ink-muted); font-size: 12px; }
+.section-heading span { color: var(--ink-muted); font-size: 12px; }
 .gallery-section { margin-top: 35px; }
 .section-heading { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 15px; }
 h2 { margin: 0; font-size: 14px; font-weight: 600; }
@@ -23,4 +23,4 @@ h2 { margin: 0; font-size: 14px; font-weight: 600; }
 .state-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .state-chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid var(--edge); border-radius: 999px; background: var(--glass); color: var(--ink-muted); font-size: 11px; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--secure); }.dot.loading { background: var(--caramel-ink); }.dot.blocked { background: var(--error); }.secure-chip { color: var(--secure); }
-@media (max-width: 680px) { .gallery-page { padding: 32px 18px; }.gallery-header { display: block; margin-bottom: 36px; }.gallery-header p { margin-top: 14px; }.sample-stage { padding: 18px 10px; }.swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .gallery-page { padding: 32px 18px; }.gallery-header { margin-bottom: 36px; }.sample-stage { padding: 18px 10px; }.swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

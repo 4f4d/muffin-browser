@@ -1,5 +1,8 @@
 <script lang="ts">
-  let address = $state('example.com');
+  import ChromeIcon from '../lib/ChromeIcon.svelte';
+
+  const exampleAddress = 'example.com';
+  let address = $state(exampleAddress);
 </script>
 
 <main class="gallery-page">
@@ -8,25 +11,23 @@
       <div class="eyebrow">MUFFIN / CHROME</div>
       <h1>Browser chrome</h1>
     </div>
-    <p>56 px host region · native titlebar · responsive controls</p>
   </header>
 
   <section class="gallery-section" aria-labelledby="toolbar-heading">
     <div class="section-heading">
       <h2 id="toolbar-heading">Navigation toolbar</h2>
-      <span>Light surface</span>
     </div>
     <div class="sample-stage">
       <div class="toolbar sample-toolbar">
         <nav class="history" aria-label="Page history">
           <button class="icon-button" aria-label="Go back" disabled>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4 2.8 9.2 8 14.4M3.2 9.2h8.1a5.1 5.1 0 0 1 0 10.2H8.8" /></svg>
+            <ChromeIcon name="back" />
           </button>
           <button class="icon-button" aria-label="Go forward" disabled>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 4 5.2 5.2-5.2 5.2m4.8-5.2H8.7a5.1 5.1 0 0 0 0 10.2h2.5" /></svg>
+            <ChromeIcon name="forward" />
           </button>
           <button class="icon-button" aria-label="Reload page">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.3 8a6.4 6.4 0 1 0 .1 3.2M16.2 3.8v4.5h-4.5" /></svg>
+            <ChromeIcon name="reload" />
           </button>
         </nav>
         <div class="address-shell sample-address">
@@ -34,7 +35,11 @@
           <label class="visually-hidden" for="gallery-address">Search or enter address</label>
           <input id="gallery-address" bind:value={address} aria-label="Search or enter address" />
         </div>
-        <button class="home-button" aria-label="Open start page"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m3.5 9 6.5-5.5L16.5 9v7a1.5 1.5 0 0 1-1.5 1.5h-3.2v-5h-3.6v5H5A1.5 1.5 0 0 1 3.5 16z" /></svg></button>
+        <div class="toolbar-actions">
+          <button type="button" class="toolbar-action" aria-label="Open start page" onclick={() => address = exampleAddress}>
+            <ChromeIcon name="home" />
+          </button>
+        </div>
       </div>
     </div>
   </section>

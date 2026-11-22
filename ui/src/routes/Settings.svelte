@@ -27,6 +27,7 @@
 <section class="surface-page settings-page" aria-labelledby="settings-heading">
   <div class="page-width settings-width">
     <header class="page-title-row"><h1 id="settings-heading">Settings</h1></header>
+    {#if snapshot.notice}<p class="surface-notice" role="status" aria-live="polite">{snapshot.notice}</p>{/if}
 
     <section class="settings-section" aria-labelledby="appearance-heading">
       <div class="settings-copy"><h2 id="appearance-heading">Appearance</h2><p>Choose how Muffin follows your display.</p></div>
@@ -69,7 +70,7 @@
         </label>
       </fieldset>
     </section>
-    <section class="settings-section" aria-labelledby="keyboard-heading">
+    <section class="settings-section settings-options" aria-labelledby="keyboard-heading">
       <div class="settings-copy"><h2 id="keyboard-heading">Common keyboard shortcuts</h2><p>⌘ Command · ⇧ Shift</p></div>
       <dl class="settings-shortcuts">
         {#each shortcuts as shortcut (shortcut.action)}
@@ -77,6 +78,5 @@
         {/each}
       </dl>
     </section>
-    {#if snapshot.notice}<p class="surface-notice" role="status" aria-live="polite">{snapshot.notice}</p>{/if}
   </div>
 </section>

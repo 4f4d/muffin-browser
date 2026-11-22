@@ -152,3 +152,9 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | Native TLS error adapter compilation | Foundation exposes NSError keys as extern statics and the new browser surface needs an explicit native match arm. Restrict the unsafe reads to the documented framework constants and handle the interstitial as a profile-free surface. | Provisional integration diagnostics E0133 and E0004. |
 | Compact browser actions with Private Window | Adding a visible, keyboard-accessible action increased tray content to 573 points in a 517-point slot. Reduce icon and button spacing only at the narrowest width, then repeat the original all-actions-fit assertion with eight actions. | First native layout receipt at `/private/tmp/muffin-m5-integrated/smoke.json`. |
 | Private-window restart with multiple regular windows | The restored front window showed a different regular fixture tab. Inspect all serialized windows for absence of private URLs, find the regular control tab’s expected window, and focus that window before checking its restored selection. | Native receipt at `/private/tmp/muffin-m5-integrated2/smoke.json` includes the passing in-process privacy checks and observed regular window. |
+
+## M6 integration attempts
+
+| Criterion | Hypothesis before retry | Evidence |
+|---|---|---|
+| Confirmation focus in Settings | Swapping two nodes bound to the same button reference left focus on the previous control. Keep one mounted button that changes its label between Clear website data and Cancel, then assert focus without skipping the confirmation check. | First exact verifier at `/private/tmp/muffin-m6-verify.log`. |

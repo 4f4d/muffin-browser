@@ -527,7 +527,7 @@
       <div class="page-width connection-error">
         <h1 id="connection-error-heading" tabindex="-1">Secure connection failed</h1>
         <p>Check the website address or return to Start.</p>
-        <button class="quiet-button" type="button" onclick={() => send({ version: 1, action: 'show_surface', value: 'start' })}>Back to Start</button>
+        <button class="quiet-button recovery-button" type="button" onclick={() => send({ version: 1, action: 'show_surface', value: 'start' })}>Back to Start</button>
       </div>
     </section>
   {/if}

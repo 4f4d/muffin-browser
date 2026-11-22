@@ -178,6 +178,7 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .connection-error { padding-top: clamp(32px, 6vw, 64px); }
 .connection-error h1 { margin: 0; font-size: 26px; font-weight: 620; letter-spacing: -.028em; text-wrap: balance; }
 .connection-error p { margin: 10px 0 20px; color: var(--ink-muted); font-size: 13px; line-height: 1.5; }
+.recovery-button { min-height: 32px; background: var(--tab-active); color: var(--ink); }
 .page-width { width: min(100% - 64px, 940px); margin: 0 auto; padding: 30px 0 54px; }
 .start-inner { width: min(100% - 48px, 650px); margin: clamp(34px, 9vh, 92px) auto 56px; }
 .brand-line { display: flex; align-items: center; gap: 13px; margin-bottom: 25px; }

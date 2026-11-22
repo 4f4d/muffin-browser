@@ -1,14 +1,12 @@
 <script lang="ts">
-  import { tick } from 'svelte';
   import type { ChromeAction, ChromeSnapshot, SearchEngine, ThemePreference } from '../lib/bridge';
 
   let { snapshot, send }: { snapshot: ChromeSnapshot; send: (action: ChromeAction) => void } = $props();
   let confirmingClear = $state(false);
   let clearButton: HTMLButtonElement | undefined = $state();
 
-  async function showClearOptions(show: boolean) {
+  function showClearOptions(show: boolean) {
     confirmingClear = show;
-    await tick();
     clearButton?.focus();
   }
 
@@ -83,14 +81,12 @@
     <section class="settings-section" aria-labelledby="site-data-heading">
       <div class="settings-copy"><h2 id="site-data-heading">Website data</h2><p>Remove cookies, caches and stored website data from regular windows. This can sign you out.</p></div>
       <div class="settings-data-actions">
+        <button bind:this={clearButton} class="quiet-button" type="button" onclick={() => showClearOptions(!confirmingClear)}>{confirmingClear ? 'Cancel' : 'Clear website data…'}</button>
         {#if confirmingClear}
-          <button bind:this={clearButton} class="quiet-button" type="button" onclick={() => showClearOptions(false)}>Cancel</button>
           <button class="quiet-button site-data-clear" type="button" onclick={() => {
             send({ version: 1, action: 'clear_site_data' });
-            void showClearOptions(false);
+            showClearOptions(false);
           }}>Clear website data</button>
-        {:else}
-          <button bind:this={clearButton} class="quiet-button" type="button" onclick={() => showClearOptions(true)}>Clear website data…</button>
         {/if}
       </div>
     </section>

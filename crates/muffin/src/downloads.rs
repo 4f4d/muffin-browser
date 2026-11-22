@@ -80,6 +80,12 @@ impl Downloads {
         self.custom_root = root;
     }
 
+    pub fn separate_window(&self) -> Self {
+        let mut downloads = Self::new(self.default_root.clone());
+        downloads.set_custom_root(self.custom_root.clone());
+        downloads
+    }
+
     pub fn root(&self) -> &Path {
         self.custom_root.as_deref().unwrap_or(&self.default_root)
     }

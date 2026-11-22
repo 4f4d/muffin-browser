@@ -143,3 +143,11 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | Camera and microphone prompt | The camera promise returned `NotAllowedError` after direct executable launch. The window showed no prompt, and the OS trace referenced the launcher’s identity. Use LaunchServices to launch a fresh disposable bundle and examine the prompt and denial as separate observations. | Provisional interactive receipt at `/private/tmp/muffin-m4-interactive-followup.json` |
 | Selected-tab playback suspension | The isolated playback test passed, but the combined fixture did not see the HTML media element’s paused flag change. Query WebKit’s native playback state and verify the media clock stays stable between native suspension and resume. | Combined provisional receipt at `/private/tmp/muffin-m4-followup-retry2/smoke.json` |
 | Selected-tab playback suspension | The first clean run confirmed WebKit's suspended state and then read an earlier HTTP media clock sample as its baseline. Sequence the page samples and require two successive stable values after the native state becomes suspended, then recheck the clock after the second tab plays. | First clean verifier receipt at `/private/tmp/muffin-m4-exact-verifier/smoke.json` |
+
+## M5 integration attempts
+
+| Criterion | Hypothesis before retry | Evidence |
+|---|---|---|
+| Existing folder Settings control | Website data controls reused the folder-specific action class and violated the folder row selector. Give the data row its own class and keep the existing folder test unchanged. | First Svelte test run reported 23 passed and one failure in the destination row. |
+| Native TLS error adapter compilation | Foundation exposes NSError keys as extern statics and the new browser surface needs an explicit native match arm. Restrict the unsafe reads to the documented framework constants and handle the interstitial as a profile-free surface. | Provisional integration diagnostics E0133 and E0004. |
+| Compact browser actions with Private Window | Adding a visible, keyboard-accessible action increased tray content to 573 points in a 517-point slot. Reduce icon and button spacing only at the narrowest width, then repeat the original all-actions-fit assertion with eight actions. | First native layout receipt at `/private/tmp/muffin-m5-integrated/smoke.json`. |

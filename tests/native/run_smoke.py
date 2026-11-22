@@ -7,6 +7,7 @@ from pathlib import Path
 import platform
 import plistlib
 import shutil
+import sqlite3
 import subprocess
 from tempfile import TemporaryDirectory
 import time
@@ -14,7 +15,7 @@ import tomllib
 
 from fixture import (
     DOWNLOAD_PAYLOADS, RETRY_DOWNLOAD, RETRY_PAYLOAD, SLOW_DOWNLOAD, SLOW_DOWNLOAD_CHUNK,
-    UNREQUESTED_DOWNLOAD, browser_fixture,
+    UNREQUESTED_DOWNLOAD, browser_fixture, untrusted_tls_fixture,
 )
 
 THEME_BASE_COLORS = {
@@ -771,7 +772,7 @@ def exercise_chrome_layout(process, control, steps, capture):
     if capture is not None:
         capture(process, control, command, "native-chrome-compact-actions")
     if (not layout or not layout["more_actions_visible"] or not layout["more_actions_fit"]
-            or layout["more_action_count"] != 7):
+            or layout["more_action_count"] != 8):
         raise AssertionError(f"browser actions do not fit the compact toolbar: {layout}")
 
 
@@ -940,6 +941,177 @@ def exercise_download_folder(process, control, first, steps, capture):
     }})
 
 
+def exercise_privacy(process, control, server, launch, steps, capture):
+    def command(action, **fields):
+        send_command(control, action, **fields)
+
+    def expect(description, predicate):
+        return until(process, description, lambda: (
+            state if predicate(state := observation(control)) else None
+        ))
+
+    def probe(label, expected, write=None):
+        url = server.origin + "/storage-fixture?probe=" + label
+        if write is not None:
+            url += "&write=" + write
+        command("navigate", value=url)
+        expect(f"{label} commits", lambda s: s.get("url") == url and s.get("status") == "ready")
+        storage = until(process, f"{label} storage receipt", lambda: server.storage_results.get(label))
+        if tuple(storage.get(kind) for kind in ("cookie", "local", "cache")) != (expected,) * 3 or storage.get("error"):
+            raise AssertionError(f"unexpected {label} storage receipt: {storage}")
+        return url
+
+    normal_count = observation(control)["window_count"]
+    command("show_surface", value="settings")
+    expect("regular Settings", lambda s: s.get("surface") == "settings")
+    command("set_restore_session", enabled=True)
+    command("set_clear_history_on_exit", enabled=False)
+    expect("normal session persistence enabled", lambda s: (
+        s["settings"]["restore_session"] and not s["settings"]["clear_history_on_exit"]
+    ))
+    probe("regular-written", "regular", write="regular")
+    command("press_fixture_shortcut", shortcut="private_window")
+    first = expect("native shortcut opened a private window", lambda s: (
+        s.get("window_count") == normal_count + 1 and s.get("private_window") is True and s.get("chrome_ready")
+    ))
+    if first["history"] or first["suggestions"] or first["bookmarks"] or first["shortcuts"]:
+        raise AssertionError("private chrome received regular profile rows")
+    command("show_surface", value="settings")
+    command("add_shortcut", title="private-hidden", url=server.origin + "/private-hidden")
+    if capture is not None:
+        capture(process, control, command, "native-private-start")
+    probe("private-one-empty", None)
+    probe("private-one-written", "private-one", write="private-one")
+    command("new_tab")
+    expect("second private tab", lambda s: len(s.get("tabs", [])) == 2)
+    probe("private-one-second-tab", "private-one")
+    command("new_private_window")
+    expect("second private window", lambda s: (
+        s.get("window_count") == normal_count + 2 and s.get("private_window") is True and s.get("chrome_ready")
+    ))
+    probe("private-two-empty", None)
+    probe("private-two-written", "private-two", write="private-two")
+    command("close_window")
+    expect("close second private window", lambda s: s.get("window_count") == normal_count + 1)
+    command("focus_fixture_window", index=normal_count)
+    expect("restore first private focus", lambda s: s.get("private_window") is True and len(s.get("tabs", [])) == 2)
+    probe("private-one-still-isolated", "private-one")
+
+    published = control / "downloads"
+    before = set(published.iterdir())
+    command("navigate", value=server.origin + "/download/alpha")
+    command("show_surface", value="downloads")
+    offer_state = expect("private download has its own approval", lambda s: (
+        s.get("private_window") is True and s.get("surface") == "downloads"
+        and len(s.get("downloads", [])) == 1 and s["downloads"][0]["status"] == "awaiting_approval"
+    ))
+    if set(published.iterdir()) != before:
+        raise AssertionError("private download staged a file before approval")
+    download_id = offer_state["downloads"][0]["id"]
+    command("decide_download", id=download_id, approve=True)
+    completed = expect("approved private download finished", lambda s: (
+        s.get("private_window") is True and any(
+            row["id"] == download_id and row["status"] == "finished" for row in s.get("downloads", [])
+        )
+    ))["downloads"][0]
+    private_file = published / completed["name"]
+    if private_file in before or private_file.read_bytes() != DOWNLOAD_PAYLOADS["/download/alpha"]:
+        raise AssertionError("private Save did not create the approved fixture")
+    marker = subprocess.run(
+        ["/usr/bin/xattr", "-p", "com.apple.quarantine", str(private_file)], capture_output=True, timeout=5,
+    )
+    if marker.returncode != 0 or not marker.stdout.strip():
+        raise AssertionError("WebKit quarantine marker did not survive download publication")
+
+    forwarded_url = server.origin + "/first?privacy-native-forward"
+    forwarded = subprocess.run([*launch, forwarded_url], timeout=8, check=False)
+    if forwarded.returncode != 0:
+        raise AssertionError("native instance forwarding did not return normally")
+    expect("external URL routes to a regular window", lambda s: (
+        s.get("url") == forwarded_url and s.get("private_window") is False and s.get("status") == "ready"
+    ))
+    command("show_surface", value="downloads")
+    rows = expect("regular Downloads excludes private rows", lambda s: (
+        s.get("surface") == "downloads" and s.get("private_window") is False
+    ))["downloads"]
+    if any(row["name"] == private_file.name for row in rows):
+        raise AssertionError("private download appeared in regular Downloads")
+    probe("regular-retained", "regular")
+    command("clear_site_data")
+    probe("regular-browse-clear-denied", "regular")
+    command("show_surface", value="settings")
+    expect("regular Settings for website data", lambda s: s.get("surface") == "settings")
+    command("clear_site_data")
+    expect("site-data native completion", lambda s: "finished clearing website data" in s.get("notice", ""))
+    regular_url = probe("regular-cleared", None)
+    command("focus_fixture_window", index=normal_count)
+    expect("private window still active after regular data clear", lambda s: s.get("private_window") is True)
+    probe("private-one-after-regular-clear", "private-one")
+    command("close_window")
+    expect("closed first private window", lambda s: s.get("window_count") == normal_count)
+    if not private_file.is_file():
+        raise AssertionError("closing private browsing removed a user-approved file")
+    command("new_private_window")
+    expect("reopened private browsing in a fresh store", lambda s: (
+        s.get("window_count") == normal_count + 1 and s.get("private_window") is True and s.get("chrome_ready")
+    ))
+    probe("private-fresh-after-close", None)
+
+    with sqlite3.connect(f"file:{control / 'profile.sqlite3'}?mode=ro", uri=True) as profile:
+        for table in ("visits", "bookmarks", "shortcuts"):
+            if profile.execute(f"SELECT count(*) FROM {table} WHERE url LIKE '%private-%'").fetchone()[0]:
+                raise AssertionError(f"private URL reached regular {table}")
+        if not profile.execute("SELECT count(*) FROM visits WHERE url = ?", (regular_url,)).fetchone()[0]:
+            raise AssertionError("regular control visit was not written")
+    steps.append({"private_storage": {
+        "same_window_tab_shares": ["cookie", "localStorage", "CacheStorage"],
+        "other_private_window_separate": True, "regular_window_separate": True,
+        "regular_clear_excludes_private_store": True, "fresh_private_store_after_close": True,
+        "private_rows_in_regular_profile": 0, "external_url_used_regular_window": True,
+        "private_download_excluded_from_regular_list": True,
+        "explicitly_saved_file_survived_private_window_close": True,
+        "published_download_retained_macos_quarantine_attribute": True,
+    }})
+    return regular_url
+
+
+def verify_privacy_restart(process, control, regular_url, steps):
+    until(process, "restarted regular browsing session", lambda: (
+        (state := observation(control)).get("chrome_ready") and state.get("private_window") is False
+        and state.get("url") == regular_url
+    ))
+    session = (control / "session.json").read_text(encoding="utf-8")
+    if "probe=private-" in session or regular_url not in session:
+        raise AssertionError("persisted session contains private tab data or omits regular tabs")
+    steps.append({"private_window_excluded_from_session_restart": True})
+
+
+def exercise_secure_connection(process, control, steps, capture):
+    def command(action, **fields):
+        send_command(control, action, **fields)
+
+    command("chrome_navigate", value="mailto:fixture@example.test")
+    until(process, "unsupported protocol blocked", lambda: observation(control).get("status") == "blocked")
+    with untrusted_tls_fixture(control) as server:
+        address = f"https://127.0.0.1:{server.server_port}/first"
+        command("navigate", value=address)
+        state = until(process, "native TLS refusal opened Muffin's error surface", lambda: (
+            current if (current := observation(control)).get("surface") == "connection_error" else None
+        ))
+        if state["secure"] or state["status"] != "failed":
+            raise AssertionError("the rejected certificate was rendered as a secure or successful page")
+        if server.requests:
+            raise AssertionError("the browser reached HTTP after rejecting the certificate")
+        if capture is not None:
+            capture(process, control, command, "native-secure-connection-error")
+        command("show_surface", value="start")
+        until(process, "safe exit from TLS error", lambda: observation(control).get("surface") == "start")
+        steps.append({"native_security": {
+            "unsupported_protocol_blocked": True, "self_signed_certificate_refused": True,
+            "untrusted_server_http_requests": len(server.requests), "safe_interstitial_exit": True,
+        }})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, default=Path("target/debug/muffin"))
@@ -952,6 +1124,7 @@ def main():
     parser.add_argument("--chrome-themes", action="store_true", help="verify light and dark native chrome palettes")
     parser.add_argument("--native-shortcuts", action="store_true", help="verify AppKit shortcut routing and chrome focus")
     parser.add_argument("--download-folder", action="store_true", help="verify destination changes and persistence")
+    parser.add_argument("--privacy", action="store_true", help="verify native storage and profile boundaries")
     visual = parser.add_mutually_exclusive_group()
     visual.add_argument("--capture-window", action="store_true", help="attempt a capture of the fixture window")
     visual.add_argument("--capture-chrome", action="store_true", help="capture the native trusted chrome view")
@@ -962,6 +1135,8 @@ def main():
         parser.error("--profile requires --restart")
     if args.download_folder and not args.restart:
         parser.error("--download-folder requires --restart")
+    if args.privacy and not args.restart:
+        parser.error("--privacy requires --restart")
     binary = args.binary.resolve(strict=True)
     args.out.mkdir(parents=True, exist_ok=True)
     with binary.open("rb") as stream:
@@ -1087,6 +1262,16 @@ def main():
                         result["steps"].append({"download_folder_reopened": True, "missing_folder_warned_in_settings": True, "reset_to_default": True})
                     if args.chrome_layout:
                         exercise_chrome_layout(process, control, result["steps"], capture)
+                    if args.privacy:
+                        regular_url = exercise_privacy(process, control, servers[0], launch, result["steps"], capture)
+                        send_command(control, "quit_test")
+                        if process.wait(timeout=8) != 0:
+                            raise RuntimeError("private fixture shutdown failed")
+                        (control / "commands.jsonl").unlink()
+                        (control / "state.json").unlink()
+                        process = subprocess.Popen(launch, stdout=log, stderr=log)
+                        verify_privacy_restart(process, control, regular_url, result["steps"])
+                        exercise_secure_connection(process, control, result["steps"], capture)
                 except Exception:
                     state_path = control / "state.json"
                     if state_path.is_file():

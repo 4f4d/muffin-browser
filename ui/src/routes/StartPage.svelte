@@ -43,7 +43,7 @@
   <div class="start-inner">
     <div class="brand-line">
       <svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><path d="M8.3 16.5c0-1.9 1.5-3.4 3.4-3.4.7-3 3.4-5.1 6.5-5.1s5.8 2.1 6.5 5.1c1.9 0 3.4 1.5 3.4 3.4 0 .6-.2 1.2-.5 1.7l-2.4 8.7H11.2l-2.4-8.7c-.3-.5-.5-1.1-.5-1.7Z" /><path d="M13 20.5h10M14.7 23.7h6.6" /></svg>
-      <h1 id="start-heading">Muffin</h1>
+      <h1 id="start-heading">{snapshot.private_window ? 'Private browsing' : 'Muffin'}</h1>
     </div>
 
     <form class="start-search" role="search" onsubmit={submitSearch}>
@@ -65,6 +65,9 @@
       </section>
     {/if}
 
+    {#if snapshot.private_window}
+      <p class="private-summary">Muffin clears this window’s history and website data on close. Files you save stay on disk.</p>
+    {:else}
     <section class="shortcut-section" aria-labelledby="shortcut-heading">
       <div class="surface-heading-row">
         <h2 id="shortcut-heading">Shortcuts</h2>
@@ -99,5 +102,6 @@
         </form>
       {/if}
     </section>
+    {/if}
   </div>
 </section>

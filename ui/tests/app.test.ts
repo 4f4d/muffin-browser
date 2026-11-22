@@ -420,6 +420,39 @@ describe('browser chrome controls', () => {
     expect(document.querySelectorAll('.settings-folder-actions button')).toHaveLength(1);
   });
 
+  it('separates private browsing controls from the regular profile', async () => {
+    document.querySelector<HTMLButtonElement>('[aria-label="More browser actions"]')!.click();
+    await tick();
+    document.querySelector<HTMLButtonElement>('[aria-label="Open new private window"]')!.click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'new_private_window' });
+    bridgeState.bridge.render(makeSnapshot({ surface: 'start', private_window: true }));
+    await tick();
+    expect(document.querySelector('.private-indicator')?.textContent).toBe('Private');
+    expect(document.querySelector('#start-heading')?.textContent).toBe('Private browsing');
+    expect(document.querySelector('.shortcut-section')).toBeNull();
+    document.querySelector<HTMLButtonElement>('[aria-label="More browser actions"]')!.click();
+    await tick();
+    expect(document.querySelector('#more-actions [aria-label="Library"]')).toBeNull();
+    expect(document.querySelector('#more-actions [aria-label="Settings"]')).toBeNull();
+  });
+
+  it('sends a clear request only after confirming in Settings', async () => {
+    bridgeState.bridge.render(makeSnapshot({ surface: 'settings' }));
+    await tick();
+    const buttons = () => [...document.querySelectorAll<HTMLButtonElement>('.settings-data-actions button')];
+    buttons()[0].click();
+    await tick();
+    expect(bridgeState.bridge.take()).toBeNull();
+    expect(buttons()[0].textContent).toBe('Cancel');
+    buttons()[0].click();
+    await tick();
+    expect(bridgeState.bridge.take()).toBeNull();
+    buttons()[0].click();
+    await tick();
+    buttons()[1].click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'clear_site_data' });
+  });
+
   it('keeps consent text inert and routes approval, cancellation, and reveal actions', async () => {
     bridgeState.bridge.render(makeSnapshot({
       surface: 'downloads',

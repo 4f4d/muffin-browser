@@ -1,11 +1,21 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import type { ChromeAction, ChromeSnapshot, SearchEngine, ThemePreference } from '../lib/bridge';
 
   let { snapshot, send }: { snapshot: ChromeSnapshot; send: (action: ChromeAction) => void } = $props();
+  let confirmingClear = $state(false);
+  let clearButton: HTMLButtonElement | undefined = $state();
+
+  async function showClearOptions(show: boolean) {
+    confirmingClear = show;
+    await tick();
+    clearButton?.focus();
+  }
 
   const shortcuts = [
     { action: 'Focus address field', keys: '⌘L' },
     { action: 'New tab', keys: '⌘T' },
+    { action: 'New private window', keys: '⇧⌘N' },
     { action: 'Close tab', keys: '⌘W' },
     { action: 'Reopen closed tab', keys: '⇧⌘T' },
     { action: 'Search open tabs', keys: '⇧⌘A' },
@@ -69,6 +79,20 @@
           <input id="clear-history-on-exit" type="checkbox" checked={snapshot.settings.clear_history_on_exit} onchange={(event) => send({ version: 1, action: 'set_clear_history_on_exit', enabled: event.currentTarget.checked })} />
         </label>
       </fieldset>
+    </section>
+    <section class="settings-section" aria-labelledby="site-data-heading">
+      <div class="settings-copy"><h2 id="site-data-heading">Website data</h2><p>Remove cookies, caches and stored website data from regular windows. This can sign you out.</p></div>
+      <div class="settings-data-actions">
+        {#if confirmingClear}
+          <button bind:this={clearButton} class="quiet-button" type="button" onclick={() => showClearOptions(false)}>Cancel</button>
+          <button class="quiet-button site-data-clear" type="button" onclick={() => {
+            send({ version: 1, action: 'clear_site_data' });
+            void showClearOptions(false);
+          }}>Clear website data</button>
+        {:else}
+          <button bind:this={clearButton} class="quiet-button" type="button" onclick={() => showClearOptions(true)}>Clear website data…</button>
+        {/if}
+      </div>
     </section>
     <section class="settings-section settings-options" aria-labelledby="keyboard-heading">
       <div class="settings-copy"><h2 id="keyboard-heading">Common keyboard shortcuts</h2><p>⌘ Command · ⇧ Shift</p></div>

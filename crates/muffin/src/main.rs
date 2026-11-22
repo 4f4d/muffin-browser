@@ -22,6 +22,8 @@ mod profile;
 #[path = "session.rs"]
 mod session;
 #[cfg(target_os = "macos")]
+mod site_data;
+#[cfg(target_os = "macos")]
 #[path = "tabs.rs"]
 mod tabs;
 
@@ -34,6 +36,7 @@ mod browser {
         session::SessionStore,
         tabs::{SavedWindow, SessionDocument, TabSet},
     };
+    use objc2::rc::Retained;
     use objc2::MainThreadMarker;
     use objc2_foundation::{NSBundle, NSString};
     use objc2_web_kit::{
@@ -99,6 +102,7 @@ mod browser {
         Library,
         Settings,
         Downloads,
+        ConnectionError,
     }
 
     #[derive(Clone, Copy, Debug, Deserialize)]
@@ -178,6 +182,8 @@ mod browser {
         SetSearchEngine { version: u8, value: String },
         #[serde(rename = "clear_history")]
         ClearHistory { version: u8, value: String },
+        #[serde(rename = "clear_site_data")]
+        ClearSiteData { version: u8 },
         #[serde(rename = "set_restore_session")]
         SetRestoreSession { version: u8, enabled: bool },
         #[serde(rename = "set_clear_history_on_exit")]
@@ -232,6 +238,8 @@ mod browser {
         NewTab { version: u8 },
         #[serde(rename = "new_window")]
         NewWindow { version: u8 },
+        #[serde(rename = "new_private_window")]
+        NewPrivateWindow { version: u8 },
         #[serde(rename = "reopen_tab")]
         ReopenTab { version: u8 },
         #[serde(rename = "tab_search")]
@@ -287,6 +295,8 @@ mod browser {
         PrintFixturePdf { version: u8 },
         #[serde(rename = "inspect_fixture_playback")]
         InspectFixturePlayback { version: u8 },
+        #[serde(rename = "focus_fixture_window")]
+        FocusFixtureWindow { version: u8, index: usize },
     }
 
     #[cfg(debug_assertions)]
@@ -294,6 +304,7 @@ mod browser {
     #[serde(rename_all = "snake_case")]
     enum FixtureShortcut {
         NewTab,
+        PrivateWindow,
         CloseTab,
         ReopenTab,
         FirstTab,
@@ -327,7 +338,8 @@ mod browser {
                 | ChromeTestAction::ClickFixtureLink { version: 1 }
                 | ChromeTestAction::CaptureFixtureContent { version: 1 }
                 | ChromeTestAction::PrintFixturePdf { version: 1 }
-                | ChromeTestAction::InspectFixturePlayback { version: 1 },
+                | ChromeTestAction::InspectFixturePlayback { version: 1 }
+                | ChromeTestAction::FocusFixtureWindow { version: 1, .. },
             ) => Some(command),
             TestCommand::Native(action) if action.version() == 1 => Some(command),
             TestCommand::Quit { version: 1, action } if action == "quit_test" => Some(command),
@@ -359,6 +371,7 @@ mod browser {
                 | Self::SetTheme { version, .. }
                 | Self::SetSearchEngine { version, .. }
                 | Self::ClearHistory { version, .. }
+                | Self::ClearSiteData { version }
                 | Self::SetRestoreSession { version, .. }
                 | Self::SetClearHistoryOnExit { version, .. }
                 | Self::BookmarkCurrent { version, .. }
@@ -381,6 +394,7 @@ mod browser {
                 Self::CloseWindow { version } | Self::CloseSelectedTab { version } => *version,
                 Self::NewTab { version }
                 | Self::NewWindow { version }
+                | Self::NewPrivateWindow { version }
                 | Self::ReopenTab { version }
                 | Self::TabSearch { version } => *version,
                 Self::SelectTab { version, .. }
@@ -449,6 +463,7 @@ mod browser {
         tabs: Vec<TabSnapshot>,
         selected_tab: u32,
         can_restore: bool,
+        private_window: bool,
         downloads: Vec<DownloadItem>,
         download_approval_count: usize,
         download_folder: Option<String>,
@@ -466,6 +481,8 @@ mod browser {
         Title(WindowId, u32, u64, String),
         ProcessTerminated(WindowId, u32, u64),
         DownloadChanged,
+        SiteDataCleared(WindowId),
+        SecureConnectionFailed(WindowId, u32, u64, String),
         FindResult(WindowId, u32, u64, u64, bool),
         PdfFinished(WindowId, bool),
         DiscardSafety(WindowId, u32, u64, u64, bool),
@@ -559,6 +576,7 @@ mod browser {
         find_ticket: u64,
         find_found: Option<bool>,
         media_suspended: bool,
+        tls_error: Option<String>,
     }
 
     struct BrowserWindow {
@@ -572,6 +590,8 @@ mod browser {
         chrome_poll_started: Option<Instant>,
         last_poll: Instant,
         test_mode: bool,
+        private_window: bool,
+        data_store: Retained<WKWebsiteDataStore>,
         discard_serial: u64,
         profile_state: ProfileSnapshot,
         omnibox_query: String,
@@ -586,9 +606,15 @@ mod browser {
             saved: Option<SavedWindow>,
             test_mode: bool,
             downloads: SharedDownloads,
+            private_window: bool,
+            data_store: Retained<WKWebsiteDataStore>,
         ) -> Result<Self, String> {
             let window = WindowBuilder::new()
-                .with_title("Muffin")
+                .with_title(if private_window {
+                    "Muffin Private"
+                } else {
+                    "Muffin"
+                })
                 .with_inner_size(LogicalSize::new(1100.0, 760.0))
                 .with_min_inner_size(LogicalSize::new(640.0, 420.0))
                 .build(target)
@@ -618,6 +644,8 @@ mod browser {
                 chrome_poll_started: None,
                 last_poll: Instant::now(),
                 test_mode,
+                private_window,
+                data_store,
                 discard_serial: 0,
                 profile_state: ProfileSnapshot::default(),
                 omnibox_query: String::new(),
@@ -631,18 +659,11 @@ mod browser {
             Ok(browser)
         }
 
-        fn make_web_configuration(
-            test_mode: bool,
-        ) -> Result<objc2::rc::Retained<WKWebViewConfiguration>, String> {
+        fn make_web_configuration(&self) -> Result<Retained<WKWebViewConfiguration>, String> {
             let main_thread = MainThreadMarker::new().ok_or("WebKit must start on main thread")?;
             let configuration = unsafe { WKWebViewConfiguration::new(main_thread) };
             unsafe {
-                let store = if test_mode {
-                    WKWebsiteDataStore::nonPersistentDataStore(main_thread)
-                } else {
-                    WKWebsiteDataStore::defaultDataStore(main_thread)
-                };
-                configuration.setWebsiteDataStore(&store);
+                configuration.setWebsiteDataStore(&self.data_store);
                 configuration
                     .preferences()
                     .setJavaScriptCanOpenWindowsAutomatically(false);
@@ -665,11 +686,10 @@ mod browser {
             let title_proxy = self.proxy.clone();
             let terminate_proxy = self.proxy.clone();
             let popup_proxy = self.proxy.clone();
-            let configuration = Self::make_web_configuration(self.test_mode)?;
+            let configuration = self.make_web_configuration()?;
             let builder = WebViewBuilder::new()
                 .with_webview_configuration(configuration)
                 .with_devtools(false)
-                .with_incognito(self.test_mode)
                 .with_focused(false)
                 .with_navigation_handler(allowed_navigation)
                 .with_new_window_req_handler(move |url, _| {
@@ -706,10 +726,19 @@ mod browser {
                 .build_as_child(&self.window)
                 .map_err(|error| error.to_string())?;
             let download_proxy = self.proxy.clone();
-            let downloads =
-                TabDownloads::install(&webview.webview(), Rc::clone(&self.downloads), move || {
+            let tls_proxy = self.proxy.clone();
+            let downloads = TabDownloads::install(
+                &webview.webview(),
+                Rc::clone(&self.downloads),
+                move || {
                     let _ = download_proxy.send_event(Message::DownloadChanged);
-                });
+                },
+                move |url| {
+                    let _ = tls_proxy.send_event(Message::SecureConnectionFailed(
+                        window_id, tab_id, generation, url,
+                    ));
+                },
+            );
             let _ = webview.set_visible(tab_id == self.tabs.selected());
             self.views.insert(
                 tab_id,
@@ -723,6 +752,7 @@ mod browser {
                     find_ticket: 0,
                     find_found: None,
                     media_suspended: false,
+                    tls_error: None,
                 },
             );
             if start_url != "about:blank" {
@@ -797,6 +827,7 @@ mod browser {
                 view.discard_ticket = None;
                 view.find_ticket = view.find_ticket.wrapping_add(1);
                 view.find_found = None;
+                view.tls_error = None;
                 if explicit {
                     view.recovery_attempted = false;
                 }
@@ -806,6 +837,10 @@ mod browser {
             }
             if self.tabs.selected() == tab_id {
                 self.status = Status::Loading;
+                if self.profile_state.surface == Surface::ConnectionError {
+                    self.profile_state.surface = Surface::Browse;
+                    self.layout();
+                }
             }
         }
 
@@ -916,7 +951,13 @@ mod browser {
                     }
                 }
                 Action::Reload { .. } => {
-                    if self.views.contains_key(&previously_selected) {
+                    let failed = self
+                        .views
+                        .get(&previously_selected)
+                        .and_then(|v| v.tls_error.clone());
+                    if let Some(url) = failed.filter(|url| !url.is_empty()) {
+                        self.navigate(previously_selected, &url);
+                    } else if self.views.contains_key(&previously_selected) {
                         self.begin_tab_load(previously_selected, true);
                         let _ = self.views[&previously_selected].webview.reload();
                     }
@@ -1049,7 +1090,10 @@ mod browser {
                         focus_address_after_render = true;
                     }
                 }
-                Action::NewWindow { .. } => return WindowEffect::NewWindow,
+                Action::NewWindow { .. } => return WindowEffect::NewWindow { private: false },
+                Action::NewPrivateWindow { .. } => {
+                    return WindowEffect::NewWindow { private: true }
+                }
                 Action::CloseWindow { .. } => return WindowEffect::CloseWindow,
                 Action::CloseSelectedTab { .. } => {
                     let id = self.tabs.selected();
@@ -1111,6 +1155,12 @@ mod browser {
 
         fn set_selected_surface(&mut self) {
             self.profile_state.surface = if self
+                .views
+                .get(&self.tabs.selected())
+                .is_some_and(|view| view.tls_error.is_some())
+            {
+                Surface::ConnectionError
+            } else if self
                 .tabs
                 .get(self.tabs.selected())
                 .is_some_and(|tab| tab.url == "about:blank")
@@ -1133,15 +1183,26 @@ mod browser {
                 view.discard_ticket = None;
             }
             if let Some(tab) = self.tabs.get(selected) {
-                self.status = if tab.loading {
+                self.status = if self.profile_state.surface == Surface::ConnectionError {
+                    Status::Failed
+                } else if tab.loading {
                     Status::Loading
                 } else if tab.url == "about:blank" {
                     Status::Home
                 } else {
                     Status::Ready
                 };
-                self.window.set_title(&format!("{} — Muffin", tab.title));
+                self.set_title(&tab.title);
             }
+        }
+
+        fn set_title(&self, title: &str) {
+            let browser = if self.private_window {
+                "Muffin Private"
+            } else {
+                "Muffin"
+            };
+            self.window.set_title(&format!("{title} — {browser}"));
         }
 
         fn refresh_profile(&mut self, database: Option<&Profile>) {
@@ -1151,6 +1212,9 @@ mod browser {
             };
             let result = (|| -> super::profile::Result<()> {
                 self.profile_state.settings = database.settings()?;
+                if self.private_window {
+                    return Ok(());
+                }
                 self.profile_state.bookmarked = self
                     .tabs
                     .get(self.tabs.selected())
@@ -1204,7 +1268,10 @@ mod browser {
                             item.title = bounded_title(&item.title);
                         }
                     }
-                    Surface::Browse | Surface::Settings | Surface::Downloads => {}
+                    Surface::Browse
+                    | Surface::Settings
+                    | Surface::Downloads
+                    | Surface::ConnectionError => {}
                 }
                 Ok(())
             })();
@@ -1233,7 +1300,12 @@ mod browser {
             let view = self.selected_view();
             Snapshot {
                 version: 1,
-                url: tab.map(|tab| tab.url.clone()).unwrap_or_default(),
+                url: self
+                    .views
+                    .get(&id)
+                    .and_then(|view| view.tls_error.clone())
+                    .or_else(|| tab.map(|tab| tab.url.clone()))
+                    .unwrap_or_default(),
                 title: tab.map(|tab| tab.title.clone()).unwrap_or_default(),
                 loading: tab.is_some_and(|tab| tab.loading),
                 can_back: view.is_some_and(|view| view.can_go_back().unwrap_or(false)),
@@ -1259,6 +1331,7 @@ mod browser {
                     .collect(),
                 selected_tab: id,
                 can_restore: self.tabs.can_reopen(),
+                private_window: self.private_window,
                 downloads: if self.profile_state.surface == Surface::Downloads {
                     downloads
                 } else {
@@ -1363,7 +1436,7 @@ mod browser {
 
     enum WindowEffect {
         None,
-        NewWindow,
+        NewWindow { private: bool },
         CloseWindow,
         Discard(u32),
     }
@@ -1375,6 +1448,8 @@ mod browser {
         session: Option<SessionStore>,
         profile: Option<Profile>,
         downloads: SharedDownloads,
+        normal_store: Retained<WKWebsiteDataStore>,
+        clearing_site_data: bool,
         test_control: Option<TestControl>,
         session_dirty: bool,
         last_session_save: Instant,
@@ -1426,6 +1501,12 @@ mod browser {
             };
             let proxy = event_loop.create_proxy();
             let test_mode = test_control.is_some();
+            let main_thread = MainThreadMarker::new().ok_or("WebKit must start on main thread")?;
+            let normal_store = if test_mode {
+                unsafe { WKWebsiteDataStore::nonPersistentDataStore(main_thread) }
+            } else {
+                unsafe { WKWebsiteDataStore::defaultDataStore(main_thread) }
+            };
             let downloads_root = if let Some(control) = &test_control {
                 let path = control.directory.join("downloads");
                 std::fs::create_dir_all(&path)
@@ -1461,6 +1542,8 @@ mod browser {
                         Some(saved),
                         test_mode,
                         Rc::clone(&downloads),
+                        false,
+                        normal_store.clone(),
                     )?);
                 }
             } else {
@@ -1470,6 +1553,8 @@ mod browser {
                     None,
                     test_mode,
                     Rc::clone(&downloads),
+                    false,
+                    normal_store.clone(),
                 )?);
             }
             let focused = windows[0].window.id();
@@ -1480,6 +1565,8 @@ mod browser {
                 session,
                 profile,
                 downloads,
+                normal_store,
+                clearing_site_data: false,
                 test_control,
                 session_dirty: false,
                 last_session_save: Instant::now(),
@@ -1549,6 +1636,7 @@ mod browser {
                 windows: self
                     .windows
                     .iter()
+                    .filter(|window| !window.private_window)
                     .map(|window| window.tabs.saved())
                     .collect(),
             };
@@ -1585,29 +1673,65 @@ mod browser {
                 }
             }
         }
-        fn create_window(&mut self, target: &EventLoopWindowTarget<Message>) {
+        fn create_window(&mut self, target: &EventLoopWindowTarget<Message>, private: bool) {
             if self.windows.len() >= 8 {
                 return;
             }
+            let (data_store, downloads) = if private {
+                let Some(main_thread) = MainThreadMarker::new() else {
+                    return;
+                };
+                (
+                    unsafe { WKWebsiteDataStore::nonPersistentDataStore(main_thread) },
+                    Rc::new(RefCell::new(self.downloads.borrow().separate_window())),
+                )
+            } else {
+                (self.normal_store.clone(), Rc::clone(&self.downloads))
+            };
             if let Ok(window) = BrowserWindow::new(
                 target,
                 self.proxy.clone(),
                 None,
                 self.test_control.is_some(),
-                Rc::clone(&self.downloads),
+                downloads,
+                private,
+                data_store,
             ) {
                 self.focused = window.window.id();
                 self.windows.push(window);
                 self.refresh_profile_window(self.focused);
-                self.session_dirty = true;
+                self.session_dirty |= !private;
             }
         }
-        fn forward_urls(&mut self, urls: Vec<url::Url>) {
-            let active = self.active_id();
+        fn forward_urls(&mut self, target: &EventLoopWindowTarget<Message>, urls: Vec<url::Url>) {
+            if urls.is_empty() {
+                return;
+            }
+            let focused = self.active_id();
+            let active = self
+                .windows
+                .iter()
+                .filter(|window| !window.private_window)
+                .min_by_key(|window| window.window.id() != focused)
+                .map(|window| window.window.id());
+            let active = if let Some(active) = active {
+                active
+            } else {
+                self.create_window(target, false);
+                let Some(window) = self.windows.iter().find(|window| !window.private_window) else {
+                    return;
+                };
+                window.window.id()
+            };
             if let Some(window) = self.window_mut(active) {
                 window.window.set_minimized(false);
                 window.window.set_focus();
             }
+            self.focused = active;
+            self.open_urls_in_window(active, urls);
+        }
+
+        fn open_urls_in_window(&mut self, window_id: WindowId, urls: Vec<url::Url>) {
             for url in urls {
                 let value = url.to_string();
                 if external_web_url(&value).is_none() {
@@ -1616,7 +1740,7 @@ mod browser {
                 if let Some(window) = self
                     .windows
                     .iter_mut()
-                    .find(|window| window.window.id() == active)
+                    .find(|window| window.window.id() == window_id)
                 {
                     if !window.tabs.can_create() {
                         break;
@@ -1625,10 +1749,10 @@ mod browser {
                     if window.ensure_view(id).is_ok() {
                         window.navigate(id, &value);
                         window.render();
+                        self.session_dirty |= !window.private_window;
                     }
                 }
             }
-            self.session_dirty = true;
             self.write_test_state();
         }
         fn close_window(&mut self, id: WindowId) -> bool {
@@ -1642,14 +1766,31 @@ mod browser {
             else {
                 return false;
             };
+            self.session_dirty |= !self.windows[index].private_window;
             self.windows.remove(index);
             if self.focused == id {
                 self.focused = self.windows[0].window.id();
             }
-            self.session_dirty = true;
             true
         }
         fn apply(&mut self, target: &EventLoopWindowTarget<Message>, id: WindowId, action: Action) {
+            if matches!(action, Action::ClearSiteData { .. }) {
+                if !self.clearing_site_data && self.settings_visible(id) {
+                    let Some(main_thread) = MainThreadMarker::new() else {
+                        return;
+                    };
+                    self.clearing_site_data = true;
+                    if let Some(window) = self.window_mut(id) {
+                        window.profile_state.notice = "Clearing website data…".into();
+                        window.render();
+                    }
+                    let proxy = self.proxy.clone();
+                    super::site_data::clear_all(&self.normal_store, main_thread, move || {
+                        let _ = proxy.send_event(Message::SiteDataCleared(id));
+                    });
+                }
+                return;
+            }
             if matches!(
                 action,
                 Action::ChooseDownloadFolder { .. } | Action::ResetDownloadFolder { .. }
@@ -1683,19 +1824,20 @@ mod browser {
                     | Action::RetryDownload { .. }
                     | Action::ClearDownloads { .. }
             ) {
-                let visible = self.windows.iter().any(|window| {
+                let Some(window) = self.windows.iter().find(|window| {
                     window.window.id() == id && window.profile_state.surface == Surface::Downloads
-                });
-                if !visible {
+                }) else {
                     return;
-                }
+                };
+                let store = Rc::clone(&window.downloads);
                 if matches!(action, Action::ClearDownloads { .. }) {
-                    if self.downloads.borrow_mut().clear_terminal() {
+                    if store.borrow_mut().clear_terminal() {
                         self.handle(target, Message::DownloadChanged);
                     }
                 } else {
                     self.windows
                         .iter()
+                        .filter(|window| Rc::ptr_eq(&store, &window.downloads))
                         .flat_map(|window| window.views.values())
                         .any(|view| {
                             view.downloads
@@ -1723,14 +1865,14 @@ mod browser {
                 self.write_test_state();
                 return;
             }
-            let effect = if let Some(window) = self.window_mut(id) {
-                window.apply(action)
+            let (effect, regular_window) = if let Some(window) = self.window_mut(id) {
+                (window.apply(action), !window.private_window)
             } else {
                 return;
             };
             match effect {
                 WindowEffect::None => {}
-                WindowEffect::NewWindow => self.create_window(target),
+                WindowEffect::NewWindow { private } => self.create_window(target, private),
                 WindowEffect::CloseWindow => {
                     self.close_window(id);
                 }
@@ -1740,13 +1882,16 @@ mod browser {
                     }
                 }
             }
-            self.session_dirty = true;
+            self.session_dirty |=
+                regular_window && !matches!(effect, WindowEffect::NewWindow { private: true });
             self.refresh_profile_window(id);
             self.write_test_state();
         }
         fn settings_visible(&self, id: WindowId) -> bool {
             self.windows.iter().any(|window| {
-                window.window.id() == id && window.profile_state.surface == Surface::Settings
+                window.window.id() == id
+                    && !window.private_window
+                    && window.profile_state.surface == Surface::Settings
             })
         }
 
@@ -1781,6 +1926,14 @@ mod browser {
             };
             match action {
                 Action::ShowSurface { value, .. } => {
+                    if *value == Surface::ConnectionError {
+                        return true;
+                    }
+                    if window.private_window
+                        && matches!(value, Surface::Library | Surface::Settings)
+                    {
+                        return true;
+                    }
                     window.profile_state.notice.clear();
                     window.library_query.clear();
                     window.omnibox_query.clear();
@@ -1805,11 +1958,17 @@ mod browser {
                     return true;
                 }
                 Action::QueryOmnibox { value, .. } => {
+                    if window.private_window {
+                        return true;
+                    }
                     window.omnibox_query = value.chars().take(240).collect();
                     self.refresh_profile_window(id);
                     return true;
                 }
                 Action::QueryLibrary { value, .. } => {
+                    if window.private_window {
+                        return true;
+                    }
                     window.library_query = value.chars().take(240).collect();
                     self.refresh_profile_window(id);
                     return true;
@@ -1831,6 +1990,9 @@ mod browser {
                 _ => return false,
             }
 
+            if window.private_window {
+                return true;
+            }
             let current = window
                 .tabs
                 .get(window.tabs.selected())
@@ -1877,10 +2039,49 @@ mod browser {
 
         fn handle(&mut self, target: &EventLoopWindowTarget<Message>, message: Message) {
             match message {
-                Message::ExternalUrls(urls) => self.forward_urls(urls),
+                Message::ExternalUrls(urls) => self.forward_urls(target, urls),
                 Message::DownloadChanged => {
                     for window in &self.windows {
                         window.render();
+                    }
+                    self.write_test_state();
+                }
+                Message::SiteDataCleared(id) => {
+                    self.clearing_site_data = false;
+                    if let Some(window) = self.window_mut(id) {
+                        if window.profile_state.surface == Surface::Settings {
+                            window.profile_state.notice =
+                                "WebKit finished clearing website data.".into();
+                            window.render();
+                        }
+                    }
+                    self.write_test_state();
+                }
+                Message::SecureConnectionFailed(id, tab_id, generation, url) => {
+                    if let Some(window) = self.window_mut(id) {
+                        if window
+                            .tabs
+                            .get(tab_id)
+                            .is_some_and(|tab| tab.generation == generation)
+                        {
+                            if let Some(view) = window.views.get_mut(&tab_id) {
+                                view.tls_error = Some(
+                                    external_web_url(&url)
+                                        .filter(|url| url.scheme() == "https")
+                                        .map(|url| url.to_string())
+                                        .unwrap_or_default(),
+                                );
+                                window.fail_tab_load(tab_id);
+                                if window.tabs.selected() == tab_id
+                                    && window.profile_state.surface == Surface::Browse
+                                {
+                                    window.profile_state.surface = Surface::ConnectionError;
+                                    window.layout();
+                                    let _ = window.chrome.focus();
+                                }
+                                window.render();
+                            }
+                        }
                     }
                     self.write_test_state();
                 }
@@ -1926,7 +2127,7 @@ mod browser {
                                     .is_some_and(|tab| tab.generation == generation)
                         });
                     if current {
-                        self.forward_urls(vec![url]);
+                        self.open_urls_in_window(id, vec![url]);
                     }
                 }
                 Message::ChromeResult(id, raw) => {
@@ -1969,6 +2170,7 @@ mod browser {
                 }
                 Message::Loaded(id, tab_id, generation, event, url) => {
                     let mut visit = None;
+                    let mut regular_window = false;
                     if let Some(window) = self.window_mut(id) {
                         if window
                             .tabs
@@ -1977,6 +2179,7 @@ mod browser {
                         {
                             return;
                         }
+                        regular_window = !window.private_window;
                         match event {
                             PageLoadEvent::Started => {
                                 window.begin_tab_load(tab_id, false);
@@ -2004,7 +2207,9 @@ mod browser {
                                     if let Some(title) = title {
                                         tab.title = title;
                                     }
-                                    if external_web_url(&tab.url).is_some() {
+                                    if !window.private_window
+                                        && external_web_url(&tab.url).is_some()
+                                    {
                                         visit = Some((tab.url.clone(), tab.title.clone()));
                                     }
                                 }
@@ -2030,11 +2235,13 @@ mod browser {
                         }
                     }
                     self.refresh_profile_window(id);
-                    self.session_dirty = true;
+                    self.session_dirty |= regular_window;
                     self.write_test_state();
                 }
                 Message::Title(id, tab_id, generation, title) => {
+                    let mut regular_window = false;
                     if let Some(window) = self.window_mut(id) {
+                        regular_window = !window.private_window;
                         let selected = tab_id == window.tabs.selected();
                         let display_title = if let Some(tab) = window
                             .tabs
@@ -2048,12 +2255,12 @@ mod browser {
                         };
                         if selected {
                             if let Some(title) = display_title {
-                                window.window.set_title(&format!("{} — Muffin", title));
+                                window.set_title(&title);
                             }
                         }
                         window.render();
                     }
-                    self.session_dirty = true;
+                    self.session_dirty |= regular_window;
                     self.write_test_state();
                 }
                 Message::ProcessTerminated(id, tab_id, generation) => {
@@ -2295,6 +2502,12 @@ mod browser {
                         }
                     }
                 }
+                TestCommand::Chrome(ChromeTestAction::FocusFixtureWindow { index, .. }) => {
+                    if let Some(window) = self.windows.get(index) {
+                        self.focused = window.window.id();
+                        window.window.set_focus();
+                    }
+                }
             }
             false
         }
@@ -2487,6 +2700,7 @@ mod browser {
 
         let (key, code, shifted) = match shortcut {
             FixtureShortcut::NewTab => ("t", 17, false),
+            FixtureShortcut::PrivateWindow => ("N", 45, true),
             FixtureShortcut::CloseTab => ("w", 13, false),
             FixtureShortcut::ReopenTab => ("T", 17, true),
             FixtureShortcut::FirstTab => ("1", 18, false),
@@ -2626,8 +2840,10 @@ mod browser {
             || host.starts_with("localhost:")
             || host == "127.0.0.1"
             || host.starts_with("127.0.0.1:");
-        let has_port = host.split_once(':').is_some_and(|(_, port)| {
-            !port.is_empty() && port.bytes().all(|byte| byte.is_ascii_digit())
+        let has_port = host.split_once(':').is_some_and(|(name, port)| {
+            (name == "localhost" || name.contains('.'))
+                && !port.is_empty()
+                && port.bytes().all(|byte| byte.is_ascii_digit())
         });
         let parsed = if input.contains("://") {
             url::Url::parse(input).ok()?
@@ -2637,6 +2853,9 @@ mod browser {
                 if is_local { "http" } else { "https" }
             ))
             .ok()?
+        } else if url::Url::parse(input).is_ok() {
+            // An unsupported URI must neither open an external handler nor become a web search.
+            return None;
         } else if input.split('/').next()?.contains('.') || input.starts_with("localhost") {
             url::Url::parse(&format!("https://{input}")).ok()?
         } else {
@@ -2727,6 +2946,7 @@ mod browser {
         Settings,
         NewTab,
         NewWindow,
+        NewPrivateWindow,
         CloseSelectedTab,
         Back,
         Forward,
@@ -2768,6 +2988,7 @@ mod browser {
                 },
                 Self::NewTab => Action::NewTab { version: 1 },
                 Self::NewWindow => Action::NewWindow { version: 1 },
+                Self::NewPrivateWindow => Action::NewPrivateWindow { version: 1 },
                 Self::CloseSelectedTab => Action::CloseSelectedTab { version: 1 },
                 Self::Back => Action::Back { version: 1 },
                 Self::Forward => Action::Forward { version: 1 },
@@ -2795,6 +3016,7 @@ mod browser {
             shortcut,
             NativeShortcut::NewTab
                 | NativeShortcut::NewWindow
+                | NativeShortcut::NewPrivateWindow
                 | NativeShortcut::CloseSelectedTab
                 | NativeShortcut::ReopenTab
         )
@@ -2815,6 +3037,7 @@ mod browser {
                 b"t" => Some(NativeShortcut::ReopenTab),
                 b"a" => Some(NativeShortcut::TabSearch),
                 b"j" => Some(NativeShortcut::Downloads),
+                b"n" => Some(NativeShortcut::NewPrivateWindow),
                 _ => None,
             };
         }
@@ -2955,7 +3178,7 @@ mod browser {
         };
         let mut state = App::new(&event_loop, control, session_path)?;
         if !startup_urls.is_empty() {
-            state.forward_urls(startup_urls);
+            state.forward_urls(&event_loop, startup_urls);
         }
         let mut app = Some(state);
         let _key_monitor = install_keys(event_loop.create_proxy());
@@ -3006,7 +3229,7 @@ mod browser {
                 }
                 Event::Opened { urls } => {
                     if let Some(app) = app.as_mut() {
-                        app.forward_urls(urls);
+                        app.forward_urls(target, urls);
                     }
                 }
                 Event::LoopDestroyed => {
@@ -3129,8 +3352,13 @@ mod browser {
             );
             assert_eq!(
                 address_destination("javascript:alert(1)", "duckduckgo"),
-                Some("https://duckduckgo.com/?q=javascript%3Aalert%281%29".into())
+                None
             );
+            assert_eq!(
+                address_destination("mailto:fixture@example.test", "duckduckgo"),
+                None
+            );
+            assert_eq!(address_destination("tel:12345", "duckduckgo"), None);
         }
 
         #[test]

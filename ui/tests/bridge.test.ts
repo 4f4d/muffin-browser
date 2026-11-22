@@ -37,7 +37,7 @@ describe('chrome IPC bridge', () => {
       secure: true,
       tabs: [{ id: 3, title: 'Example', pinned: false, loading: false, discarded: false }],
       selected_tab: 3,
-      can_restore: false,
+      can_restore: false, private_window: false,
       surface: 'browse',
       settings: { theme: 'system', search_engine: 'duckduckgo', restore_session: true, clear_history_on_exit: false },
       suggestions: [],
@@ -113,6 +113,8 @@ describe('chrome IPC bridge', () => {
     expect(isAction({ version: 1, action: 'cancel_download', id: -1 })).toBe(false);
     expect(isAction({ version: 1, action: 'cancel_download', id: 42, path: '/tmp/a' })).toBe(false);
     expect(isAction({ version: 1, action: 'clear_downloads' })).toBe(true);
+    expect(isAction({ version: 1, action: 'clear_site_data' })).toBe(true);
+    expect(isAction({ version: 1, action: 'clear_site_data', origin: 'https://example.test/' })).toBe(false);
     expect(isAction({ version: 1, action: 'choose_download_folder' })).toBe(true);
     expect(isAction({ version: 1, action: 'reset_download_folder' })).toBe(true);
     expect(isAction({ version: 1, action: 'choose_download_folder', path: '/tmp/x' })).toBe(false);
@@ -127,7 +129,7 @@ describe('chrome IPC bridge', () => {
     const state = createChromeBridge();
     const snapshot: ChromeSnapshot = {
       version: 1, url: '', title: 'New tab', loading: false, can_back: false, can_forward: false,
-      status: 'home', secure: false, tabs: [], selected_tab: 0, can_restore: false, surface: 'downloads',
+      status: 'home', secure: false, tabs: [], selected_tab: 0, can_restore: false, private_window: false, surface: 'downloads',
       settings: { theme: 'system', search_engine: 'duckduckgo', restore_session: true, clear_history_on_exit: false },
       suggestions: [{ url: 'https://saved.test', title: 'Saved', bookmarked: true }],
       history: [{ id: 1, url: 'https://visited.test', title: 'Visited', visited_at_ms: 1_700_000_000_000 }],

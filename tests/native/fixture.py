@@ -4,10 +4,14 @@ from contextlib import contextmanager
 from hashlib import sha256
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
+import json
+from pathlib import Path
+import re
+import ssl
+import subprocess
 from threading import Event, Thread
 from urllib.parse import parse_qs, urlsplit
 import wave
-import re
 
 
 PAGE_ONE = """<!doctype html>
@@ -133,6 +137,38 @@ CAPTURE_PAGE = """<!doctype html>
 </script></html>
 """
 
+PRIVACY_PAGE = """<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Muffin storage fixture</title>
+<h1>Storage fixture</h1>
+<script>
+(async () => {
+  const params = new URLSearchParams(location.search);
+  const probe = params.get('probe');
+  const value = params.get('write');
+  const cache = await caches.open('muffin-fixture');
+  const marker = new URL('/fixture-cache-marker', location.origin);
+  if (value) {
+    document.cookie = 'muffin_fixture=' + value + '; Path=/; SameSite=Lax; Max-Age=600';
+    localStorage.setItem('muffin-fixture', value);
+    await cache.put(marker, new Response(value));
+  }
+  const cached = await cache.match(marker);
+  const result = {
+    probe,
+    cookie: document.cookie.split('; ').find(value => value.startsWith('muffin_fixture='))?.split('=')[1] ?? null,
+    local: localStorage.getItem('muffin-fixture'),
+    cache: cached ? await cached.text() : null,
+  };
+  await fetch('/storage-result', {method: 'POST', body: JSON.stringify(result)});
+})().catch(async (error) => {
+  await fetch('/storage-result', {
+    method: 'POST',
+    body: JSON.stringify({probe: new URLSearchParams(location.search).get('probe'), error: error.name}),
+  });
+});
+</script></html>
+"""
+
 with BytesIO() as media:
     with wave.open(media, "wb") as audio:
         audio.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
@@ -166,10 +202,34 @@ class FixtureServer(ThreadingHTTPServer):
         self.break_retry_download = Event()
         self.media_states = {}
         self.capture_results = []
+        self.storage_results = {}
 
     @property
     def origin(self):
         return f"http://127.0.0.1:{self.server_port}"
+
+
+@contextmanager
+def untrusted_tls_fixture(directory):
+    """Serve only loopback with an ephemeral self-signed certificate."""
+    certificate = Path(directory) / "untrusted-cert.pem"
+    key = Path(directory) / "untrusted-key.pem"
+    subprocess.run([
+        "/usr/bin/openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+        "-days", "1", "-subj", "/CN=Muffin loopback fixture",
+        "-keyout", str(key), "-out", str(certificate),
+    ], check=True, capture_output=True, timeout=10)
+    with FixtureServer() as server:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certificate, key)
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+        worker = Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+        try:
+            yield server
+        finally:
+            server.shutdown()
+            worker.join(timeout=3)
 
 
 class FixtureHandler(BaseHTTPRequestHandler):
@@ -261,6 +321,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
             "/upload": UPLOAD_PAGE,
             "/media": MEDIA_PAGE,
             "/capture-permission": CAPTURE_PAGE,
+            "/storage-fixture": PRIVACY_PAGE,
             "/attempt-download": (
                 "<!doctype html><title>Automatic download fixture</title>"
                 f"<script>location.assign('{UNREQUESTED_DOWNLOAD}');</script>"
@@ -294,6 +355,13 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self.server.capture_results.append({
                 key: result.get(key, [""])[0] for key in ("kind", "result")
             })
+        if self.path == "/storage-result":
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 1024:
+                self.send_error(400)
+                return
+            received = json.loads(self.rfile.read(length))
+            self.server.storage_results[received["probe"]] = received
         if self.path == "/upload":
             length = int(self.headers.get("Content-Length", "0"))
             if length < 0 or length > 1024 * 1024:

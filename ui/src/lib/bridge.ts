@@ -4,11 +4,11 @@ export type ChromeAction =
       version: 1;
       action: 'back' | 'forward' | 'reload' | 'stop' | 'focus_page' | 'open_home';
     }
-  | { version: 1; action: 'new_tab' | 'new_window' | 'reopen_tab' | 'tab_search' }
+  | { version: 1; action: 'new_tab' | 'new_window' | 'new_private_window' | 'reopen_tab' | 'tab_search' }
   | { version: 1; action: 'select_tab' | 'close_tab' | 'duplicate_tab' | 'discard_tab'; id: number }
   | { version: 1; action: 'pin_tab'; id: number; pinned: boolean }
   | { version: 1; action: 'move_tab'; id: number; index: number }
-  | { version: 1; action: 'show_surface'; value: BrowserSurface }
+  | { version: 1; action: 'show_surface'; value: Exclude<BrowserSurface, 'connection_error'> }
   | { version: 1; action: 'query_omnibox' | 'query_library' | 'set_theme' | 'set_search_engine' | 'clear_history'; value: string }
   | { version: 1; action: 'set_restore_session' | 'set_clear_history_on_exit'; enabled: boolean }
   | { version: 1; action: 'bookmark_current' | 'import_bookmarks' | 'export_bookmarks' }
@@ -21,7 +21,7 @@ export type ChromeAction =
   | { version: 1; action: 'toggle_fullscreen' | 'print_page' | 'save_pdf' }
   | { version: 1; action: 'set_media_suspended'; enabled: boolean }
   | { version: 1; action: 'reveal_download' | 'open_download' | 'retry_download' | 'cancel_download'; id: number }
-  | { version: 1; action: 'clear_downloads' | 'choose_download_folder' | 'reset_download_folder' }
+  | { version: 1; action: 'clear_downloads' | 'choose_download_folder' | 'reset_download_folder' | 'clear_site_data' }
   | { version: 1; action: 'decide_download'; id: number; approve: boolean };
 
 export type TabSnapshot = {
@@ -32,7 +32,7 @@ export type TabSnapshot = {
   discarded: boolean;
 };
 
-export type BrowserSurface = 'browse' | 'start' | 'library' | 'settings' | 'downloads';
+export type BrowserSurface = 'browse' | 'start' | 'library' | 'settings' | 'downloads' | 'connection_error';
 export type DownloadEntry = { id: number; name: string; host: string; status: 'awaiting_approval' | 'downloading' | 'finished' | 'failed' | 'cancelled'; bytes: number; retryable: boolean; openable: boolean };
 export type PageToolsState = { zoom_percent: number; find_found: boolean | null; fullscreen: boolean; media_suspended: boolean };
 export type ThemePreference = 'system' | 'light' | 'dark';
@@ -60,6 +60,7 @@ export type ChromeSnapshot = {
   tabs: TabSnapshot[];
   selected_tab: number;
   can_restore: boolean;
+  private_window: boolean;
   surface: BrowserSurface;
   settings: BrowserSettings;
   suggestions: LocalSuggestion[];
@@ -107,6 +108,7 @@ const initialSnapshot: ChromeSnapshot = {
   tabs: [],
   selected_tab: 0,
   can_restore: false,
+  private_window: false,
   surface: 'browse',
   settings: {
     theme: 'system',
@@ -182,7 +184,7 @@ export function isAction(value: unknown): value is ChromeAction {
       && value.value.length <= MAX_URL_LENGTH;
   }
   if (hasExactKeys(value, ['version', 'action'])
-    && ['back', 'forward', 'reload', 'stop', 'focus_page', 'open_home', 'new_tab', 'new_window', 'reopen_tab', 'tab_search'].includes(value.action)) {
+    && ['back', 'forward', 'reload', 'stop', 'focus_page', 'open_home', 'new_tab', 'new_window', 'new_private_window', 'reopen_tab', 'tab_search'].includes(value.action)) {
     return true;
   }
   if (hasExactKeys(value, ['version', 'action', 'id'])
@@ -225,7 +227,7 @@ export function isAction(value: unknown): value is ChromeAction {
   if (hasExactKeys(value, ['version', 'action']) && ['toggle_fullscreen', 'print_page', 'save_pdf'].includes(value.action)) return true;
   if (value.action === 'set_media_suspended' && hasExactKeys(value, ['version', 'action', 'enabled'])) return typeof value.enabled === 'boolean';
   if (hasExactKeys(value, ['version', 'action', 'id']) && ['reveal_download', 'open_download', 'retry_download', 'cancel_download'].includes(value.action)) return validId(value.id);
-  if (hasExactKeys(value, ['version', 'action']) && ['clear_downloads', 'choose_download_folder', 'reset_download_folder'].includes(value.action)) return true;
+  if (hasExactKeys(value, ['version', 'action']) && ['clear_downloads', 'choose_download_folder', 'reset_download_folder', 'clear_site_data'].includes(value.action)) return true;
   if (value.action === 'decide_download' && hasExactKeys(value, ['version', 'action', 'id', 'approve'])) {
     return validId(value.id) && typeof value.approve === 'boolean';
   }
@@ -238,7 +240,7 @@ function validId(value: unknown) {
 
 function isSnapshot(value: unknown): value is ChromeSnapshot {
   if (!isObject(value)) return false;
-  return hasExactKeys(value, ['version', 'url', 'title', 'loading', 'can_back', 'can_forward', 'status', 'secure', 'tabs', 'selected_tab', 'can_restore', 'surface', 'settings', 'suggestions', 'history', 'bookmarks', 'shortcuts', 'bookmarked', 'notice', 'downloads', 'page_tools', 'download_approval_count', 'download_folder'])
+  return hasExactKeys(value, ['version', 'url', 'title', 'loading', 'can_back', 'can_forward', 'status', 'secure', 'tabs', 'selected_tab', 'can_restore', 'private_window', 'surface', 'settings', 'suggestions', 'history', 'bookmarks', 'shortcuts', 'bookmarked', 'notice', 'downloads', 'page_tools', 'download_approval_count', 'download_folder'])
     && value.version === 1
     && typeof value.url === 'string' && value.url.length <= MAX_URL_LENGTH
     && typeof value.title === 'string' && value.title.length <= MAX_TITLE_LENGTH
@@ -252,8 +254,8 @@ function isSnapshot(value: unknown): value is ChromeSnapshot {
     && (value.tabs.length === 0
       ? value.selected_tab === 0
       : value.tabs.some((tab) => tab.id === value.selected_tab))
-    && typeof value.can_restore === 'boolean'
-    && ['browse', 'start', 'library', 'settings', 'downloads'].includes(value.surface as string)
+    && typeof value.can_restore === 'boolean' && typeof value.private_window === 'boolean'
+    && ['browse', 'start', 'library', 'settings', 'downloads', 'connection_error'].includes(value.surface as string)
     && (value.surface === 'downloads' || (Array.isArray(value.downloads) && value.downloads.length === 0))
     && isSettings(value.settings)
     && Array.isArray(value.suggestions) && value.suggestions.length <= 20 && value.suggestions.every(isSuggestion) && hasUniqueBy(value.suggestions, (entry) => entry.url)
@@ -261,6 +263,10 @@ function isSnapshot(value: unknown): value is ChromeSnapshot {
     && Array.isArray(value.bookmarks) && value.bookmarks.length <= 500 && value.bookmarks.every(isBookmarkEntry) && hasUniqueBy(value.bookmarks, (entry) => entry.id)
     && Array.isArray(value.shortcuts) && value.shortcuts.length <= 64 && value.shortcuts.every(isShortcutEntry) && hasUniqueBy(value.shortcuts, (entry) => entry.id)
     && typeof value.bookmarked === 'boolean'
+    && (!value.private_window || (
+      value.surface !== 'library' && value.surface !== 'settings' && !value.bookmarked
+      && !value.suggestions.length && !value.history.length && !value.bookmarks.length && !value.shortcuts.length
+    ))
     && typeof value.notice === 'string' && value.notice.length <= MAX_TITLE_LENGTH * 2
     && Array.isArray(value.downloads) && value.downloads.length <= 256 && value.downloads.every(isDownload) && hasUniqueBy(value.downloads, (entry) => entry.id)
     && (value.download_folder === null || (typeof value.download_folder === 'string' && validText(value.download_folder) && !value.download_folder.includes('/')))

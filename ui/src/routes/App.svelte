@@ -19,6 +19,7 @@
     tabs: [],
     selected_tab: 0,
     can_restore: false,
+    private_window: false,
     surface: 'browse',
     settings: { theme: 'system', search_engine: 'duckduckgo', restore_session: true, clear_history_on_exit: false },
     suggestions: [],
@@ -382,6 +383,7 @@
     </form>
 
     <div class="toolbar-actions" aria-label="Browser actions">
+      {#if snapshot.private_window}<span class="private-indicator" aria-label="Private window">Private</span>{/if}
       <button class="toolbar-action download-toolbar-button" class:approval-badge={snapshot.download_approval_count > 0} type="button" aria-label={snapshot.download_approval_count > 0 ? `Downloads, ${snapshot.download_approval_count} pending approvals` : 'Downloads'} title="Downloads (⇧⌘J)" aria-keyshortcuts="Meta+Shift+J" aria-pressed={snapshot.surface === 'downloads'} onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
         <ChromeIcon name="download" />
         {#if snapshot.download_approval_count > 0}<span class="download-count" aria-hidden="true">{snapshot.download_approval_count}</span>{/if}
@@ -430,8 +432,11 @@
         <button type="button" class="more-menu-action" aria-label="Restore recently closed tab" disabled={!snapshot.can_restore} onclick={() => runMore({ version: 1, action: 'reopen_tab' })}><ChromeIcon name="restore" /><span>Restore</span></button>
         <span class="more-divider" aria-hidden="true"></span>
         <button type="button" class="more-menu-action" aria-label="Open new window" onclick={() => runMore({ version: 1, action: 'new_window' })}><ChromeIcon name="window" /><span>Window</span></button>
+        <button type="button" class="more-menu-action" aria-label="Open new private window" aria-keyshortcuts="Meta+Shift+N" title="New Private Window (⇧⌘N)" onclick={() => runMore({ version: 1, action: 'new_private_window' })}><ChromeIcon name="window" /><span>Private</span></button>
+        {#if !snapshot.private_window}
         <button type="button" class="more-menu-action" aria-label="Library" aria-pressed={snapshot.surface === 'library'} onclick={() => runMore({ version: 1, action: 'show_surface', value: 'library' })}><ChromeIcon name="library" /><span>Library</span></button>
         <button type="button" class="more-menu-action" aria-label="Settings" aria-pressed={snapshot.surface === 'settings'} onclick={() => runMore({ version: 1, action: 'show_surface', value: 'settings' })}><ChromeIcon name="settings" /><span>Settings</span></button>
+        {/if}
       </div>
     {:else}
     <div class="tab-list-scroll">
@@ -509,5 +514,13 @@
     <Settings {snapshot} {send} />
   {:else if snapshot.surface === 'downloads'}
     <Downloads {snapshot} {send} />
+  {:else if snapshot.surface === 'connection_error'}
+    <section class="surface-page" aria-labelledby="connection-error-heading">
+      <div class="page-width connection-error">
+        <h1 id="connection-error-heading">Secure connection failed</h1>
+        <p>Muffin couldn’t verify this site’s secure connection.</p>
+        <button class="quiet-button" type="button" onclick={() => send({ version: 1, action: 'show_surface', value: 'start' })}>Back to Start</button>
+      </div>
+    </section>
   {/if}
 </main>

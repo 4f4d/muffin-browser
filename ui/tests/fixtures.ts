@@ -14,7 +14,7 @@ export function makeSnapshot(overrides: Partial<ChromeSnapshot> = {}): ChromeSna
     secure: false,
     tabs: [],
     selected_tab: 0,
-    can_restore: false,
+    can_restore: false, private_window: false,
     surface: 'browse',
     settings: {
       theme: 'system',

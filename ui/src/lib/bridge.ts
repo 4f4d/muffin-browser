@@ -33,7 +33,7 @@ export type TabSnapshot = {
 };
 
 export type BrowserSurface = 'browse' | 'start' | 'library' | 'settings' | 'downloads';
-export type DownloadEntry = { id: number; name: string; host: string; status: 'awaiting_approval' | 'downloading' | 'finished' | 'failed' | 'cancelled'; bytes: number; retryable: boolean };
+export type DownloadEntry = { id: number; name: string; host: string; status: 'awaiting_approval' | 'downloading' | 'finished' | 'failed' | 'cancelled'; bytes: number; retryable: boolean; openable: boolean };
 export type PageToolsState = { zoom_percent: number; find_found: boolean | null; fullscreen: boolean; media_suspended: boolean };
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type SearchEngine = 'duckduckgo' | 'google' | 'bing';
@@ -270,10 +270,11 @@ function isSnapshot(value: unknown): value is ChromeSnapshot {
 
 function isDownload(value: unknown): value is DownloadEntry {
   if (!isObject(value)) return false;
-  return hasExactKeys(value, ['id', 'name', 'host', 'status', 'bytes', 'retryable']) && validId(value.id)
+  return hasExactKeys(value, ['id', 'name', 'host', 'status', 'bytes', 'retryable', 'openable']) && validId(value.id)
     && validText(value.name) && typeof value.host === 'string' && new TextEncoder().encode(value.host).length < 256
     && ['awaiting_approval', 'downloading', 'finished', 'failed', 'cancelled'].includes(value.status as string)
     && typeof value.retryable === 'boolean' && (!value.retryable || value.status === 'failed')
+    && typeof value.openable === 'boolean' && (!value.openable || value.status === 'finished')
     && Number.isSafeInteger(value.bytes) && (value.bytes as number) >= 0;
 }
 

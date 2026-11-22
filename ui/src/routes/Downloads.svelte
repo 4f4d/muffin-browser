@@ -41,7 +41,7 @@
               <button class="quiet-button" type="button" aria-label={`Cancel download ${item.name}`} onclick={() => send({ version: 1, action: 'cancel_download', id: item.id })}>Cancel</button>
             {:else if item.status === 'finished'}
               <div class="download-consent" role="group" aria-label={`Actions for ${item.name}`}>
-                <button class="quiet-button" type="button" aria-label={`Open ${item.name}`} onclick={() => send({ version: 1, action: 'open_download', id: item.id })}>Open</button>
+                {#if item.openable}<button class="quiet-button" type="button" aria-label={`Open ${item.name}`} onclick={() => send({ version: 1, action: 'open_download', id: item.id })}>Open</button>{/if}
                 <button class="quiet-button" type="button" aria-label={`Show ${item.name} in folder`} onclick={() => send({ version: 1, action: 'reveal_download', id: item.id })}>Show in folder</button>
               </div>
             {:else if item.retryable}

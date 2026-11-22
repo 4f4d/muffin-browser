@@ -425,11 +425,11 @@ describe('browser chrome controls', () => {
       surface: 'downloads',
       download_approval_count: 2,
       downloads: [
-        { id: 90, name: '<img src=x onerror=alert(1)>', host: '<script>evil.test</script>', status: 'awaiting_approval', bytes: 0, retryable: false },
-        { id: 94, name: 'Later file', host: 'download.example', status: 'awaiting_approval', bytes: 0, retryable: false },
-        { id: 91, name: 'Annual report.pdf', host: 'reports.example', status: 'finished', bytes: 1250000, retryable: false },
-        { id: 92, name: 'Large archive.zip', host: 'files.example', status: 'downloading', bytes: 2048, retryable: false },
-        { id: 93, name: 'Cancelled item', host: 'files.example', status: 'cancelled', bytes: 0, retryable: false }
+        { id: 90, name: '<img src=x onerror=alert(1)>', host: '<script>evil.test</script>', status: 'awaiting_approval', bytes: 0, retryable: false, openable: false },
+        { id: 94, name: 'Later file', host: 'download.example', status: 'awaiting_approval', bytes: 0, retryable: false, openable: false },
+        { id: 91, name: 'Annual report.pdf', host: 'reports.example', status: 'finished', bytes: 1250000, retryable: false, openable: true },
+        { id: 92, name: 'Large archive.zip', host: 'files.example', status: 'downloading', bytes: 2048, retryable: false, openable: false },
+        { id: 93, name: 'Cancelled item', host: 'files.example', status: 'cancelled', bytes: 0, retryable: false, openable: false }
       ]
     }));
     await tick();
@@ -458,11 +458,11 @@ describe('browser chrome controls', () => {
     bridgeState.bridge.render(makeSnapshot({
       surface: 'downloads',
       downloads: [
-        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0, retryable: false },
-        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 2048, retryable: false },
-        { id: 112, name: 'Done.pdf', host: 'files.example', status: 'finished', bytes: 4096, retryable: false },
-        { id: 113, name: 'Broken.bin', host: 'files.example', status: 'failed', bytes: 10, retryable: true },
-        { id: 114, name: 'Stopped.bin', host: 'files.example', status: 'cancelled', bytes: 10, retryable: false }
+        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0, retryable: false, openable: false },
+        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 2048, retryable: false, openable: false },
+        { id: 112, name: 'Installer.pkg', host: 'files.example', status: 'finished', bytes: 4096, retryable: false, openable: false },
+        { id: 113, name: 'Broken.bin', host: 'files.example', status: 'failed', bytes: 10, retryable: true, openable: false },
+        { id: 114, name: 'Stopped.bin', host: 'files.example', status: 'cancelled', bytes: 10, retryable: false, openable: false }
       ]
     }));
     await tick();
@@ -471,6 +471,8 @@ describe('browser chrome controls', () => {
     document.querySelector<HTMLButtonElement>('[aria-label="Retry Broken.bin"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'retry_download', id: 113 });
     expect(document.querySelector('[aria-label="Retry Stopped.bin"]')).toBeNull();
+    expect(document.querySelector('[aria-label="Open Installer.pkg"]')).toBeNull();
+    expect(document.querySelector('[aria-label="Show Installer.pkg in folder"]')).not.toBeNull();
     document.querySelector<HTMLButtonElement>('[aria-label="Cancel download Active.zip"]')!.click();
     expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'cancel_download', id: 111 });
     document.querySelector<HTMLButtonElement>('[aria-label="Clear completed and stopped downloads"]')!.click();
@@ -479,8 +481,8 @@ describe('browser chrome controls', () => {
     bridgeState.bridge.render(makeSnapshot({
       surface: 'downloads',
       downloads: [
-        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0, retryable: false },
-        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 0, retryable: false }
+        { id: 110, name: 'Waiting.zip', host: 'files.example', status: 'awaiting_approval', bytes: 0, retryable: false, openable: false },
+        { id: 111, name: 'Active.zip', host: 'files.example', status: 'downloading', bytes: 0, retryable: false, openable: false }
       ]
     }));
     await tick();

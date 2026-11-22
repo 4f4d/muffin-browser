@@ -19,19 +19,20 @@ fn viewer_for(path: &Path, identity: (u64, u64)) -> Result<&'static str, &'stati
     {
         return Err(changed);
     }
-    let extension = path
-        .extension()
-        .and_then(|value| value.to_str())
-        .unwrap_or("");
-    if metadata.mode() & 0o111 != 0 {
-        return Err("Use Show in folder to review this file.");
+    supported_viewer(path, metadata.mode()).ok_or("Use Show in folder to review this file.")
+}
+
+pub fn supported_viewer(path: &Path, mode: u32) -> Option<&'static str> {
+    if mode & 0o111 != 0 {
+        return None;
     }
-    let viewer = match extension.to_ascii_lowercase().as_str() {
-        "txt" => "com.apple.TextEdit",
-        "pdf" | "png" | "jpg" | "jpeg" | "gif" | "tif" | "tiff" | "heic" => "com.apple.Preview",
-        _ => return Err("Use Show in folder to review this file."),
-    };
-    Ok(viewer)
+    match path.extension()?.to_str()?.to_ascii_lowercase().as_str() {
+        "txt" => Some("com.apple.TextEdit"),
+        "pdf" | "png" | "jpg" | "jpeg" | "gif" | "tif" | "tiff" | "heic" => {
+            Some("com.apple.Preview")
+        }
+        _ => None,
+    }
 }
 
 #[cfg(test)]

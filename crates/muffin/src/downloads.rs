@@ -37,6 +37,7 @@ pub struct DownloadItem {
     pub status: DownloadStatus,
     pub bytes: u64,
     pub retryable: bool,
+    pub openable: bool,
 }
 
 #[derive(Debug)]
@@ -47,6 +48,13 @@ struct Record {
     destination_root: Option<PathBuf>,
     completed_path: Option<PathBuf>,
     completed_identity: Option<(u64, u64)>,
+}
+
+struct PublishedFile {
+    path: PathBuf,
+    bytes: u64,
+    identity: (u64, u64),
+    openable: bool,
 }
 
 pub struct Downloads {
@@ -119,6 +127,7 @@ impl Downloads {
                 status: DownloadStatus::AwaitingApproval,
                 bytes: 0,
                 retryable: false,
+                openable: false,
             },
             staged_path: None,
             stage: None,
@@ -185,10 +194,17 @@ impl Downloads {
             return;
         };
         let published = success.then(|| self.publish_file(index)).flatten();
-        if let Some((path, bytes, identity)) = published {
+        if let Some(PublishedFile {
+            path,
+            bytes,
+            identity,
+            openable,
+        }) = published
+        {
             let record = &mut self.records[index];
             record.item.status = DownloadStatus::Finished;
             record.item.bytes = bytes;
+            record.item.openable = openable;
             if let Some(name) = path.file_name().and_then(|name| name.to_str()) {
                 record.item.name = name.to_owned();
             }
@@ -314,7 +330,7 @@ impl Downloads {
         }
     }
 
-    fn publish_file(&self, index: usize) -> Option<(PathBuf, u64, (u64, u64))> {
+    fn publish_file(&self, index: usize) -> Option<PublishedFile> {
         let record = &self.records[index];
         let root = record.destination_root.as_deref()?;
         let stage = record.stage.as_ref()?;
@@ -346,7 +362,16 @@ impl Downloads {
         for suffix in 0..10_000u32 {
             let visible = root.join(collision_name(&record.item.name, suffix));
             match fs::hard_link(staged_path, &visible) {
-                Ok(()) => return Some((visible, bytes, identity)),
+                Ok(()) => {
+                    let openable =
+                        crate::download_open::supported_viewer(&visible, meta.mode()).is_some();
+                    return Some(PublishedFile {
+                        path: visible,
+                        bytes,
+                        identity,
+                        openable,
+                    });
+                }
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
                 Err(_) => return None,
             }

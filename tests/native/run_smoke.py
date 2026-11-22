@@ -494,6 +494,8 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
         result = next(item for item in terminal["downloads"] if item.get("id") == download_id)
         if result.get("status") != "finished":
             raise AssertionError(f"{label} did not finish after approval: {result.get('status')}")
+        if result.get("openable") is not False:
+            raise AssertionError("unsupported fixture .bin appeared as openable")
         return result
 
     approved_rows = []
@@ -623,7 +625,8 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
         raise AssertionError("Retry did not issue exactly one fresh request without writing files")
     command("decide_download", id=new_id, approve=True)
     expect("fresh approval finishes the restarted native download", lambda s: any(
-        item["id"] == new_id and item["status"] == "finished" for item in s.get("downloads", [])
+        item["id"] == new_id and item["status"] == "finished" and item.get("openable") is True
+        for item in s.get("downloads", [])
     ))
     digest = sha256((directory / "retry.txt").read_bytes()).hexdigest()
     if digest != sha256(RETRY_PAYLOAD).hexdigest():
@@ -632,6 +635,8 @@ def exercise_page_tools(process, control, first, second, steps, capture, pdf_out
         "failed_download_id": failed_id, "approval_download_id": new_id,
         "get_requests": 2, "unapproved_filesystem_writes": False, "sha256": digest,
     }})
+    if capture is not None:
+        capture(process, control, command, "native-download-retry")
 
 
 def exercise_media(process, control, server, steps):

@@ -8,7 +8,10 @@ use objc2::{
 };
 use objc2_foundation::{
     MainThreadMarker, NSData, NSError, NSHTTPURLResponse, NSMutableURLRequest, NSObject,
-    NSObjectProtocol, NSString, NSURLRequest, NSURLResponse, NSURL,
+    NSObjectProtocol, NSString, NSURLErrorDomain, NSURLErrorFailingURLErrorKey,
+    NSURLErrorSecureConnectionFailed, NSURLErrorServerCertificateHasBadDate,
+    NSURLErrorServerCertificateHasUnknownRoot, NSURLErrorServerCertificateNotYetValid,
+    NSURLErrorServerCertificateUntrusted, NSURLRequest, NSURLResponse, NSURL,
 };
 use objc2_web_kit::{
     WKDownload, WKDownloadDelegate, WKDownloadRedirectPolicy, WKNavigation, WKNavigationAction,
@@ -314,6 +317,38 @@ fn http_url(url: Option<&NSURL>) -> Option<url::Url> {
     .then_some(parsed)
 }
 
+fn is_secure_connection_failure(error: &NSError) -> bool {
+    error.domain().isEqualToString(unsafe { NSURLErrorDomain })
+        && is_secure_connection_error_code(error.code())
+}
+
+#[allow(non_upper_case_globals)]
+fn is_secure_connection_error_code(code: isize) -> bool {
+    matches!(
+        code,
+        NSURLErrorSecureConnectionFailed
+            | NSURLErrorServerCertificateHasBadDate
+            | NSURLErrorServerCertificateUntrusted
+            | NSURLErrorServerCertificateHasUnknownRoot
+            | NSURLErrorServerCertificateNotYetValid
+    )
+}
+
+fn failing_https_url(error: &NSError) -> String {
+    let key = unsafe { NSURLErrorFailingURLErrorKey };
+    let Some(url) = error
+        .userInfo()
+        .objectForKey(key)
+        .and_then(|value| value.downcast::<NSURL>().ok())
+    else {
+        return String::new();
+    };
+    let Some(parsed) = http_url(Some(&url)).filter(|url| url.scheme() == "https") else {
+        return String::new();
+    };
+    parsed.to_string()
+}
+
 fn sanitized_retry_request(request: &NSURLRequest) -> Option<Retained<NSURLRequest>> {
     let url = http_url(request.URL().as_deref())?;
     let method = request.HTTPMethod()?.to_string();
@@ -348,6 +383,33 @@ fn replayable_request_parts(
     }) && method == "GET"
         && !has_body
         && !has_body_stream
+}
+
+#[cfg(test)]
+mod tls_error_tests {
+    use super::is_secure_connection_error_code;
+    use objc2_foundation::{
+        NSURLErrorSecureConnectionFailed, NSURLErrorServerCertificateHasBadDate,
+        NSURLErrorServerCertificateHasUnknownRoot, NSURLErrorServerCertificateNotYetValid,
+        NSURLErrorServerCertificateUntrusted,
+    };
+
+    #[allow(non_upper_case_globals)]
+    #[test]
+    fn only_secure_connection_and_server_certificate_codes_are_included() {
+        for code in [
+            NSURLErrorSecureConnectionFailed,
+            NSURLErrorServerCertificateHasBadDate,
+            NSURLErrorServerCertificateUntrusted,
+            NSURLErrorServerCertificateHasUnknownRoot,
+            NSURLErrorServerCertificateNotYetValid,
+        ] {
+            assert!(is_secure_connection_error_code(code));
+        }
+        for unrelated in [-1001, -1005, -1205, -1206, 0] {
+            assert!(!is_secure_connection_error_code(unrelated));
+        }
+    }
 }
 
 fn sanitized_request_is_safe(request: &NSURLRequest) -> bool {
@@ -405,6 +467,8 @@ define_class!(
 struct NavigationState {
     wry: Retained<ProtocolObject<dyn WKNavigationDelegate>>,
     downloads: Retained<TransferDelegate>,
+    secure_connection_failed: Rc<dyn Fn(String)>,
+    current_navigation: Cell<usize>,
 }
 
 define_class!(
@@ -416,6 +480,13 @@ define_class!(
     unsafe impl NSObjectProtocol for NavigationDelegate {}
 
     unsafe impl WKNavigationDelegate for NavigationDelegate {
+        #[unsafe(method(webView:didStartProvisionalNavigation:))]
+        fn started_provisional(&self, _: &WKWebView, navigation: Option<&WKNavigation>) {
+            self.ivars()
+                .current_navigation
+                .set(navigation.map_or(0, |navigation| ptr::from_ref(navigation).addr()));
+        }
+
         #[unsafe(method(webView:decidePolicyForNavigationAction:decisionHandler:))]
         fn action(
             &self,
@@ -504,6 +575,7 @@ define_class!(
 
         #[unsafe(method(webView:didCommitNavigation:))]
         fn committed(&self, view: &WKWebView, navigation: Option<&WKNavigation>) {
+            self.clear_current_navigation(navigation);
             unsafe {
                 self.ivars()
                     .wry
@@ -513,6 +585,7 @@ define_class!(
 
         #[unsafe(method(webView:didFinishNavigation:))]
         fn finished(&self, view: &WKWebView, navigation: Option<&WKNavigation>) {
+            self.clear_current_navigation(navigation);
             unsafe {
                 self.ivars()
                     .wry
@@ -524,8 +597,34 @@ define_class!(
         fn terminated(&self, view: &WKWebView) {
             unsafe { self.ivars().wry.webViewWebContentProcessDidTerminate(view) };
         }
+
+        #[unsafe(method(webView:didFailProvisionalNavigation:withError:))]
+        fn failed_provisional(
+            &self,
+            _: &WKWebView,
+            navigation: Option<&WKNavigation>,
+            error: &NSError,
+        ) {
+            let matches_current = navigation.is_some_and(|navigation| {
+                self.ivars().current_navigation.get() == ptr::from_ref(navigation).addr()
+            });
+            if matches_current && is_secure_connection_failure(error) {
+                (self.ivars().secure_connection_failed)(failing_https_url(error));
+            }
+            self.clear_current_navigation(navigation);
+        }
     }
 );
+
+impl NavigationDelegate {
+    fn clear_current_navigation(&self, navigation: Option<&WKNavigation>) {
+        if navigation.is_some_and(|navigation| {
+            self.ivars().current_navigation.get() == ptr::from_ref(navigation).addr()
+        }) {
+            self.ivars().current_navigation.set(0);
+        }
+    }
+}
 
 pub struct TabDownloads {
     _navigation: Retained<NavigationDelegate>,
@@ -538,6 +637,7 @@ impl TabDownloads {
         view: &WKWebView,
         store: Rc<RefCell<Downloads>>,
         changed: impl Fn() + 'static,
+        secure_connection_failed: impl Fn(String) + 'static,
     ) -> Option<Self> {
         let main_thread = MainThreadMarker::new()?;
         if !view.respondsToSelector(objc2::sel!(startDownloadUsingRequest:completionHandler:)) {
@@ -557,7 +657,12 @@ impl TabDownloads {
         let downloads = unsafe { msg_send![super(downloads), init] };
         let navigation = main_thread
             .alloc::<NavigationDelegate>()
-            .set_ivars(NavigationState { wry, downloads });
+            .set_ivars(NavigationState {
+                wry,
+                downloads,
+                secure_connection_failed: Rc::new(secure_connection_failed),
+                current_navigation: Cell::new(0),
+            });
         let navigation: Retained<NavigationDelegate> =
             unsafe { msg_send![super(navigation), init] };
         unsafe { view.setNavigationDelegate(Some(ProtocolObject::from_ref(&*navigation))) };

@@ -1072,17 +1072,25 @@ def exercise_privacy(process, control, server, launch, steps, capture):
         "explicitly_saved_file_survived_private_window_close": True,
         "published_download_retained_macos_quarantine_attribute": True,
     }})
-    return regular_url
+    return regular_url, normal_count
 
 
-def verify_privacy_restart(process, control, regular_url, steps):
+def verify_privacy_restart(process, control, regular_url, normal_count, steps):
+    session = (control / "session.json").read_text(encoding="utf-8")
+    windows = json.loads(session)["windows"]
+    if "probe=private-" in session or len(windows) != normal_count:
+        raise AssertionError("persisted session contains private tabs/windows or omits regular windows")
+    matching = [
+        index for index, window in enumerate(windows)
+        if any(tab["id"] == window["selected_tab"] and tab["url"] == regular_url for tab in window["tabs"])
+    ]
+    if len(matching) != 1:
+        raise AssertionError("the regular control tab was not saved as selected in exactly one window")
+    send_command(control, "focus_fixture_window", index=matching[0])
     until(process, "restarted regular browsing session", lambda: (
         (state := observation(control)).get("chrome_ready") and state.get("private_window") is False
-        and state.get("url") == regular_url
+        and state.get("url") == regular_url and state.get("window_count") == normal_count
     ))
-    session = (control / "session.json").read_text(encoding="utf-8")
-    if "probe=private-" in session or regular_url not in session:
-        raise AssertionError("persisted session contains private tab data or omits regular tabs")
     steps.append({"private_window_excluded_from_session_restart": True})
 
 
@@ -1263,14 +1271,14 @@ def main():
                     if args.chrome_layout:
                         exercise_chrome_layout(process, control, result["steps"], capture)
                     if args.privacy:
-                        regular_url = exercise_privacy(process, control, servers[0], launch, result["steps"], capture)
+                        regular_url, regular_count = exercise_privacy(process, control, servers[0], launch, result["steps"], capture)
                         send_command(control, "quit_test")
                         if process.wait(timeout=8) != 0:
                             raise RuntimeError("private fixture shutdown failed")
                         (control / "commands.jsonl").unlink()
                         (control / "state.json").unlink()
                         process = subprocess.Popen(launch, stdout=log, stderr=log)
-                        verify_privacy_restart(process, control, regular_url, result["steps"])
+                        verify_privacy_restart(process, control, regular_url, regular_count, result["steps"])
                         exercise_secure_connection(process, control, result["steps"], capture)
                 except Exception:
                     state_path = control / "state.json"

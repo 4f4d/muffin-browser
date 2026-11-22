@@ -208,6 +208,10 @@
 
   function onTabSearchKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') closeTabSearch();
+    if (event.key === 'ArrowDown' && visibleTabs.length > 0) {
+      event.preventDefault();
+      document.querySelector<HTMLButtonElement>(`[data-tab-id="${visibleTabs[0].id}"]`)?.focus();
+    }
     if (event.key === 'Enter' && visibleTabs.length > 0) {
       const tabId = visibleTabs[0].id;
       send({ version: 1, action: 'select_tab', id: tabId });
@@ -230,10 +234,12 @@
     }
     if (!event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
       event.preventDefault();
-      const last = snapshot.tabs.length - 1;
+      const candidates = tabSearchOpen ? visibleTabs : snapshot.tabs;
+      const position = candidates.findIndex((tab) => tab.id === tabId);
+      const last = candidates.length - 1;
       const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? last
-        : Math.max(0, Math.min(last, index + (event.key === 'ArrowLeft' ? -1 : 1)));
-      const nextTab = snapshot.tabs[nextIndex];
+        : Math.max(0, Math.min(last, position + (event.key === 'ArrowLeft' ? -1 : 1)));
+      const nextTab = candidates[nextIndex];
       if (nextTab) {
         send({ version: 1, action: 'select_tab', id: nextTab.id });
         document.querySelector<HTMLButtonElement>(`[data-tab-id="${nextTab.id}"]`)?.focus();
@@ -390,7 +396,7 @@
       </button>
     </form>
 
-    <div class="toolbar-actions" aria-label="Browser actions">
+    <div class="toolbar-actions" role="group" aria-label="Browser actions">
       {#if snapshot.private_window}<span class="private-indicator" aria-label="Private window">Private</span>{/if}
       <button class="toolbar-action download-toolbar-button" class:approval-badge={snapshot.download_approval_count > 0} type="button" aria-label={snapshot.download_approval_count > 0 ? `Downloads, ${snapshot.download_approval_count} pending approvals` : 'Downloads'} title="Downloads (⇧⌘J)" aria-keyshortcuts="Meta+Shift+J" aria-pressed={snapshot.surface === 'downloads'} onclick={() => send({ version: 1, action: 'show_surface', value: 'downloads' })}>
         <ChromeIcon name="download" />
@@ -448,13 +454,12 @@
       </div>
     {:else}
     <div class="tab-list-scroll">
-      <div class="tab-list" role="tablist" aria-label="Open tabs">
+      <div class="tab-list" role="group" aria-label="Open tabs">
         {#each visibleTabs as tab (tab.id)}
           <div class="tab-item" role="presentation" class:selected={tab.id === snapshot.selected_tab} class:pinned={tab.pinned} class:discarded={tab.discarded}>
             <button
               class="tab-select"
-              role="tab"
-              aria-selected={tab.id === snapshot.selected_tab}
+              aria-pressed={tab.id === snapshot.selected_tab}
               aria-label={`${tab.title || 'New tab'}${tab.pinned ? ', pinned' : ''}${tab.discarded ? ', discarded' : ''}`}
               title={tab.title || 'New tab'}
               tabindex={tab.id === snapshot.selected_tab ? 0 : -1}

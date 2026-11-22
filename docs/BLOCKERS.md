@@ -158,3 +158,4 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 | Criterion | Hypothesis before retry | Evidence |
 |---|---|---|
 | Confirmation focus in Settings | Swapping two nodes bound to the same button reference left focus on the previous control. Keep one mounted button that changes its label between Clear website data and Cancel, then assert focus without skipping the confirmation check. | First exact verifier at `/private/tmp/muffin-m6-verify.log`. |
+| Tab-strip screen reader semantics | Axe flagged Close and Unload as invalid children of a DOM tablist. Expose the browser strip as a named group with native selection buttons showing pressed state, keep Close and Unload accessible and retain the existing keyboard and layout checks. | Exact Chromium audit and detail under `/private/tmp/muffin-m6-a11y/`. |

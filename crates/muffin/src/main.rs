@@ -806,6 +806,7 @@ mod browser {
             }
             if tab_id == self.tabs.selected() && !recovering {
                 self.profile_state.surface = if url == "about:blank" {
+                    self.set_title("New Tab");
                     Surface::Start
                 } else {
                     Surface::Browse

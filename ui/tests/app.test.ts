@@ -281,7 +281,11 @@ describe('browser chrome controls', () => {
     search.value = 'docs';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     await tick();
-    expect(document.querySelectorAll('[role="tab"]')).toHaveLength(1);
+    expect(document.querySelectorAll('.tab-list .tab-select')).toHaveLength(1);
+    expect(document.querySelector('.tab-list .tab-select')?.getAttribute('aria-pressed')).toBe('false');
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement?.getAttribute('data-tab-id')).toBe('30');
+    search.focus();
     search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await tick();
     await tick();

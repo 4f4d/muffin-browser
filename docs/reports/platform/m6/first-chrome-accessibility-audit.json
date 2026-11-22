@@ -1,0 +1,415 @@
+{
+  "scope": "bundled chrome DOM in Chromium",
+  "axe": "4.13.0",
+  "pa11y": "9.1.1",
+  "states": [
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "start",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "private",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "settings",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "downloads",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 640,
+      "scenario": "connection_error",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "start",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "private",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "settings",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "downloads",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1100,
+      "scenario": "connection_error",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "start",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "private",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "settings",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "downloads",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 640,
+      "scenario": "connection_error",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "start",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "private",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "settings",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "downloads",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1100,
+      "scenario": "connection_error",
+      "violations": [
+        {
+          "rule": "aria-required-children",
+          "impact": "critical",
+          "nodes": [
+            [
+              ".tab-list"
+            ]
+          ]
+        }
+      ],
+      "incomplete_rules": [
+        "aria-prohibited-attr"
+      ]
+    }
+  ],
+  "source_commit": "1d172687b776ec829005500795aed0b6211f6e38",
+  "source_worktree_clean": true,
+  "chrome_bundle_sha256": "29a0149d99c00b5b4351b28f809e02c202992343276d59f4a2debed9d4858698",
+  "browser": "157.0.8103.80",
+  "address_enter_submitted": true,
+  "htmlcs_initial_chrome": [
+    {
+      "code": "WCAG2AA.Principle3.Guideline3_2.3_2_2.H32.2",
+      "type": "error",
+      "selector": "#app > main > div:nth-child(1) > form"
+    }
+  ]
+}

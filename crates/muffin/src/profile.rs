@@ -9,7 +9,7 @@ use html5ever::{
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::{
-    path::Path,
+    path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
 use url::Url;
@@ -159,6 +159,40 @@ impl Profile {
             }
         }
         Ok(s)
+    }
+    pub fn download_folder(&self) -> Result<Option<PathBuf>> {
+        let value = self
+            .conn
+            .query_row(
+                "SELECT value FROM settings WHERE key='download_folder'",
+                [],
+                |row| row.get::<_, String>(0),
+            )
+            .optional()?;
+        Ok(value.map(PathBuf::from))
+    }
+    pub fn save_download_folder(&mut self, folder: Option<&Path>) -> Result<()> {
+        let canonical = match folder {
+            Some(folder) => Some(
+                crate::downloads::Downloads::canonical_folder(folder)
+                    .ok_or_else(|| ProfileError::Html("invalid download folder".into()))?,
+            ),
+            None => None,
+        };
+        let tx = self.conn.unchecked_transaction()?;
+        if let Some(folder) = canonical {
+            let Some(folder) = folder.to_str() else {
+                return Err(ProfileError::Html("invalid download folder".into()));
+            };
+            tx.execute(
+                "INSERT INTO settings(key,value) VALUES('download_folder',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                [folder],
+            )?;
+        } else {
+            tx.execute("DELETE FROM settings WHERE key='download_folder'", [])?;
+        }
+        tx.commit()?;
+        Ok(())
     }
     pub fn save_settings(&self, s: &Settings) -> Result<()> {
         if !["system", "light", "dark"].contains(&s.theme.as_str())
@@ -697,7 +731,11 @@ mod tests {
         let directory = d.path().canonicalize().unwrap();
         let path = directory.join("profile.sqlite");
         {
-            let p = Profile::open(&path).unwrap();
+            let mut p = Profile::open(&path).unwrap();
+            assert_eq!(p.download_folder().unwrap(), None);
+            let download_folder = directory.join("chosen-downloads");
+            std::fs::create_dir(&download_folder).unwrap();
+            p.save_download_folder(Some(&download_folder)).unwrap();
             let s = Settings {
                 theme: "dark".into(),
                 ..Settings::default()
@@ -714,6 +752,10 @@ mod tests {
         let p = Profile::open(&path).unwrap();
         assert_eq!(p.history(4).unwrap().len(), 1);
         assert_eq!(p.settings().unwrap().theme, "dark");
+        assert_eq!(
+            p.download_folder().unwrap(),
+            Some(directory.join("chosen-downloads"))
+        );
         #[cfg(unix)]
         {
             let linked_database = directory.join("linked-profile.sqlite");

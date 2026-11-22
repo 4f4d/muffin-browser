@@ -287,6 +287,8 @@ input::placeholder { color: var(--placeholder); opacity: 1; }
 .settings-shortcuts { display: grid; gap: 8px; min-width: 0; margin: 0; font-size: 12px; }
 .settings-shortcuts div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .settings-shortcuts dd { margin: 0; }
+.settings-folder-name { overflow-wrap: anywhere; color: var(--ink); font-size: 12px; }
+.settings-folder-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .settings-shortcuts kbd { padding: 2px 7px; border-radius: 5px; color: var(--ink); background: var(--tab-active); font: inherit; white-space: nowrap; }
 .settings-checks input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .surface-notice { padding: 10px 0; border-top: 1px solid var(--line); color: var(--secure); font-size: 11px; }

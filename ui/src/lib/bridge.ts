@@ -20,7 +20,7 @@ export type ChromeAction =
   | { version: 1; action: 'zoom_page'; value: 'in' | 'out' | 'reset' }
   | { version: 1; action: 'toggle_fullscreen' | 'print_page' | 'save_pdf' }
   | { version: 1; action: 'reveal_download' | 'cancel_download'; id: number }
-  | { version: 1; action: 'clear_downloads' }
+  | { version: 1; action: 'clear_downloads' | 'choose_download_folder' | 'reset_download_folder' }
   | { version: 1; action: 'decide_download'; id: number; approve: boolean };
 
 export type TabSnapshot = {
@@ -69,6 +69,7 @@ export type ChromeSnapshot = {
   notice: string;
   downloads: DownloadEntry[];
   download_approval_count: number;
+  download_folder: string | null;
   page_tools: PageToolsState;
 };
 
@@ -120,6 +121,7 @@ const initialSnapshot: ChromeSnapshot = {
   notice: '',
   downloads: [],
   download_approval_count: 0,
+  download_folder: null,
   page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
 };
 
@@ -221,7 +223,7 @@ export function isAction(value: unknown): value is ChromeAction {
   if (value.action === 'zoom_page' && hasExactKeys(value, ['version', 'action', 'value'])) return ['in', 'out', 'reset'].includes(value.value as string);
   if (hasExactKeys(value, ['version', 'action']) && ['toggle_fullscreen', 'print_page', 'save_pdf'].includes(value.action)) return true;
   if (hasExactKeys(value, ['version', 'action', 'id']) && ['reveal_download', 'cancel_download'].includes(value.action)) return validId(value.id);
-  if (hasExactKeys(value, ['version', 'action']) && value.action === 'clear_downloads') return true;
+  if (hasExactKeys(value, ['version', 'action']) && ['clear_downloads', 'choose_download_folder', 'reset_download_folder'].includes(value.action)) return true;
   if (value.action === 'decide_download' && hasExactKeys(value, ['version', 'action', 'id', 'approve'])) {
     return validId(value.id) && typeof value.approve === 'boolean';
   }
@@ -234,7 +236,7 @@ function validId(value: unknown) {
 
 function isSnapshot(value: unknown): value is ChromeSnapshot {
   if (!isObject(value)) return false;
-  return hasExactKeys(value, ['version', 'url', 'title', 'loading', 'can_back', 'can_forward', 'status', 'secure', 'tabs', 'selected_tab', 'can_restore', 'surface', 'settings', 'suggestions', 'history', 'bookmarks', 'shortcuts', 'bookmarked', 'notice', 'downloads', 'page_tools', 'download_approval_count'])
+  return hasExactKeys(value, ['version', 'url', 'title', 'loading', 'can_back', 'can_forward', 'status', 'secure', 'tabs', 'selected_tab', 'can_restore', 'surface', 'settings', 'suggestions', 'history', 'bookmarks', 'shortcuts', 'bookmarked', 'notice', 'downloads', 'page_tools', 'download_approval_count', 'download_folder'])
     && value.version === 1
     && typeof value.url === 'string' && value.url.length <= MAX_URL_LENGTH
     && typeof value.title === 'string' && value.title.length <= MAX_TITLE_LENGTH
@@ -259,6 +261,7 @@ function isSnapshot(value: unknown): value is ChromeSnapshot {
     && typeof value.bookmarked === 'boolean'
     && typeof value.notice === 'string' && value.notice.length <= MAX_TITLE_LENGTH * 2
     && Array.isArray(value.downloads) && value.downloads.length <= 256 && value.downloads.every(isDownload) && hasUniqueBy(value.downloads, (entry) => entry.id)
+    && (value.download_folder === null || (typeof value.download_folder === 'string' && validText(value.download_folder) && !value.download_folder.includes('/')))
     && isPageTools(value.page_tools)
     && Number.isSafeInteger(value.download_approval_count) && (value.download_approval_count as number) >= 0 && (value.download_approval_count as number) <= 16;
 }

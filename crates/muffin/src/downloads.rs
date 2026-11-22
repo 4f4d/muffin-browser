@@ -42,12 +42,14 @@ struct Record {
     item: DownloadItem,
     staged_path: Option<PathBuf>,
     stage: Option<TempDir>,
+    destination_root: Option<PathBuf>,
     completed_path: Option<PathBuf>,
 }
 
 pub struct Downloads {
-    root: PathBuf,
-    canonical_root: Option<PathBuf>,
+    default_root: PathBuf,
+    canonical_default_root: Option<PathBuf>,
+    custom_root: Option<PathBuf>,
     records: Vec<Record>,
     next_id: u32,
 }
@@ -55,11 +57,38 @@ pub struct Downloads {
 impl Downloads {
     pub fn new(root: PathBuf) -> Self {
         Self {
-            root,
-            canonical_root: None,
+            default_root: root,
+            canonical_default_root: None,
+            custom_root: None,
             records: Vec::new(),
             next_id: 1,
         }
+    }
+
+    pub fn set_custom_root(&mut self, root: Option<PathBuf>) {
+        self.custom_root = root;
+    }
+
+    pub fn root(&self) -> &Path {
+        self.custom_root.as_deref().unwrap_or(&self.default_root)
+    }
+
+    pub fn is_custom_root(&self) -> bool {
+        self.custom_root.is_some()
+    }
+
+    /// Return the canonical path for an existing, non-symlink folder usable by WKDownload.
+    pub fn canonical_folder(path: &Path) -> Option<PathBuf> {
+        if !path.is_absolute() || path.to_str().is_none() {
+            return None;
+        }
+        let metadata = fs::symlink_metadata(path).ok()?;
+        if metadata.file_type().is_symlink() || !metadata.is_dir() {
+            return None;
+        }
+        let canonical = fs::canonicalize(path).ok()?;
+        canonical.to_str()?;
+        Some(canonical)
     }
 
     /// Record an engine-proposed transfer without touching the filesystem.
@@ -89,6 +118,7 @@ impl Downloads {
             },
             staged_path: None,
             stage: None,
+            destination_root: None,
             completed_path: None,
         });
         self.trim_recent();
@@ -102,7 +132,7 @@ impl Downloads {
             .iter()
             .position(|r| r.item.id == id && r.item.status == DownloadStatus::AwaitingApproval)?;
         let prepared = (|| {
-            let root = self.ensure_root()?.to_path_buf();
+            let root = self.root_for_approval()?;
             let stage = tempfile::Builder::new()
                 .prefix(".muffin-download-")
                 .tempdir_in(&root)
@@ -111,12 +141,13 @@ impl Downloads {
             if fs::symlink_metadata(&staged_path).is_ok() {
                 return None;
             }
-            Some((stage, staged_path))
+            Some((root, stage, staged_path))
         })();
-        if let Some((stage, path)) = prepared {
+        if let Some((root, stage, path)) = prepared {
             let record = &mut self.records[index];
             record.staged_path = Some(path.clone());
             record.stage = Some(stage);
+            record.destination_root = Some(root);
             record.item.status = DownloadStatus::Downloading;
             Some(path)
         } else {
@@ -207,21 +238,26 @@ impl Downloads {
             .and_then(|r| r.completed_path.as_deref())
     }
 
-    fn ensure_root(&mut self) -> Option<&Path> {
-        if self.canonical_root.is_none() {
-            if !self.root.is_absolute() {
+    fn root_for_approval(&mut self) -> Option<PathBuf> {
+        if let Some(custom) = &self.custom_root {
+            return Self::canonical_folder(custom);
+        }
+        if self.canonical_default_root.is_none() {
+            if !self.default_root.is_absolute() {
                 return None;
             }
-            if fs::create_dir_all(&self.root).is_err() {
+            if fs::create_dir_all(&self.default_root).is_err() {
                 return None;
             }
-            let meta = fs::symlink_metadata(&self.root).ok()?;
+            let meta = fs::symlink_metadata(&self.default_root).ok()?;
             if meta.file_type().is_symlink() || !meta.is_dir() {
                 return None;
             }
-            self.canonical_root = Some(fs::canonicalize(&self.root).ok()?);
+            let canonical = fs::canonicalize(&self.default_root).ok()?;
+            canonical.to_str()?;
+            self.canonical_default_root = Some(canonical);
         }
-        self.canonical_root.as_deref()
+        self.canonical_default_root.clone()
     }
 
     fn allocate_id(&mut self) -> u32 {
@@ -235,8 +271,8 @@ impl Downloads {
     }
 
     fn publish_file(&self, index: usize) -> Option<(PathBuf, u64)> {
-        let root = self.canonical_root.as_deref()?;
         let record = &self.records[index];
+        let root = record.destination_root.as_deref()?;
         let stage = record.stage.as_ref()?;
         let staged_path = record.staged_path.as_deref()?;
         let stage_path = stage.path();
@@ -471,6 +507,91 @@ mod tests {
                 .unwrap()
                 .join("report (1).pdf")
         );
+    }
+
+    #[test]
+    fn approved_transfers_keep_the_root_selected_at_approval() {
+        let dir = tempfile::tempdir().unwrap();
+        let default = dir.path().join("default");
+        let custom = dir.path().join("custom");
+        fs::create_dir(&custom).unwrap();
+        let mut downloads = Downloads::new(default.clone());
+        let first = downloads
+            .offer(&url("https://example.test/a"), Path::new("same.txt"))
+            .unwrap();
+        let first_stage = downloads.approve(first).unwrap();
+        assert!(first_stage.starts_with(fs::canonicalize(&default).unwrap()));
+
+        downloads.set_custom_root(Some(custom.clone()));
+        assert!(downloads.is_custom_root());
+        assert_eq!(downloads.root(), custom);
+        let second = downloads
+            .offer(&url("https://example.test/b"), Path::new("same.txt"))
+            .unwrap();
+        let second_stage = downloads.approve(second).unwrap();
+        assert!(second_stage.starts_with(fs::canonicalize(&custom).unwrap()));
+
+        fs::write(&first_stage, b"default payload").unwrap();
+        fs::write(&second_stage, b"custom payload").unwrap();
+        downloads.finish(first, true);
+        downloads.finish(second, true);
+        assert_eq!(
+            fs::read(downloads.completed_path(first).unwrap()).unwrap(),
+            b"default payload"
+        );
+        assert_eq!(
+            fs::read(downloads.completed_path(second).unwrap()).unwrap(),
+            b"custom payload"
+        );
+        assert!(downloads
+            .completed_path(first)
+            .unwrap()
+            .starts_with(fs::canonicalize(default).unwrap()));
+        assert!(downloads
+            .completed_path(second)
+            .unwrap()
+            .starts_with(fs::canonicalize(custom).unwrap()));
+    }
+
+    #[test]
+    fn custom_root_duplicate_and_existing_names_never_overwrite() {
+        let dir = tempfile::tempdir().unwrap();
+        let custom = dir.path().join("custom");
+        fs::create_dir(&custom).unwrap();
+        fs::write(custom.join("report.txt"), b"user file").unwrap();
+        let mut downloads = Downloads::new(dir.path().join("default"));
+        downloads.set_custom_root(Some(custom.clone()));
+
+        let first = downloads
+            .offer(&url("https://example.test/a"), Path::new("report.txt"))
+            .unwrap();
+        let second = downloads
+            .offer(&url("https://example.test/b"), Path::new("report.txt"))
+            .unwrap();
+        for (id, payload) in [(first, b"first".as_slice()), (second, b"second".as_slice())] {
+            let staged = downloads.approve(id).unwrap();
+            fs::write(staged, payload).unwrap();
+            downloads.finish(id, true);
+        }
+        assert_eq!(fs::read(custom.join("report.txt")).unwrap(), b"user file");
+        assert_eq!(fs::read(custom.join("report (1).txt")).unwrap(), b"first");
+        assert_eq!(fs::read(custom.join("report (2).txt")).unwrap(), b"second");
+    }
+
+    #[test]
+    fn missing_custom_root_fails_approval_without_fallback_or_creation() {
+        let dir = tempfile::tempdir().unwrap();
+        let default = dir.path().join("default");
+        let missing = dir.path().join("removed-custom-folder");
+        let mut downloads = Downloads::new(default.clone());
+        downloads.set_custom_root(Some(missing.clone()));
+        let id = downloads
+            .offer(&url("https://example.test/file"), Path::new("file"))
+            .unwrap();
+        assert!(downloads.approve(id).is_none());
+        assert!(!missing.exists());
+        assert!(!default.exists());
+        assert_eq!(downloads.items()[0].status, DownloadStatus::Failed);
     }
 
     #[test]

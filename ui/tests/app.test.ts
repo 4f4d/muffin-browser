@@ -405,6 +405,21 @@ describe('browser chrome controls', () => {
     expect(document.body.classList.contains('surface-expanded')).toBe(false);
   });
 
+  it('shows only the chosen folder name and routes folder changes without a path', async () => {
+    bridgeState.bridge.render(makeSnapshot({ surface: 'settings', download_folder: 'Project files' }));
+    await tick();
+    expect(document.querySelector('.settings-folder-name')?.textContent).toBe('Project files');
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.settings-folder-actions button');
+    buttons[0].click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'choose_download_folder' });
+    buttons[1].click();
+    expect(bridgeState.bridge.take()).toEqual({ version: 1, action: 'reset_download_folder' });
+    bridgeState.bridge.render(makeSnapshot({ surface: 'settings' }));
+    await tick();
+    expect(document.querySelector('.settings-folder-name')?.textContent).toBe('Downloads');
+    expect(document.querySelectorAll('.settings-folder-actions button')).toHaveLength(1);
+  });
+
   it('keeps consent text inert and routes approval, cancellation, and reveal actions', async () => {
     bridgeState.bridge.render(makeSnapshot({
       surface: 'downloads',

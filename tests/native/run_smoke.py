@@ -775,6 +775,62 @@ def exercise_chrome_themes(process, control, first, steps, capture):
             capture(process, control, command, label)
 
 
+def exercise_download_folder(process, control, first, steps, capture):
+    def expect(label, predicate):
+        return until(process, label, lambda: (state if predicate(state := observation(control)) else None))
+
+    def approve(path):
+        send_command(control, "navigate", value=first.origin + path)
+        send_command(control, "show_surface", value="downloads")
+        state = expect(f"{path} awaiting consent", lambda s: any(
+            item["status"] == "awaiting_approval" for item in s.get("downloads", [])
+        ))
+        row = next(item for item in state["downloads"] if item["status"] == "awaiting_approval")
+        send_command(control, "decide_download", id=row["id"], approve=True)
+        return row["id"]
+
+    def finish(download_id):
+        state = expect(f"download {download_id} published", lambda s: any(
+            item["id"] == download_id and item["status"] == "finished" for item in s.get("downloads", [])
+        ))
+        return next(item["name"] for item in state["downloads"] if item["id"] == download_id)
+
+    original = control / "downloads"
+    alternate = control / "alternate-downloads"
+    alternate.mkdir()
+    (alternate / "shared.bin").write_bytes(b"keep fixture user file")
+    active = approve(SLOW_DOWNLOAD)
+    expect("the original folder has an active transfer", lambda s: any(
+        item["id"] == active and item["status"] == "downloading" and item["bytes"] > 0
+        for item in s.get("downloads", [])
+    ))
+    send_command(control, "show_surface", value="settings")
+    send_command(control, "choose_fixture_download_folder")
+    expect("the chosen folder is displayed by name", lambda s: s.get("download_folder") == alternate.name)
+    layout = control / "chrome-layout.json"
+    layout.unlink(missing_ok=True)
+    send_command(control, "inspect_chrome")
+    until(process, "Settings WebKit layout after choosing a folder", layout.is_file)
+    if json.loads(layout.read_text())["visible_download_folder"] != alternate.name:
+        raise AssertionError("Settings did not render the chosen folder name")
+    if capture is not None:
+        capture(process, control, lambda action, **fields: send_command(control, action, **fields), "native-download-folder-setting")
+    first.release_slow_download.set()
+    send_command(control, "show_surface", value="downloads")
+    retained = original / finish(active)
+    if retained.read_bytes() != SLOW_DOWNLOAD_CHUNK * 2:
+        raise AssertionError("the active transfer did not keep its original destination and data")
+    chosen = alternate / finish(approve("/download/alpha"))
+    if chosen.name != "shared (1).bin" or chosen.read_bytes() != DOWNLOAD_PAYLOADS["/download/alpha"]:
+        raise AssertionError("the next transfer did not publish to the chosen folder without clobbering")
+    if (alternate / "shared.bin").read_bytes() != b"keep fixture user file":
+        raise AssertionError("the chosen folder lost a pre-existing file")
+    steps.append({"download_folder": {
+        "chosen_name": alternate.name, "active_transfer_kept_original_folder": True,
+        "next_transfer_used_chosen_folder": True, "collision_name": chosen.name, "original_file_preserved": True,
+    }})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, default=Path("target/debug/muffin"))
@@ -786,6 +842,7 @@ def main():
     parser.add_argument("--chrome-layout", action="store_true", help="verify default and compact native chrome geometry")
     parser.add_argument("--chrome-themes", action="store_true", help="verify light and dark native chrome palettes")
     parser.add_argument("--native-shortcuts", action="store_true", help="verify AppKit shortcut routing and chrome focus")
+    parser.add_argument("--download-folder", action="store_true", help="verify destination changes and persistence")
     visual = parser.add_mutually_exclusive_group()
     visual.add_argument("--capture-window", action="store_true", help="attempt a capture of the fixture window")
     visual.add_argument("--capture-chrome", action="store_true", help="capture the native trusted chrome view")
@@ -794,6 +851,8 @@ def main():
         parser.error("--restart requires --tabs")
     if args.profile and not args.restart:
         parser.error("--profile requires --restart")
+    if args.download_folder and not args.restart:
+        parser.error("--download-folder requires --restart")
     binary = args.binary.resolve(strict=True)
     args.out.mkdir(parents=True, exist_ok=True)
     with binary.open("rb") as stream:
@@ -892,6 +951,30 @@ def main():
                         exercise_chrome_themes(process, control, servers[0], result["steps"], capture)
                     if args.native_shortcuts:
                         exercise_native_shortcuts(process, control, servers[0], result["steps"])
+                    if args.download_folder:
+                        exercise_download_folder(process, control, servers[0], result["steps"], capture)
+                        send_command(control, "quit_test")
+                        if process.wait(timeout=8) != 0:
+                            raise RuntimeError("download folder fixture shutdown failed")
+                        (control / "commands.jsonl").unlink()
+                        (control / "state.json").unlink()
+                        process = subprocess.Popen(launch, stdout=log, stderr=log)
+                        until(process, "download folder survives restart", lambda: (
+                            (state := observation(control)).get("chrome_ready")
+                            and state.get("download_folder") == "alternate-downloads"
+                        ))
+                        (control / "alternate-downloads").rename(control / "detached-downloads")
+                        send_command(control, "show_surface", value="settings")
+                        until(process, "Settings warns when the saved folder is unavailable", lambda: (
+                            (state := observation(control)).get("surface") == "settings"
+                            and "download folder is unavailable" in state.get("notice", "")
+                        ))
+                        send_command(control, "reset_download_folder")
+                        until(process, "Reset restores default download folder", lambda: (
+                            (state := observation(control)).get("surface") == "settings"
+                            and "download_folder" in state and state["download_folder"] is None
+                        ))
+                        result["steps"].append({"download_folder_reopened": True, "missing_folder_warned_in_settings": True, "reset_to_default": True})
                     if args.chrome_layout:
                         exercise_chrome_layout(process, control, result["steps"], capture)
                 except Exception:

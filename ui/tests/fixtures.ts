@@ -30,6 +30,7 @@ export function makeSnapshot(overrides: Partial<ChromeSnapshot> = {}): ChromeSna
     notice: '',
     downloads: [],
     download_approval_count: 0,
+    download_folder: null,
     page_tools: { zoom_percent: 100, find_found: null, fullscreen: false },
     ...overrides
   };

@@ -46,6 +46,17 @@
       </label>
     </section>
 
+    <section class="settings-section" aria-labelledby="download-folder-heading">
+      <div class="settings-copy"><h2 id="download-folder-heading">Download folder</h2><p>Applies to files you approve from now on.</p></div>
+      <div class="settings-control">
+        <span class="settings-folder-name" title={snapshot.download_folder ?? 'Downloads'}>{snapshot.download_folder ?? 'Downloads'}</span>
+        <div class="settings-folder-actions">
+          <button class="quiet-button" type="button" onclick={() => send({ version: 1, action: 'choose_download_folder' })}>Choose folder…</button>
+          {#if snapshot.download_folder !== null}<button class="quiet-button" type="button" onclick={() => send({ version: 1, action: 'reset_download_folder' })}>Use default</button>{/if}
+        </div>
+      </div>
+    </section>
+
     <section class="settings-section settings-options" aria-labelledby="startup-heading">
       <div class="settings-copy"><h2 id="startup-heading">Startup and privacy</h2><p>Choose what Muffin restores and clears when you quit.</p></div>
       <fieldset class="settings-checks">

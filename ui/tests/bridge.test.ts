@@ -48,6 +48,7 @@ describe('chrome IPC bridge', () => {
       notice: '',
       downloads: [],
       download_approval_count: 0,
+      download_folder: null,
       page_tools: { zoom_percent: 100, find_found: null, fullscreen: false }
     };
     state.bridge.render(snapshot);
@@ -108,6 +109,9 @@ describe('chrome IPC bridge', () => {
     expect(isAction({ version: 1, action: 'cancel_download', id: -1 })).toBe(false);
     expect(isAction({ version: 1, action: 'cancel_download', id: 42, path: '/tmp/a' })).toBe(false);
     expect(isAction({ version: 1, action: 'clear_downloads' })).toBe(true);
+    expect(isAction({ version: 1, action: 'choose_download_folder' })).toBe(true);
+    expect(isAction({ version: 1, action: 'reset_download_folder' })).toBe(true);
+    expect(isAction({ version: 1, action: 'choose_download_folder', path: '/tmp/x' })).toBe(false);
     expect(isAction({ version: 1, action: 'clear_downloads', id: 42 })).toBe(false);
     expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: true })).toBe(true);
     expect(isAction({ version: 1, action: 'decide_download', id: 9, approve: false })).toBe(true);
@@ -127,6 +131,7 @@ describe('chrome IPC bridge', () => {
       shortcuts: [{ id: 3, url: 'https://docs.test', title: 'Docs' }], bookmarked: true, notice: '',
       downloads: [{ id: 9, name: 'report.pdf', host: 'example.test', status: 'finished', bytes: 1250 }],
       download_approval_count: 1,
+      download_folder: null,
       page_tools: { zoom_percent: 125, find_found: true, fullscreen: false }
     };
     state.bridge.render(snapshot);

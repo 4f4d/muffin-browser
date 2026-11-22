@@ -136,6 +136,10 @@ mod browser {
         CancelDownload { version: u8, id: u32 },
         #[serde(rename = "clear_downloads")]
         ClearDownloads { version: u8 },
+        #[serde(rename = "choose_download_folder")]
+        ChooseDownloadFolder { version: u8 },
+        #[serde(rename = "reset_download_folder")]
+        ResetDownloadFolder { version: u8 },
         #[serde(skip)]
         FocusFind { version: u8 },
         #[serde(rename = "query_omnibox")]
@@ -245,6 +249,8 @@ mod browser {
             version: u8,
             shortcut: FixtureShortcut,
         },
+        #[serde(rename = "choose_fixture_download_folder")]
+        ChooseFixtureDownloadFolder { version: u8 },
         #[serde(rename = "capture_pdf")]
         CapturePdf { version: u8 },
         #[serde(rename = "click_fixture_link")]
@@ -288,6 +294,7 @@ mod browser {
                 | ChromeTestAction::CompactWindow { version: 1 }
                 | ChromeTestAction::OpenBrowserActions { version: 1 }
                 | ChromeTestAction::PressShortcut { version: 1, .. }
+                | ChromeTestAction::ChooseFixtureDownloadFolder { version: 1 }
                 | ChromeTestAction::CapturePdf { version: 1 }
                 | ChromeTestAction::ClickFixtureLink { version: 1 }
                 | ChromeTestAction::CaptureFixtureContent { version: 1 }
@@ -312,6 +319,8 @@ mod browser {
                 | Self::DecideDownload { version, .. }
                 | Self::CancelDownload { version, .. }
                 | Self::ClearDownloads { version }
+                | Self::ChooseDownloadFolder { version }
+                | Self::ResetDownloadFolder { version }
                 | Self::FocusFind { version }
                 | Self::QueryOmnibox { version, .. }
                 | Self::QueryLibrary { version, .. }
@@ -410,6 +419,7 @@ mod browser {
         can_restore: bool,
         downloads: Vec<DownloadItem>,
         download_approval_count: usize,
+        download_folder: Option<String>,
         page_tools: PageToolsSnapshot,
         #[serde(flatten)]
         profile: ProfileSnapshot,
@@ -1140,7 +1150,16 @@ mod browser {
         }
 
         fn snapshot(&self) -> Snapshot {
-            let downloads = self.downloads.borrow().items();
+            let store = self.downloads.borrow();
+            let downloads = store.items();
+            let download_folder = store.is_custom_root().then(|| {
+                store
+                    .root()
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .unwrap_or("Volume root")
+                    .to_owned()
+            });
             let download_approval_count = downloads
                 .iter()
                 .filter(|item| item.status == DownloadStatus::AwaitingApproval)
@@ -1182,6 +1201,7 @@ mod browser {
                     Vec::new()
                 },
                 download_approval_count,
+                download_folder,
                 page_tools: PageToolsSnapshot {
                     zoom_percent: view.map_or(100, |view| {
                         (unsafe { view.webview().pageZoom() } * 100.0).round() as u16
@@ -1353,7 +1373,17 @@ mod browser {
                     .map(|home| home.join("Downloads"))
                     .unwrap_or_default()
             };
-            let downloads = Rc::new(RefCell::new(Downloads::new(downloads_root)));
+            let mut download_store = Downloads::new(downloads_root);
+            let saved_download_folder = profile
+                .as_ref()
+                .and_then(|profile| profile.download_folder().ok())
+                .flatten();
+            download_store.set_custom_root(saved_download_folder.filter(|folder| {
+                test_control
+                    .as_ref()
+                    .is_none_or(|control| folder == &control.directory.join("alternate-downloads"))
+            }));
+            let downloads = Rc::new(RefCell::new(download_store));
             let saved_windows = saved
                 .map(|document| document.windows)
                 .filter(|windows| !windows.is_empty());
@@ -1557,6 +1587,26 @@ mod browser {
         fn apply(&mut self, target: &EventLoopWindowTarget<Message>, id: WindowId, action: Action) {
             if matches!(
                 action,
+                Action::ChooseDownloadFolder { .. } | Action::ResetDownloadFolder { .. }
+            ) {
+                if self.settings_visible(id) {
+                    if matches!(action, Action::ResetDownloadFolder { .. }) {
+                        self.change_download_folder(id, None);
+                    } else if self.test_control.is_none() {
+                        let current = self.downloads.borrow().root().to_owned();
+                        let chosen = rfd::FileDialog::new()
+                            .set_title("Choose a download folder")
+                            .set_directory(current)
+                            .pick_folder();
+                        if let Some(folder) = chosen {
+                            self.change_download_folder(id, Some(folder));
+                        }
+                    }
+                }
+                return;
+            }
+            if matches!(
+                action,
                 Action::DecideDownload { .. }
                     | Action::CancelDownload { .. }
                     | Action::ClearDownloads { .. }
@@ -1612,6 +1662,37 @@ mod browser {
             self.refresh_profile_window(id);
             self.write_test_state();
         }
+        fn settings_visible(&self, id: WindowId) -> bool {
+            self.windows.iter().any(|window| {
+                window.window.id() == id && window.profile_state.surface == Surface::Settings
+            })
+        }
+
+        fn change_download_folder(&mut self, id: WindowId, folder: Option<PathBuf>) {
+            let change = (|| {
+                let folder = folder
+                    .as_deref()
+                    .map(|path| {
+                        Downloads::canonical_folder(path)
+                            .ok_or("Choose an existing download folder.")
+                    })
+                    .transpose()?;
+                self.profile
+                    .as_mut()
+                    .ok_or("The local profile is unavailable.")?
+                    .save_download_folder(folder.as_deref())
+                    .map_err(|_| "Muffin couldn’t save the download folder setting.")?;
+                self.downloads.borrow_mut().set_custom_root(folder);
+                Ok("Download folder updated.")
+            })();
+            if let Some(window) = self.window_mut(id) {
+                window.profile_state.notice = change.unwrap_or_else(|error: &str| error).into();
+            }
+            for window in &self.windows {
+                window.render();
+            }
+            self.write_test_state();
+        }
         fn apply_profile_action(&mut self, id: WindowId, action: &Action) -> bool {
             let Some(window) = self.window_mut(id) else {
                 return true;
@@ -1627,6 +1708,14 @@ mod browser {
                         window.set_selected_surface();
                     } else {
                         window.profile_state.surface = *value;
+                    }
+                    if *value == Surface::Settings {
+                        let downloads = window.downloads.borrow();
+                        if downloads.is_custom_root()
+                            && Downloads::canonical_folder(downloads.root()).is_none()
+                        {
+                            window.profile_state.notice = "The chosen download folder is unavailable. Choose another folder or use Downloads.".into();
+                        }
                     }
                     window.layout();
                     let _ = window.chrome.focus();
@@ -2035,6 +2124,16 @@ mod browser {
                         post_fixture_shortcut(window, shortcut, &directory);
                     }
                 }
+                TestCommand::Chrome(ChromeTestAction::ChooseFixtureDownloadFolder { .. }) => {
+                    if let Some(control) = self
+                        .test_control
+                        .as_ref()
+                        .filter(|_| self.settings_visible(active))
+                    {
+                        let folder = control.directory.join("alternate-downloads");
+                        self.change_download_folder(active, Some(folder));
+                    }
+                }
                 TestCommand::Chrome(ChromeTestAction::CapturePdf { .. }) => {
                     let path = self
                         .test_control
@@ -2252,6 +2351,7 @@ mod browser {
                         newTab.left >= 0 && newTab.right <= window.innerWidth,
                     new_tab_gap: stripBounds && newTab ? Math.round(newTab.left - stripBounds.right) : null,
                     focused_control: document.activeElement?.id ?? '',
+                    visible_download_folder: document.querySelector('.settings-folder-name')?.textContent ?? null,
                     more_actions_visible: !!actionsBounds && actionsBounds.width > 0 &&
                         actionsBounds.left >= 0 && actionsBounds.right <= window.innerWidth &&
                         actionsBounds.bottom <= document.querySelector('.tabbar').getBoundingClientRect().bottom,

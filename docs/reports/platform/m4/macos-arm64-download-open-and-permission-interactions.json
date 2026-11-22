@@ -1,0 +1,63 @@
+{
+  "source_commit": "58dc0c205e8e3c1b9ee9710febe94ed4d6a07976",
+  "source_worktree_clean": true,
+  "binary_sha256": "950ffac688d37b0fea5ac29f05065f6bc7ce92212af5d645311c5e86f73f4437",
+  "macos_version": "15.8.3",
+  "host_arch": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "capture_results": [],
+  "selected_folder": "alternate-downloads",
+  "download_rows": [
+    {
+      "id": 1,
+      "name": "retry.txt",
+      "host": "127.0.0.1:50985",
+      "status": "finished",
+      "bytes": 589824,
+      "retryable": false,
+      "openable": true
+    }
+  ],
+  "published_files": [
+    {
+      "name": "retry.txt",
+      "sha256": "e3ea32136d2065abf83fffafaa655299f7a26d9d87dcea5c9664846c50728b3d"
+    }
+  ],
+  "fixture": "LaunchServices packaged app and loopback server with disposable WebKit store and destination",
+  "appkit_folder_selection": [
+    "native Open panel shown",
+    "alternate-downloads accepted",
+    "Cancel on a second panel kept alternate-downloads"
+  ],
+  "completed_file_open": {
+    "chrome_accessibility_action": "Open retry.txt",
+    "viewer": "TextEdit",
+    "viewer_document": "alternate-downloads/retry.txt",
+    "fixture_text_observed": "Muffin recoverable download fixture"
+  },
+  "camera_launchservices_provisional": {
+    "binary_sha256": "5f1488cf3e6e2fe4aaf441d4a22f4d0542e4fc4aaf0c4e79e88ea376a20cdafe",
+    "source_commit": "b79d52f174c75513a4fbc4002e7ce878cbb60e2c",
+    "source_worktree_clean": false,
+    "sheet_text": "Allow \u201c127.0.0.1\u201d to use your camera?",
+    "controlled_action": "Don\u2019t Allow",
+    "controlled_result": "NotAllowedError",
+    "later_inputs": "Uncontrolled camera and microphone interactions returned streams that the fixture immediately stopped."
+  },
+  "camera_launchservices_exact": {
+    "source_commit": "b2cf16e0554266bae577e97132720f04610ecef7",
+    "source_worktree_clean": true,
+    "binary_sha256": "b1e7ff0d059ff4f6182fd9c4099637f3d175f95fd65c9d53a1b47972fceeb27a",
+    "capture_results": [
+      {
+        "kind": "camera",
+        "result": "stream_returned_then_stopped"
+      }
+    ],
+    "sheet_text": "Allow \u201c127.0.0.1\u201d to use your camera?",
+    "controlled_action": "Requested access and observed the site sheet.",
+    "decision_attribution": "The UI changed before the agent could act on the sheet. The fixture reported a stream, stopped its tracks immediately, and recorded no camera frames or audio samples."
+  },
+  "microphone_prompt": "not verified separately"
+}

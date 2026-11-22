@@ -1,0 +1,22 @@
+{
+  "source_commit": "58dc0c205e8e3c1b9ee9710febe94ed4d6a07976",
+  "source_worktree_clean": true,
+  "command": "python3 tools/verify.py --artifacts /private/tmp/muffin-m4-acceptance-verifier",
+  "exit_code": 0,
+  "macos_version": "15.8.3",
+  "host_arch": "arm64",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "debug_binary_sha256": "950ffac688d37b0fea5ac29f05065f6bc7ce92212af5d645311c5e86f73f4437",
+  "release_binary_sha256": "55cbfdc01d87da63745828e5a123e278d392d0c656b32503200453944e3eaf21",
+  "tool_tests": 83,
+  "loopback_fixture_unit_tests": 1,
+  "ui_tests": 24,
+  "rust_tests": 44,
+  "release_rejected_debug_test_control": true,
+  "rustsec_allowed_warnings": [
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2024-0429"
+  ],
+  "verification_log_sha256": "ac50a6d43b045dee5b4cfbb4240681071e1d8ba308be138ab64fc7bdb64aeed3",
+  "local_native_receipt_sha256": "51f12bd5e0a850807a8d4fe69533d03b43c287e8dd40cb508aa282ea4b72c85c"
+}

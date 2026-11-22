@@ -658,20 +658,31 @@ def exercise_media(process, control, server, steps):
         state if (state := observation(control)).get("url") == first_url
         and state.get("status") == "ready" else None
     ))["selected_tab"]
-    until(process, "first fixture tab plays", lambda: server.media_states.get("one", (0, True))[0] > 0.2)
+    until(process, "first fixture tab plays", lambda: server.media_states.get("one", (0, 0))[0] > 0.2)
     expect_native_state("playing")
     send_command(control, "set_media_suspended", enabled=True)
     expect_native_state("suspended")
-    paused_at = server.media_states["one"][0]
+    previous = server.media_states["one"]
+
+    def stable_clock():
+        nonlocal previous
+        sample = server.media_states["one"]
+        if sample[1] <= previous[1]:
+            return None
+        stable = abs(sample[0] - previous[0]) <= 0.03
+        previous = sample
+        return sample if stable else None
+
+    paused_at, _ = until(process, "stable page clock after native suspension", stable_clock)
     send_command(control, "new_tab")
     until(process, "second tab selected", lambda: observation(control)["selected_tab"] != first)
     second_url = server.origin + "/media?tab=two"
     send_command(control, "navigate", value=second_url)
     until(process, "second fixture tab plays independently", lambda: (
-        server.media_states.get("two", (0, True))[0] > 0.2
+        server.media_states.get("two", (0, 0))[0] > 0.2
     ))
     if abs(server.media_states["one"][0] - paused_at) > 0.1:
-        raise AssertionError("the first tab advanced while suspended")
+        raise AssertionError(f"first tab clock changed while suspended: {paused_at} -> {server.media_states['one'][0]}")
     send_command(control, "select_tab", id=first)
     until(process, "suspension is retained by the first tab", lambda: (
         (state := observation(control))["selected_tab"] == first

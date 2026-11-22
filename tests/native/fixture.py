@@ -90,9 +90,10 @@ MEDIA_PAGE = """<!doctype html>
 <script>
   const audio = document.getElementById('fixture-audio');
   const tab = new URLSearchParams(location.search).get('tab');
+  let sequence = 0;
   setInterval(() => {
     fetch('/media-state?' + new URLSearchParams({
-      tab, time: audio.currentTime.toFixed(3), paused: String(audio.paused),
+      tab, time: audio.currentTime.toFixed(3), sequence: ++sequence,
     }), {cache: 'no-store'});
   }, 100);
 </script></html>
@@ -178,12 +179,13 @@ class FixtureHandler(BaseHTTPRequestHandler):
         if self.path.startswith("/media-state?"):
             state = parse_qs(urlsplit(self.path).query)
             try:
-                self.server.media_states[state["tab"][0]] = (
-                    float(state["time"][0]), state["paused"][0] == "true",
-                )
+                tab = state["tab"][0]
+                sample = float(state["time"][0]), int(state["sequence"][0])
             except (KeyError, ValueError):
                 self.send_error(400)
                 return
+            if sample[1] > self.server.media_states.get(tab, (0, 0))[1]:
+                self.server.media_states[tab] = sample
             self.send_response(204)
             self.end_headers()
             return

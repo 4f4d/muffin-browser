@@ -1,0 +1,458 @@
+{
+  "source_commit": "739de5b123b5d935413f5f9877b3e77e24b937f8",
+  "source_worktree_clean": true,
+  "binary_sha256": "1ac0e16f4bf060ea5a77bf5b1bda6dd7ac5190a9cec3e0019e3521ba12bf301f",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_loopback",
+  "steps": [
+    {
+      "version": 1,
+      "status": "home",
+      "chrome_ready": true
+    },
+    {
+      "url": "http://127.0.0.1:51702/first",
+      "status": "ready",
+      "title": "Muffin fixture | First page",
+      "secure": false
+    },
+    {
+      "navigation_input": "trusted chrome address form"
+    },
+    {
+      "webkit_user_agent_token": true,
+      "browser_product_token": "Muffin/0.1.0"
+    },
+    {
+      "url": "http://127.0.0.1:51703/second",
+      "status": "ready",
+      "title": "Muffin fixture | Second page",
+      "can_back": true
+    },
+    {
+      "url": "http://127.0.0.1:51703/second",
+      "status": "ready"
+    },
+    {
+      "remote_page_executed": true,
+      "remote_chrome_state_received": false
+    },
+    {
+      "url": "http://127.0.0.1:51702/first",
+      "status": "ready",
+      "can_forward": true
+    },
+    {
+      "url": "http://127.0.0.1:51703/second",
+      "status": "ready"
+    },
+    {
+      "status": "blocked",
+      "url": "http://127.0.0.1:51703/second"
+    },
+    {
+      "distinct_loopback_origins": true,
+      "redirect_requested": true
+    },
+    {
+      "loading": true
+    },
+    {
+      "loading": false,
+      "native_loading": false
+    },
+    {
+      "unsolicited_popup_requested": false
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "http://127.0.0.1:51702/first",
+      "window_count": 1
+    },
+    {
+      "case": "new tab is selected in the same native window",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        2
+      ],
+      "url": "about:blank",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        2
+      ],
+      "url": "http://127.0.0.1:51703/second",
+      "window_count": 1
+    },
+    {
+      "case": "duplicate retains committed URL with a distinct ID",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        2,
+        3
+      ],
+      "url": "http://127.0.0.1:51703/second",
+      "window_count": 1
+    },
+    {
+      "case": "pin moves tab into the pinned segment",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        2,
+        3
+      ],
+      "url": "http://127.0.0.1:51703/second",
+      "window_count": 1
+    },
+    {
+      "case": "unpinned tab reorders within the unpinned segment",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:51703/second",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:51702/first",
+      "window_count": 1
+    },
+    {
+      "case": "inactive tab retains metadata when its native view is discarded",
+      "selected_tab": 1,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:51702/first",
+      "window_count": 1
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:51703/second",
+      "window_count": 1
+    },
+    {
+      "case": "selection restores the discarded WebView",
+      "selected_tab": 2,
+      "tabs": [
+        1,
+        3,
+        2
+      ],
+      "url": "http://127.0.0.1:51703/second",
+      "window_count": 1
+    },
+    {
+      "case": "closed tab exposes an undo entry",
+      "selected_tab": 3,
+      "tabs": [
+        1,
+        3
+      ],
+      "url": "http://127.0.0.1:51703/second",
+      "window_count": 1
+    },
+    {
+      "case": "reopened tab reloads its committed URL",
+      "selected_tab": 4,
+      "tabs": [
+        1,
+        3,
+        4
+      ],
+      "url": "http://127.0.0.1:51703/second",
+      "window_count": 1
+    },
+    {
+      "case": "second native window has an independent selected tab",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "about:blank",
+      "window_count": 2
+    },
+    {
+      "case": "tab committed its own URL",
+      "selected_tab": 1,
+      "tabs": [
+        1
+      ],
+      "url": "http://127.0.0.1:51702/first",
+      "window_count": 2
+    },
+    {
+      "case": "second process forwarded a URL and exited",
+      "window_count": 2,
+      "url": "http://127.0.0.1:51703/second"
+    },
+    {
+      "case": "graceful restart restored two windows and a committed fixture tab",
+      "window_count": 2,
+      "selected_tab": 2,
+      "url": "http://127.0.0.1:51703/second"
+    },
+    {
+      "native-chrome-regular": {
+        "more_actions_fit": false,
+        "more_actions_width": 0,
+        "more_actions_scroll_width": 0,
+        "more_actions_visible": false,
+        "new_tab_gap": 8,
+        "scroll_height": 672,
+        "more_action_count": 0,
+        "visible_download_folder": null,
+        "new_tab_visible": true,
+        "selected_tab_fill": "rgb(53, 58, 64)",
+        "surface_ink": "rgb(241, 243, 245)",
+        "focused_control": "",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 672,
+        "selected_tab_ink": "rgb(241, 243, 245)",
+        "address_width": 899,
+        "theme": "system",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 444,
+        "width": 1100,
+        "tab_strip_scroll_width": 444,
+        "selected_tab_visible": true,
+        "client_height": 672
+      }
+    },
+    {
+      "native-chrome-compact": {
+        "more_actions_fit": false,
+        "more_actions_width": 0,
+        "more_actions_scroll_width": 0,
+        "more_actions_visible": false,
+        "new_tab_gap": 8,
+        "scroll_height": 432,
+        "more_action_count": 0,
+        "visible_download_folder": null,
+        "new_tab_visible": true,
+        "selected_tab_fill": "rgb(53, 58, 64)",
+        "surface_ink": "rgb(241, 243, 245)",
+        "focused_control": "address",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 432,
+        "selected_tab_ink": "rgb(241, 243, 245)",
+        "address_width": 439,
+        "theme": "system",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 517,
+        "width": 640,
+        "tab_strip_scroll_width": 1356,
+        "selected_tab_visible": true,
+        "client_height": 432
+      }
+    },
+    {
+      "native-chrome-compact-actions": {
+        "more_actions_fit": true,
+        "more_actions_width": 517,
+        "more_actions_scroll_width": 517,
+        "more_actions_visible": true,
+        "new_tab_gap": null,
+        "scroll_height": 432,
+        "more_action_count": 8,
+        "visible_download_folder": null,
+        "new_tab_visible": true,
+        "selected_tab_fill": "",
+        "surface_ink": "rgb(241, 243, 245)",
+        "focused_control": "address",
+        "surface_fill": "rgb(32, 35, 39)",
+        "heading": "Muffin",
+        "heading_visible": true,
+        "scroll_probe": 0,
+        "height": 432,
+        "selected_tab_ink": "",
+        "address_width": 439,
+        "theme": "system",
+        "muted_ink": "#C2C8CF",
+        "focus_ink": "#F1BE62",
+        "tab_strip_width": 0,
+        "width": 640,
+        "tab_strip_scroll_width": 0,
+        "selected_tab_visible": false,
+        "client_height": 432
+      }
+    },
+    {
+      "private_storage": {
+        "same_window_tab_shares": [
+          "cookie",
+          "localStorage",
+          "CacheStorage"
+        ],
+        "other_private_window_separate": true,
+        "regular_window_separate": true,
+        "regular_clear_excludes_private_store": true,
+        "fresh_private_store_after_close": true,
+        "private_rows_in_regular_profile": 0,
+        "external_url_used_regular_window": true,
+        "private_download_excluded_from_regular_list": true,
+        "explicitly_saved_file_survived_private_window_close": true,
+        "published_download_retained_macos_quarantine_attribute": true
+      }
+    }
+  ],
+  "chrome_image_sha256": "6dbaeb57d18ade272845e8fdfaf727665b006e115f79de585b822acd5a4229f1",
+  "additional_capture_sha256": {
+    "native-chrome-regular": "42893adf69929f2473763d96f1cdaa23c17656a8feba6b1adee96733fc323829",
+    "native-chrome-compact": "61d241e33888ec8e216256980ff3b9b137b7c10692210d4c0f7d644a6fb37455",
+    "native-chrome-compact-actions": "e2643dc8f8c161ed96e0a16463961d23f25d9be98fe2516fd14eec8809059f6f",
+    "native-private-start": "82b17ba7e95190a83b70b05f4a76ab481364c989343ef8985b9607854464fe49"
+  },
+  "last_observation": {
+    "version": 1,
+    "url": "http://127.0.0.1:51702/storage-fixture?probe=regular-written&write=regular",
+    "title": "Muffin storage fixture",
+    "loading": false,
+    "can_back": false,
+    "can_forward": false,
+    "status": "ready",
+    "secure": false,
+    "tabs": [
+      {
+        "id": 1,
+        "title": "Muffin fixture | First page",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 2,
+        "title": "",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 4,
+        "title": "New Tab",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 5,
+        "title": "New Tab",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 6,
+        "title": "New Tab",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 7,
+        "title": "New Tab",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 8,
+        "title": "New Tab",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 9,
+        "title": "New Tab",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 10,
+        "title": "New Tab",
+        "pinned": false,
+        "loading": false,
+        "discarded": true
+      },
+      {
+        "id": 11,
+        "title": "Muffin storage fixture",
+        "pinned": false,
+        "loading": false,
+        "discarded": false
+      }
+    ],
+    "selected_tab": 11,
+    "can_restore": false,
+    "private_window": false,
+    "downloads": [],
+    "download_approval_count": 0,
+    "download_folder": null,
+    "page_tools": {
+      "zoom_percent": 100,
+      "find_found": null,
+      "fullscreen": false,
+      "media_suspended": false
+    },
+    "surface": "browse",
+    "settings": {
+      "theme": "system",
+      "search_engine": "duckduckgo",
+      "restore_session": true,
+      "clear_history_on_exit": false
+    },
+    "suggestions": [],
+    "history": [],
+    "bookmarks": [],
+    "shortcuts": [],
+    "bookmarked": false,
+    "notice": "",
+    "chrome_ready": true,
+    "window_number": 30728,
+    "window_count": 2,
+    "native_loading": false,
+    "native_fullscreen": false
+  },
+  "outcome": "failed",
+  "error": "waiting for restarted regular browsing session"
+}

@@ -13,6 +13,12 @@ Private Downloads uses the folder preference in effect when the window opens and
 
 Regular Settings offers an explicit confirmation before clearing cookies, caches and other website data from the regular WebKit store. This action can sign users out. An open page can create website data again. Regular browser history and bookmarks have their own controls. The completion notice reports that WebKit finished the operation. Private website stores remain independent and close with their windows. [Apple removal API](https://developer.apple.com/documentation/webkit/wkwebsitedatastore/removedata%28oftypes%3Amodifiedsince%3Acompletionhandler%3A%29?language=swift), [WebKit adapter](../../crates/muffin/src/site_data.rs)
 
+## Navigation and downloads
+
+WebKit makes the certificate trust decision. Muffin handles current provisional failure callbacks for WebKit’s secure-connection and server-certificate error codes. It presents a bundled error surface and offers a safe route back to Start. Embedded credentials and unsupported protocol inputs are rejected. An unsupported URI cannot become a search query or invoke an OS handler. [Apple navigation failure callback](https://developer.apple.com/documentation/webkit/wknavigationdelegate/webview(_:didfailprovisionalnavigation:witherror:)), [native adapter](../../crates/muffin/src/download_delegate.rs), [address policy](../../crates/muffin/src/main.rs)
+
+The download path publishes through a hard link to preserve the completed file’s identity and metadata. The M5 fixture tests for the quarantine attribute on the actual approved output. It exercises metadata preservation. System handling of signed or executable downloads remains a release qualification case. [Apple quarantine property](https://developer.apple.com/documentation/foundation/urlresourcevalues/quarantineproperties?changes=latest_min_2__2_3_1), [native fixture](../../tests/native/run_smoke.py)
+
 ## Verification and revisit triggers
 
 The loopback verifier compares cookies, localStorage and Cache Storage between regular and private views. It checks private history and shortcut absence against SQLite, regular session restoration, separate download rows and continued file presence after explicit Save. It also checks a site-data clear while a private view stays open. Revisit the design when adding a sync mechanism, a shared private session, new profile databases or another platform runtime. [Native fixture](../../tests/native/run_smoke.py)

@@ -7,14 +7,63 @@ from pathlib import Path
 import platform
 import plistlib
 import re
+import shutil
 import subprocess
 import sys
-from tempfile import TemporaryDirectory
+from tempfile import mkdtemp
+import time
 from uuid import uuid4
 
 from fixture import browser_fixture
 from run_launchservices_smoke import ROOT, run, source_identity
 from run_smoke import observation, send_command, until
+
+
+FIXTURE_APPLICATION = """
+ObjC.import('AppKit');
+function run(argv) {
+    const [bundleID, bundlePath, executablePath, action] = argv;
+    const apps = $.NSRunningApplication.runningApplicationsWithBundleIdentifier(bundleID);
+    if (apps.count === 0) return 'closed';
+    if (apps.count !== 1) throw Error('ambiguous fixture identity');
+    const app = apps.objectAtIndex(0);
+    if (ObjC.unwrap(app.bundleURL.path) !== bundlePath ||
+        ObjC.unwrap(app.executableURL.path) !== executablePath) {
+        throw Error('unexpected fixture application paths');
+    }
+    if (action === 'stop' && !app.forceTerminate) throw Error('fixture termination failed');
+    return 'running';
+}
+"""
+
+
+def fixture_running(bundle_id, bundle, *, stop=False):
+    result = run(
+        "/usr/bin/osascript", "-l", "JavaScript", "-e", FIXTURE_APPLICATION,
+        bundle_id, str(bundle), str(bundle / "Contents/MacOS/muffin"),
+        "stop" if stop else "check", capture_output=True, text=True,
+    ).stdout.strip()
+    if result not in {"closed", "running"}:
+        raise RuntimeError("AppKit returned an unexpected fixture state")
+    return result == "running"
+
+
+def clean_up(launch, control, bundle_id, bundle):
+    if launch.poll() is None:
+        send_command(control, "quit_test")
+        try:
+            launch.wait(timeout=4)
+        except subprocess.TimeoutExpired:
+            pass
+    if fixture_running(bundle_id, bundle, stop=True):
+        deadline = time.monotonic() + 4
+        while fixture_running(bundle_id, bundle):
+            if time.monotonic() >= deadline:
+                raise RuntimeError("fixture still running; retained its isolated control directory")
+            time.sleep(0.1)
+    if launch.poll() is None:
+        launch.kill()
+        launch.wait(timeout=4)
 
 
 def main():
@@ -58,10 +107,11 @@ def main():
         "webkit_bundle_version": webkit,
         "steps": [],
     }
+    scratch = Path(mkdtemp(prefix="muffin-cold-launch-", dir="/private/tmp"))
+    bundle = scratch / "Muffin Cold Launch Fixture.app"
+    fixture_closed = True
     try:
-        with TemporaryDirectory(prefix="muffin-cold-launch-", dir="/private/tmp") as temporary, browser_fixture() as (server, _):
-            scratch = Path(temporary)
-            bundle = scratch / "Muffin Cold Launch Fixture.app"
+        with browser_fixture() as (server, _):
             control = scratch / "control"
             control.mkdir(mode=0o700)
             log_path = args.out / "browser.log"
@@ -83,6 +133,7 @@ def main():
                      "--test-control", str(control)],
                     stdout=log, stderr=log,
                 )
+                fixture_closed = False
                 receipt["steps"].append("open -n -W sent a cold HTTP URL event to a unique debug bundle")
                 try:
                     def ready():
@@ -99,6 +150,8 @@ def main():
                     state = until(launch, "cold Launch Services URL opened in one regular test window", ready)
                     if ("GET", "/first?cold-launch=1") not in server.requests:
                         raise AssertionError("the loopback fixture did not receive the cold-open HTTP GET")
+                    if not fixture_running(bundle_id, bundle):
+                        raise RuntimeError("AppKit did not identify the launched fixture")
                     receipt["steps"].append({
                         "cold_url": state["url"],
                         "title": state["title"],
@@ -112,14 +165,8 @@ def main():
                         raise RuntimeError(f"open reported {launch.returncode}")
                     receipt["steps"].append("the disposable browser closed and open -W returned")
                 finally:
-                    if launch.poll() is None:
-                        send_command(control, "quit_test")
-                        try:
-                            launch.wait(timeout=4)
-                        except subprocess.TimeoutExpired:
-                            # This is the open launcher. Only the isolated control channel can quit the app.
-                            launch.kill()
-                            launch.wait(timeout=4)
+                    clean_up(launch, control, bundle_id, bundle)
+                    fixture_closed = True
         if source_identity() != (commit, clean):
             raise RuntimeError("the harness source changed during the check")
     except Exception as error:
@@ -129,6 +176,8 @@ def main():
         receipt["outcome"] = "passed"
     finally:
         (args.out / "cold-launch.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+        if fixture_closed:
+            shutil.rmtree(scratch)
 
 
 if __name__ == "__main__":

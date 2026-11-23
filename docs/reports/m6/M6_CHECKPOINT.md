@@ -1,6 +1,6 @@
 # M6 — macOS visual and accessibility checkpoint
 
-The reviewed candidate is macOS Apple Silicon development source `60772c5ca3c85fd5328f412301b7a9fa49369059`. A preview of this exact binary is open at Start with a disposable profile. The app’s accessibility tree shows the Open tabs group, the selected page’s pressed state and separate Close and Unload controls. [Binary and verifier receipt](../platform/m6/macos-arm64-m6-verifier.json)
+The reviewed candidate is macOS Apple Silicon development source `60772c5ca3c85fd5328f412301b7a9fa49369059`. A preview of this exact binary was opened at Start with a disposable profile. The app’s accessibility tree shows the Open tabs group, the selected page’s pressed state and separate Close and Unload controls. [Binary and verifier receipt](../platform/m6/macos-arm64-m6-verifier.json)
 
 ## Native evidence
 
@@ -24,4 +24,4 @@ Muffin uses a warm accent for the New Tab control and meaningful states. The chr
 
 ## Acceptance boundary
 
-The human visual and accessibility checkpoint is open. Automated browser and native checks help locate regressions. The owner records the accessibility and visual acceptance here or supplies findings for another iteration. M0b, platform and release qualification use their existing evidence and decision process. [Milestone gates](../../PLAN.md#gates)
+The owner deferred the human visual and accessibility checkpoint and authorized M7 engineering. This checkpoint remains open. The owner records the accessibility and visual acceptance here or supplies findings for another iteration. M0b, platform and release qualification use their existing evidence and decision process. [Human testing checklist](../m7/HUMAN_TESTING_CHECKLIST.md), [milestone gates](../../PLAN.md#gates)

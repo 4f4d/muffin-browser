@@ -275,6 +275,8 @@ The owner explicitly authorized implementation on 2026-11-20. WRY + TAO is provi
 
 ### M7 — Hardening and release readiness
 
+**2026-11-23 owner direction.** Defer human testing and continue M7 engineering. M6 visual and accessibility acceptance, M0b results and acceptance, and release approval remain open. [Decision](adr/0007-defer-human-qualification-during-m7.md), [human testing checklist](reports/m7/HUMAN_TESTING_CHECKLIST.md)
+
 - Regression, security, performance and packaging review.
 - Install/uninstall, default-browser, URL scheme, update and crash recovery tests.
 - Sign/notarize only with explicit user-provided credentials and approval. Unsigned beta artifacts may be generated with clear installation caveats.
@@ -363,7 +365,7 @@ Avoid duplicating the same information across many hand-maintained files. Genera
 | Deferred M0b qualification | Required before initial production release | Human reviews the feature-complete browser, DEC-UA, sign-in gate and platform readiness |
 | End of M1 | Soft checkpoint | Human reviews design tokens and the first screenshots; work may continue meanwhile |
 | M2–M5 | Auto-advance on objective gates | Reviewer sign-off plus `verify` pass; handoff file at each boundary |
-| End of M6 | Hard stop | Human visual and accessibility review on real artifacts |
+| End of M6 | Hard stop, deferred for M7 engineering by the owner | Human visual and accessibility review on real artifacts remains pending |
 | Any publish/release/signing | Hard stop | Human |
 
 ### Scope cut line

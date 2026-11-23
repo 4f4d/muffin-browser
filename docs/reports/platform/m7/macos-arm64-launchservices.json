@@ -1,0 +1,17 @@
+{
+  "kind": "native_debug_loopback_launchservices",
+  "source_commit": "bce769de8892e78cca94d6299e265fd4d3fef578",
+  "source_worktree_clean": true,
+  "binary_sha256": "2e6684907f8f1601d5449e8d17da104091785296bca05db3f3f6c8468f75b5ce",
+  "native_debug_smoke_sha256": "87b0e62023eca3dab66e1b9874722f07689977363e3606e0ddc6090017a487af",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "steps": [
+    "fixture started on Home",
+    "Launch Services opened HTTP in the running regular window",
+    "private window received focus",
+    "external HTTP selected the regular window with a private window open"
+  ],
+  "outcome": "passed"
+}

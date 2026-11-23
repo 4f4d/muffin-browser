@@ -275,7 +275,7 @@ The owner explicitly authorized implementation on 2026-11-20. WRY + TAO is provi
 
 ### M7 — Hardening and release readiness
 
-**2026-11-23 owner direction.** Defer human testing and continue M7 engineering. M6 visual and accessibility acceptance, M0b results and acceptance, and release approval remain open. [Decision](adr/0007-defer-human-qualification-during-m7.md), [human testing checklist](reports/m7/HUMAN_TESTING_CHECKLIST.md)
+**2026-11-23 owner direction.** Defer human testing and continue M7 engineering. M6 visual and accessibility acceptance, M0b results and acceptance, and release approval remain open. [Decision](adr/0007-defer-human-qualification-during-m7.md), [human testing checklist](reports/m7/HUMAN_TESTING_CHECKLIST.md), [M7 engineering results](reports/m7/M7_PROGRESS.md)
 
 - Regression, security, performance and packaging review.
 - Install/uninstall, default-browser, URL scheme, update and crash recovery tests.

@@ -1,0 +1,25 @@
+{
+  "source_commit": "bce769de8892e78cca94d6299e265fd4d3fef578",
+  "binary_source_commit": "bce769de8892e78cca94d6299e265fd4d3fef578",
+  "source_worktree_clean": true,
+  "binary_sha256": "2e6684907f8f1601d5449e8d17da104091785296bca05db3f3f6c8468f75b5ce",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "kind": "development_native_debug_host_process_crash",
+  "steps": [
+    {
+      "regular_session_saved_before_crash": true,
+      "private_window_excluded_before_crash": true,
+      "crashed_while_private_window_selected": true
+    },
+    {
+      "restored_regular_url": "http://127.0.0.1:57553/first?crash-recovery=regular",
+      "forwarded_url_after_recovery": "http://127.0.0.1:57553/first?crash-recovery=forwarded",
+      "window_count": 1,
+      "private_window_restored": false,
+      "single_instance_lock_recovered": true
+    }
+  ],
+  "outcome": "passed"
+}

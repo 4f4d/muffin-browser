@@ -159,3 +159,11 @@ An attempt counts as different only if its hypothesis differs from the earlier o
 |---|---|---|
 | Confirmation focus in Settings | Swapping two nodes bound to the same button reference left focus on the previous control. Keep one mounted button that changes its label between Clear website data and Cancel, then assert focus without skipping the confirmation check. | First exact verifier at `/private/tmp/muffin-m6-verify.log`. |
 | Tab-strip screen reader semantics | Axe flagged Close and Unload as invalid children of a DOM tablist. Expose the browser strip as a named group with native selection buttons showing pressed state, keep Close and Unload accessible and retain the existing keyboard and layout checks. | Exact Chromium audit and detail under `/private/tmp/muffin-m6-a11y/`. |
+
+## M7 integration attempts
+
+| Criterion | Hypothesis before retry | Evidence |
+|---|---|---|
+| Inspect quarantine on the exact local qualification package | Python's extended attribute helpers are unavailable on macOS. Query names with the installed read-only `xattr` command before the policy assessment. | Initial policy probe stopped on `AttributeError: module 'os' has no attribute 'listxattr'`, before code signature or system policy assessment. |
+| Clean up after a cold debug launch failure | The `open` process is only a launcher. Resolve the exact disposable application by its unique bundle ID and paths, verify ownership through AppKit, and confirm exit before removing the control directory. | Independent review of `c4eff91` found that killing the launcher could strand the test application. |
+| Identify the exact cold-launch debug process | The JavaScript bridge emits AppKit’s array count as a decimal string. Normalize the count before branching and preserve command stderr if the identity lookup fails. | The first exact run with the AppKit check reported ambiguous identity even for a deliberately missing bundle ID. A read-only query returned type `string` and value `0`. The isolated debug quit closed the fixture. |

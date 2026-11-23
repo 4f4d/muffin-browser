@@ -1,0 +1,1172 @@
+{
+  "kind": "macos_debug_shell_benchmark",
+  "process_scope": "Muffin shell PID only",
+  "harness_commit": "4eab40e666c45fc7e579818743adaa191145cca9",
+  "app_commit": "bce769de8892e78cca94d6299e265fd4d3fef578",
+  "binary_sha256": "2e6684907f8f1601d5449e8d17da104091785296bca05db3f3f6c8468f75b5ce",
+  "native_debug_smoke_sha256": "87b0e62023eca3dab66e1b9874722f07689977363e3606e0ddc6090017a487af",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "environment": {
+    "host_arch": "arm64",
+    "model": "Mac16,12",
+    "chip": "Apple M4",
+    "logical_cores": 10,
+    "physical_memory_bytes": 25769803776,
+    "macos_version": "15.8.3",
+    "os_build": "24H241",
+    "power_source": "Now drawing from 'Battery Power'",
+    "low_power_mode": 1
+  },
+  "workload": {
+    "trial_count": 5,
+    "idle_seconds": 2,
+    "tab_counts": [
+      1,
+      5,
+      10
+    ]
+  },
+  "trials": [
+    {
+      "navigation": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 388998462306916,
+            "physical_footprint_bytes": 20431904,
+            "user_cpu_ns": 4368319,
+            "system_cpu_ns": 2165066
+          },
+          "end": {
+            "monotonic_ns": 388998678167750,
+            "physical_footprint_bytes": 20792376,
+            "user_cpu_ns": 4966761,
+            "system_cpu_ns": 2418646
+          }
+        },
+        {
+          "tabs": 2,
+          "start": {
+            "monotonic_ns": 389001296230125,
+            "physical_footprint_bytes": 20759608,
+            "user_cpu_ns": 6176350,
+            "system_cpu_ns": 3355300
+          },
+          "end": {
+            "monotonic_ns": 389001457505791,
+            "physical_footprint_bytes": 20841528,
+            "user_cpu_ns": 6661014,
+            "system_cpu_ns": 3534440
+          }
+        },
+        {
+          "tabs": 3,
+          "start": {
+            "monotonic_ns": 389001511625916,
+            "physical_footprint_bytes": 20956216,
+            "user_cpu_ns": 6823527,
+            "system_cpu_ns": 3610150
+          },
+          "end": {
+            "monotonic_ns": 389001676064041,
+            "physical_footprint_bytes": 21038136,
+            "user_cpu_ns": 7209730,
+            "system_cpu_ns": 3767846
+          }
+        },
+        {
+          "tabs": 4,
+          "start": {
+            "monotonic_ns": 389001726622000,
+            "physical_footprint_bytes": 21087288,
+            "user_cpu_ns": 7366921,
+            "system_cpu_ns": 3831451
+          },
+          "end": {
+            "monotonic_ns": 389001887279875,
+            "physical_footprint_bytes": 21103672,
+            "user_cpu_ns": 7759709,
+            "system_cpu_ns": 3994879
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389001997607625,
+            "physical_footprint_bytes": 21201976,
+            "user_cpu_ns": 7942229,
+            "system_cpu_ns": 4075870
+          },
+          "end": {
+            "monotonic_ns": 389002213951583,
+            "physical_footprint_bytes": 21201976,
+            "user_cpu_ns": 8345596,
+            "system_cpu_ns": 4256758
+          }
+        },
+        {
+          "tabs": 6,
+          "start": {
+            "monotonic_ns": 389004832307666,
+            "physical_footprint_bytes": 21316664,
+            "user_cpu_ns": 9806543,
+            "system_cpu_ns": 5238590
+          },
+          "end": {
+            "monotonic_ns": 389005045895250,
+            "physical_footprint_bytes": 21431352,
+            "user_cpu_ns": 10332525,
+            "system_cpu_ns": 5463170
+          }
+        },
+        {
+          "tabs": 7,
+          "start": {
+            "monotonic_ns": 389005154095166,
+            "physical_footprint_bytes": 21496888,
+            "user_cpu_ns": 10553967,
+            "system_cpu_ns": 5554398
+          },
+          "end": {
+            "monotonic_ns": 389005316973000,
+            "physical_footprint_bytes": 21513272,
+            "user_cpu_ns": 10989491,
+            "system_cpu_ns": 5733593
+          }
+        },
+        {
+          "tabs": 8,
+          "start": {
+            "monotonic_ns": 389005425033416,
+            "physical_footprint_bytes": 21595192,
+            "user_cpu_ns": 11156712,
+            "system_cpu_ns": 5813261
+          },
+          "end": {
+            "monotonic_ns": 389005638170666,
+            "physical_footprint_bytes": 21644344,
+            "user_cpu_ns": 11600118,
+            "system_cpu_ns": 5999479
+          }
+        },
+        {
+          "tabs": 9,
+          "start": {
+            "monotonic_ns": 389005748784333,
+            "physical_footprint_bytes": 21726264,
+            "user_cpu_ns": 11784395,
+            "system_cpu_ns": 6079414
+          },
+          "end": {
+            "monotonic_ns": 389005914374583,
+            "physical_footprint_bytes": 21808184,
+            "user_cpu_ns": 12234603,
+            "system_cpu_ns": 6262462
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389006020214125,
+            "physical_footprint_bytes": 21857336,
+            "user_cpu_ns": 12387472,
+            "system_cpu_ns": 6334077
+          },
+          "end": {
+            "monotonic_ns": 389006237328000,
+            "physical_footprint_bytes": 22053944,
+            "user_cpu_ns": 12865459,
+            "system_cpu_ns": 6532604
+          }
+        }
+      ],
+      "idle": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 388999183341375,
+            "physical_footprint_bytes": 20726840,
+            "user_cpu_ns": 5152959,
+            "system_cpu_ns": 2600639
+          },
+          "end": {
+            "monotonic_ns": 389001187984375,
+            "physical_footprint_bytes": 20579384,
+            "user_cpu_ns": 5830128,
+            "system_cpu_ns": 3239553
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389002719045625,
+            "physical_footprint_bytes": 21218360,
+            "user_cpu_ns": 8501418,
+            "system_cpu_ns": 4388188
+          },
+          "end": {
+            "monotonic_ns": 389004724136916,
+            "physical_footprint_bytes": 21201976,
+            "user_cpu_ns": 9502812,
+            "system_cpu_ns": 5111936
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389006742461416,
+            "physical_footprint_bytes": 22021176,
+            "user_cpu_ns": 13212161,
+            "system_cpu_ns": 6768475
+          },
+          "end": {
+            "monotonic_ns": 389008747572041,
+            "physical_footprint_bytes": 21988408,
+            "user_cpu_ns": 14387858,
+            "system_cpu_ns": 7548041
+          }
+        }
+      ],
+      "startup_to_chrome_ready_ns": 2446507542,
+      "discard_restore": {
+        "start": {
+          "monotonic_ns": 389008747593125,
+          "physical_footprint_bytes": 21988408,
+          "user_cpu_ns": 14387858,
+          "system_cpu_ns": 7548041
+        },
+        "discarded": {
+          "monotonic_ns": 389008859659291,
+          "physical_footprint_bytes": 22004792,
+          "user_cpu_ns": 14510604,
+          "system_cpu_ns": 7620784
+        },
+        "restore_start": {
+          "monotonic_ns": 389009361247916,
+          "physical_footprint_bytes": 21988408,
+          "user_cpu_ns": 14827340,
+          "system_cpu_ns": 7841001
+        },
+        "restored": {
+          "monotonic_ns": 389009581333458,
+          "physical_footprint_bytes": 22135864,
+          "user_cpu_ns": 15308384,
+          "system_cpu_ns": 8055135
+        }
+      }
+    },
+    {
+      "navigation": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 389012120890166,
+            "physical_footprint_bytes": 20399112,
+            "user_cpu_ns": 3987731,
+            "system_cpu_ns": 1854538
+          },
+          "end": {
+            "monotonic_ns": 389012337205416,
+            "physical_footprint_bytes": 20825144,
+            "user_cpu_ns": 4571969,
+            "system_cpu_ns": 2065320
+          }
+        },
+        {
+          "tabs": 2,
+          "start": {
+            "monotonic_ns": 389014959553583,
+            "physical_footprint_bytes": 20907088,
+            "user_cpu_ns": 5922953,
+            "system_cpu_ns": 3112607
+          },
+          "end": {
+            "monotonic_ns": 389015125669750,
+            "physical_footprint_bytes": 20939856,
+            "user_cpu_ns": 6402661,
+            "system_cpu_ns": 3293132
+          }
+        },
+        {
+          "tabs": 3,
+          "start": {
+            "monotonic_ns": 389015234279208,
+            "physical_footprint_bytes": 20972624,
+            "user_cpu_ns": 6544304,
+            "system_cpu_ns": 3358135
+          },
+          "end": {
+            "monotonic_ns": 389015445549958,
+            "physical_footprint_bytes": 21087312,
+            "user_cpu_ns": 7043371,
+            "system_cpu_ns": 3551704
+          }
+        },
+        {
+          "tabs": 4,
+          "start": {
+            "monotonic_ns": 389015553647958,
+            "physical_footprint_bytes": 21152848,
+            "user_cpu_ns": 7242031,
+            "system_cpu_ns": 3642753
+          },
+          "end": {
+            "monotonic_ns": 389015715213458,
+            "physical_footprint_bytes": 21218384,
+            "user_cpu_ns": 7610918,
+            "system_cpu_ns": 3789812
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389015770476541,
+            "physical_footprint_bytes": 21251152,
+            "user_cpu_ns": 7781963,
+            "system_cpu_ns": 3866936
+          },
+          "end": {
+            "monotonic_ns": 389015936384208,
+            "physical_footprint_bytes": 21316688,
+            "user_cpu_ns": 8181806,
+            "system_cpu_ns": 4036026
+          }
+        },
+        {
+          "tabs": 6,
+          "start": {
+            "monotonic_ns": 389018502150458,
+            "physical_footprint_bytes": 21398608,
+            "user_cpu_ns": 9845768,
+            "system_cpu_ns": 5138791
+          },
+          "end": {
+            "monotonic_ns": 389018668424791,
+            "physical_footprint_bytes": 21464144,
+            "user_cpu_ns": 10341022,
+            "system_cpu_ns": 5348215
+          }
+        },
+        {
+          "tabs": 7,
+          "start": {
+            "monotonic_ns": 389018774652708,
+            "physical_footprint_bytes": 21496912,
+            "user_cpu_ns": 10511998,
+            "system_cpu_ns": 5427473
+          },
+          "end": {
+            "monotonic_ns": 389018939361916,
+            "physical_footprint_bytes": 21480528,
+            "user_cpu_ns": 10894693,
+            "system_cpu_ns": 5573362
+          }
+        },
+        {
+          "tabs": 8,
+          "start": {
+            "monotonic_ns": 389018994972708,
+            "physical_footprint_bytes": 21513296,
+            "user_cpu_ns": 11083187,
+            "system_cpu_ns": 5653785
+          },
+          "end": {
+            "monotonic_ns": 389019157399000,
+            "physical_footprint_bytes": 21595216,
+            "user_cpu_ns": 11506643,
+            "system_cpu_ns": 5825912
+          }
+        },
+        {
+          "tabs": 9,
+          "start": {
+            "monotonic_ns": 389019268063833,
+            "physical_footprint_bytes": 21578832,
+            "user_cpu_ns": 11653499,
+            "system_cpu_ns": 5896678
+          },
+          "end": {
+            "monotonic_ns": 389019481816750,
+            "physical_footprint_bytes": 21775440,
+            "user_cpu_ns": 12146984,
+            "system_cpu_ns": 6092808
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389019592238833,
+            "physical_footprint_bytes": 21840976,
+            "user_cpu_ns": 12329019,
+            "system_cpu_ns": 6172515
+          },
+          "end": {
+            "monotonic_ns": 389019753884750,
+            "physical_footprint_bytes": 22021200,
+            "user_cpu_ns": 12739914,
+            "system_cpu_ns": 6333821
+          }
+        }
+      ],
+      "idle": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 389012842288083,
+            "physical_footprint_bytes": 20759608,
+            "user_cpu_ns": 4760145,
+            "system_cpu_ns": 2236435
+          },
+          "end": {
+            "monotonic_ns": 389014847425750,
+            "physical_footprint_bytes": 20546616,
+            "user_cpu_ns": 5513645,
+            "system_cpu_ns": 2965797
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389016441487750,
+            "physical_footprint_bytes": 21300304,
+            "user_cpu_ns": 8399819,
+            "system_cpu_ns": 4193818
+          },
+          "end": {
+            "monotonic_ns": 389018445978875,
+            "physical_footprint_bytes": 21251152,
+            "user_cpu_ns": 9531997,
+            "system_cpu_ns": 4991803
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389020258942875,
+            "physical_footprint_bytes": 21972048,
+            "user_cpu_ns": 12998072,
+            "system_cpu_ns": 6502034
+          },
+          "end": {
+            "monotonic_ns": 389022264054916,
+            "physical_footprint_bytes": 21922896,
+            "user_cpu_ns": 14271185,
+            "system_cpu_ns": 7333665
+          }
+        }
+      ],
+      "startup_to_chrome_ready_ns": 2440915791,
+      "discard_restore": {
+        "start": {
+          "monotonic_ns": 389022264077458,
+          "physical_footprint_bytes": 21922896,
+          "user_cpu_ns": 14271185,
+          "system_cpu_ns": 7333665
+        },
+        "discarded": {
+          "monotonic_ns": 389022318476041,
+          "physical_footprint_bytes": 21939280,
+          "user_cpu_ns": 14423410,
+          "system_cpu_ns": 7420454
+        },
+        "restore_start": {
+          "monotonic_ns": 389022820272500,
+          "physical_footprint_bytes": 21922896,
+          "user_cpu_ns": 14649727,
+          "system_cpu_ns": 7615080
+        },
+        "restored": {
+          "monotonic_ns": 389022984924000,
+          "physical_footprint_bytes": 22004816,
+          "user_cpu_ns": 15185823,
+          "system_cpu_ns": 7838260
+        }
+      }
+    },
+    {
+      "navigation": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 389025568289125,
+            "physical_footprint_bytes": 20317240,
+            "user_cpu_ns": 4046534,
+            "system_cpu_ns": 1889031
+          },
+          "end": {
+            "monotonic_ns": 389025777618750,
+            "physical_footprint_bytes": 20644920,
+            "user_cpu_ns": 4670390,
+            "system_cpu_ns": 2131922
+          }
+        },
+        {
+          "tabs": 2,
+          "start": {
+            "monotonic_ns": 389028397398208,
+            "physical_footprint_bytes": 20546616,
+            "user_cpu_ns": 5866172,
+            "system_cpu_ns": 3093077
+          },
+          "end": {
+            "monotonic_ns": 389028563111791,
+            "physical_footprint_bytes": 20694072,
+            "user_cpu_ns": 6411699,
+            "system_cpu_ns": 3284605
+          }
+        },
+        {
+          "tabs": 3,
+          "start": {
+            "monotonic_ns": 389028618649541,
+            "physical_footprint_bytes": 20759608,
+            "user_cpu_ns": 6588938,
+            "system_cpu_ns": 3357315
+          },
+          "end": {
+            "monotonic_ns": 389028834200708,
+            "physical_footprint_bytes": 20759608,
+            "user_cpu_ns": 7047493,
+            "system_cpu_ns": 3547479
+          }
+        },
+        {
+          "tabs": 4,
+          "start": {
+            "monotonic_ns": 389028887140125,
+            "physical_footprint_bytes": 20808760,
+            "user_cpu_ns": 7228484,
+            "system_cpu_ns": 3626658
+          },
+          "end": {
+            "monotonic_ns": 389029103137625,
+            "physical_footprint_bytes": 20890680,
+            "user_cpu_ns": 7689429,
+            "system_cpu_ns": 3820655
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389029213940125,
+            "physical_footprint_bytes": 20825144,
+            "user_cpu_ns": 7908383,
+            "system_cpu_ns": 3910724
+          },
+          "end": {
+            "monotonic_ns": 389029371391708,
+            "physical_footprint_bytes": 20857912,
+            "user_cpu_ns": 8325689,
+            "system_cpu_ns": 4074683
+          }
+        },
+        {
+          "tabs": 6,
+          "start": {
+            "monotonic_ns": 389031934061375,
+            "physical_footprint_bytes": 20988984,
+            "user_cpu_ns": 10068578,
+            "system_cpu_ns": 5300222
+          },
+          "end": {
+            "monotonic_ns": 389032097678500,
+            "physical_footprint_bytes": 21103672,
+            "user_cpu_ns": 10499922,
+            "system_cpu_ns": 5473399
+          }
+        },
+        {
+          "tabs": 7,
+          "start": {
+            "monotonic_ns": 389032203976083,
+            "physical_footprint_bytes": 21136440,
+            "user_cpu_ns": 10673169,
+            "system_cpu_ns": 5554476
+          },
+          "end": {
+            "monotonic_ns": 389032424932041,
+            "physical_footprint_bytes": 21201976,
+            "user_cpu_ns": 11163505,
+            "system_cpu_ns": 5745357
+          }
+        },
+        {
+          "tabs": 8,
+          "start": {
+            "monotonic_ns": 389032535683833,
+            "physical_footprint_bytes": 21251128,
+            "user_cpu_ns": 11366215,
+            "system_cpu_ns": 5831640
+          },
+          "end": {
+            "monotonic_ns": 389032692822500,
+            "physical_footprint_bytes": 21267512,
+            "user_cpu_ns": 11774725,
+            "system_cpu_ns": 5989695
+          }
+        },
+        {
+          "tabs": 9,
+          "start": {
+            "monotonic_ns": 389032745351583,
+            "physical_footprint_bytes": 21431352,
+            "user_cpu_ns": 11946167,
+            "system_cpu_ns": 6059572
+          },
+          "end": {
+            "monotonic_ns": 389032909966916,
+            "physical_footprint_bytes": 21513272,
+            "user_cpu_ns": 12403737,
+            "system_cpu_ns": 6251528
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389033020392125,
+            "physical_footprint_bytes": 21546040,
+            "user_cpu_ns": 12600240,
+            "system_cpu_ns": 6341735
+          },
+          "end": {
+            "monotonic_ns": 389033237009125,
+            "physical_footprint_bytes": 21840952,
+            "user_cpu_ns": 13084457,
+            "system_cpu_ns": 6551917
+          }
+        }
+      ],
+      "idle": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 389026282749708,
+            "physical_footprint_bytes": 20612152,
+            "user_cpu_ns": 4841784,
+            "system_cpu_ns": 2320228
+          },
+          "end": {
+            "monotonic_ns": 389028286810083,
+            "physical_footprint_bytes": 20464696,
+            "user_cpu_ns": 5546423,
+            "system_cpu_ns": 2993509
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389029876514625,
+            "physical_footprint_bytes": 20874296,
+            "user_cpu_ns": 8589701,
+            "system_cpu_ns": 4293145
+          },
+          "end": {
+            "monotonic_ns": 389031877367625,
+            "physical_footprint_bytes": 20825144,
+            "user_cpu_ns": 9767220,
+            "system_cpu_ns": 5165282
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389033742123625,
+            "physical_footprint_bytes": 21824568,
+            "user_cpu_ns": 13446077,
+            "system_cpu_ns": 6804653
+          },
+          "end": {
+            "monotonic_ns": 389035745573500,
+            "physical_footprint_bytes": 21742648,
+            "user_cpu_ns": 14572463,
+            "system_cpu_ns": 7578758
+          }
+        }
+      ],
+      "startup_to_chrome_ready_ns": 2441090542,
+      "discard_restore": {
+        "start": {
+          "monotonic_ns": 389035745604000,
+          "physical_footprint_bytes": 21742648,
+          "user_cpu_ns": 14572463,
+          "system_cpu_ns": 7578758
+        },
+        "discarded": {
+          "monotonic_ns": 389035853454083,
+          "physical_footprint_bytes": 21791800,
+          "user_cpu_ns": 14832069,
+          "system_cpu_ns": 7714848
+        },
+        "restore_start": {
+          "monotonic_ns": 389036358528583,
+          "physical_footprint_bytes": 21759032,
+          "user_cpu_ns": 15712232,
+          "system_cpu_ns": 8114369
+        },
+        "restored": {
+          "monotonic_ns": 389036571530583,
+          "physical_footprint_bytes": 21791800,
+          "user_cpu_ns": 16362879,
+          "system_cpu_ns": 8369590
+        }
+      }
+    },
+    {
+      "navigation": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 389039283379750,
+            "physical_footprint_bytes": 20300880,
+            "user_cpu_ns": 6640081,
+            "system_cpu_ns": 3263915
+          },
+          "end": {
+            "monotonic_ns": 389039499426166,
+            "physical_footprint_bytes": 20776040,
+            "user_cpu_ns": 7249191,
+            "system_cpu_ns": 3484566
+          }
+        },
+        {
+          "tabs": 2,
+          "start": {
+            "monotonic_ns": 389042116757458,
+            "physical_footprint_bytes": 20726888,
+            "user_cpu_ns": 9803532,
+            "system_cpu_ns": 4896597
+          },
+          "end": {
+            "monotonic_ns": 389042325471333,
+            "physical_footprint_bytes": 20776040,
+            "user_cpu_ns": 10191828,
+            "system_cpu_ns": 5043923
+          }
+        },
+        {
+          "tabs": 3,
+          "start": {
+            "monotonic_ns": 389042436136166,
+            "physical_footprint_bytes": 20792424,
+            "user_cpu_ns": 10368259,
+            "system_cpu_ns": 5109810
+          },
+          "end": {
+            "monotonic_ns": 389042596214125,
+            "physical_footprint_bytes": 21021800,
+            "user_cpu_ns": 10876054,
+            "system_cpu_ns": 5285208
+          }
+        },
+        {
+          "tabs": 4,
+          "start": {
+            "monotonic_ns": 389042703586083,
+            "physical_footprint_bytes": 21070952,
+            "user_cpu_ns": 11024533,
+            "system_cpu_ns": 5349054
+          },
+          "end": {
+            "monotonic_ns": 389042920155250,
+            "physical_footprint_bytes": 21103720,
+            "user_cpu_ns": 11446708,
+            "system_cpu_ns": 5501689
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389043030718291,
+            "physical_footprint_bytes": 21136488,
+            "user_cpu_ns": 11617925,
+            "system_cpu_ns": 5565080
+          },
+          "end": {
+            "monotonic_ns": 389043194020833,
+            "physical_footprint_bytes": 21234792,
+            "user_cpu_ns": 12046974,
+            "system_cpu_ns": 5704720
+          }
+        },
+        {
+          "tabs": 6,
+          "start": {
+            "monotonic_ns": 389045757871458,
+            "physical_footprint_bytes": 21677160,
+            "user_cpu_ns": 13593084,
+            "system_cpu_ns": 6341575
+          },
+          "end": {
+            "monotonic_ns": 389045919114250,
+            "physical_footprint_bytes": 21791848,
+            "user_cpu_ns": 14027584,
+            "system_cpu_ns": 6505336
+          }
+        },
+        {
+          "tabs": 7,
+          "start": {
+            "monotonic_ns": 389046025381791,
+            "physical_footprint_bytes": 21857384,
+            "user_cpu_ns": 14168406,
+            "system_cpu_ns": 6567112
+          },
+          "end": {
+            "monotonic_ns": 389046236906583,
+            "physical_footprint_bytes": 21939304,
+            "user_cpu_ns": 14668081,
+            "system_cpu_ns": 6745014
+          }
+        },
+        {
+          "tabs": 8,
+          "start": {
+            "monotonic_ns": 389046347482833,
+            "physical_footprint_bytes": 21988456,
+            "user_cpu_ns": 14856399,
+            "system_cpu_ns": 6817500
+          },
+          "end": {
+            "monotonic_ns": 389046563871416,
+            "physical_footprint_bytes": 22086760,
+            "user_cpu_ns": 15304404,
+            "system_cpu_ns": 6983051
+          }
+        },
+        {
+          "tabs": 9,
+          "start": {
+            "monotonic_ns": 389046670118916,
+            "physical_footprint_bytes": 22053992,
+            "user_cpu_ns": 15538013,
+            "system_cpu_ns": 7059995
+          },
+          "end": {
+            "monotonic_ns": 389046836092916,
+            "physical_footprint_bytes": 22217832,
+            "user_cpu_ns": 16062230,
+            "system_cpu_ns": 7243369
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389046942485041,
+            "physical_footprint_bytes": 22234216,
+            "user_cpu_ns": 16252113,
+            "system_cpu_ns": 7317435
+          },
+          "end": {
+            "monotonic_ns": 389047163060750,
+            "physical_footprint_bytes": 22479976,
+            "user_cpu_ns": 16756750,
+            "system_cpu_ns": 7495333
+          }
+        }
+      ],
+      "idle": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 389040001732250,
+            "physical_footprint_bytes": 20644968,
+            "user_cpu_ns": 7398984,
+            "system_cpu_ns": 3642214
+          },
+          "end": {
+            "monotonic_ns": 389042006053166,
+            "physical_footprint_bytes": 20612200,
+            "user_cpu_ns": 9613703,
+            "system_cpu_ns": 4832675
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389043699090750,
+            "physical_footprint_bytes": 21234792,
+            "user_cpu_ns": 12483441,
+            "system_cpu_ns": 5892992
+          },
+          "end": {
+            "monotonic_ns": 389045703272083,
+            "physical_footprint_bytes": 21513320,
+            "user_cpu_ns": 13412404,
+            "system_cpu_ns": 6275551
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389047668110541,
+            "physical_footprint_bytes": 22447208,
+            "user_cpu_ns": 16950395,
+            "system_cpu_ns": 7614995
+          },
+          "end": {
+            "monotonic_ns": 389049669918416,
+            "physical_footprint_bytes": 22496360,
+            "user_cpu_ns": 18566075,
+            "system_cpu_ns": 8295039
+          }
+        }
+      ],
+      "startup_to_chrome_ready_ns": 2612707541,
+      "discard_restore": {
+        "start": {
+          "monotonic_ns": 389049669932416,
+          "physical_footprint_bytes": 22496360,
+          "user_cpu_ns": 18566075,
+          "system_cpu_ns": 8295039
+        },
+        "discarded": {
+          "monotonic_ns": 389049780787333,
+          "physical_footprint_bytes": 22496360,
+          "user_cpu_ns": 18645592,
+          "system_cpu_ns": 8338082
+        },
+        "restore_start": {
+          "monotonic_ns": 389050282469416,
+          "physical_footprint_bytes": 23151744,
+          "user_cpu_ns": 18976166,
+          "system_cpu_ns": 8566668
+        },
+        "restored": {
+          "monotonic_ns": 389050503733583,
+          "physical_footprint_bytes": 22873192,
+          "user_cpu_ns": 19436896,
+          "system_cpu_ns": 8751518
+        }
+      }
+    },
+    {
+      "navigation": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 389053036827125,
+            "physical_footprint_bytes": 20350056,
+            "user_cpu_ns": 4621801,
+            "system_cpu_ns": 1911171
+          },
+          "end": {
+            "monotonic_ns": 389053253415208,
+            "physical_footprint_bytes": 20792424,
+            "user_cpu_ns": 5167933,
+            "system_cpu_ns": 2113365
+          }
+        },
+        {
+          "tabs": 2,
+          "start": {
+            "monotonic_ns": 389055870634208,
+            "physical_footprint_bytes": 20825192,
+            "user_cpu_ns": 5940837,
+            "system_cpu_ns": 2625076
+          },
+          "end": {
+            "monotonic_ns": 389056091965750,
+            "physical_footprint_bytes": 20989032,
+            "user_cpu_ns": 6421575,
+            "system_cpu_ns": 2815984
+          }
+        },
+        {
+          "tabs": 3,
+          "start": {
+            "monotonic_ns": 389056202748333,
+            "physical_footprint_bytes": 21038184,
+            "user_cpu_ns": 6565174,
+            "system_cpu_ns": 2882488
+          },
+          "end": {
+            "monotonic_ns": 389056364012958,
+            "physical_footprint_bytes": 21070952,
+            "user_cpu_ns": 7000896,
+            "system_cpu_ns": 3058623
+          }
+        },
+        {
+          "tabs": 4,
+          "start": {
+            "monotonic_ns": 389056474364958,
+            "physical_footprint_bytes": 21087336,
+            "user_cpu_ns": 7122647,
+            "system_cpu_ns": 3120739
+          },
+          "end": {
+            "monotonic_ns": 389056692049791,
+            "physical_footprint_bytes": 21185640,
+            "user_cpu_ns": 7596986,
+            "system_cpu_ns": 3308646
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389056798502500,
+            "physical_footprint_bytes": 21251176,
+            "user_cpu_ns": 7761727,
+            "system_cpu_ns": 3377442
+          },
+          "end": {
+            "monotonic_ns": 389056963989916,
+            "physical_footprint_bytes": 21496936,
+            "user_cpu_ns": 8194386,
+            "system_cpu_ns": 3551095
+          }
+        },
+        {
+          "tabs": 6,
+          "start": {
+            "monotonic_ns": 389059529433958,
+            "physical_footprint_bytes": 21382248,
+            "user_cpu_ns": 9319997,
+            "system_cpu_ns": 4355196
+          },
+          "end": {
+            "monotonic_ns": 389059693704041,
+            "physical_footprint_bytes": 21464168,
+            "user_cpu_ns": 9751890,
+            "system_cpu_ns": 4541924
+          }
+        },
+        {
+          "tabs": 7,
+          "start": {
+            "monotonic_ns": 389059802058041,
+            "physical_footprint_bytes": 21644392,
+            "user_cpu_ns": 9981675,
+            "system_cpu_ns": 4635350
+          },
+          "end": {
+            "monotonic_ns": 389060015075875,
+            "physical_footprint_bytes": 21677160,
+            "user_cpu_ns": 10441124,
+            "system_cpu_ns": 4815594
+          }
+        },
+        {
+          "tabs": 8,
+          "start": {
+            "monotonic_ns": 389060121397208,
+            "physical_footprint_bytes": 21775464,
+            "user_cpu_ns": 10601020,
+            "system_cpu_ns": 4885488
+          },
+          "end": {
+            "monotonic_ns": 389060284950625,
+            "physical_footprint_bytes": 21890152,
+            "user_cpu_ns": 11037969,
+            "system_cpu_ns": 5053004
+          }
+        },
+        {
+          "tabs": 9,
+          "start": {
+            "monotonic_ns": 389060336722875,
+            "physical_footprint_bytes": 21922920,
+            "user_cpu_ns": 11178149,
+            "system_cpu_ns": 5116846
+          },
+          "end": {
+            "monotonic_ns": 389060501368375,
+            "physical_footprint_bytes": 22021224,
+            "user_cpu_ns": 11619678,
+            "system_cpu_ns": 5294641
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389060608804708,
+            "physical_footprint_bytes": 22103144,
+            "user_cpu_ns": 11762042,
+            "system_cpu_ns": 5368294
+          },
+          "end": {
+            "monotonic_ns": 389060825309916,
+            "physical_footprint_bytes": 22447208,
+            "user_cpu_ns": 12274678,
+            "system_cpu_ns": 5575133
+          }
+        }
+      ],
+      "idle": [
+        {
+          "tabs": 1,
+          "start": {
+            "monotonic_ns": 389053758492916,
+            "physical_footprint_bytes": 20808808,
+            "user_cpu_ns": 5325013,
+            "system_cpu_ns": 2210299
+          },
+          "end": {
+            "monotonic_ns": 389055761001416,
+            "physical_footprint_bytes": 20776040,
+            "user_cpu_ns": 5789947,
+            "system_cpu_ns": 2567954
+          }
+        },
+        {
+          "tabs": 5,
+          "start": {
+            "monotonic_ns": 389057469131708,
+            "physical_footprint_bytes": 21365864,
+            "user_cpu_ns": 8400016,
+            "system_cpu_ns": 3720270
+          },
+          "end": {
+            "monotonic_ns": 389059474326083,
+            "physical_footprint_bytes": 21333096,
+            "user_cpu_ns": 9142686,
+            "system_cpu_ns": 4280736
+          }
+        },
+        {
+          "tabs": 10,
+          "start": {
+            "monotonic_ns": 389061330445541,
+            "physical_footprint_bytes": 22348904,
+            "user_cpu_ns": 12505004,
+            "system_cpu_ns": 5731578
+          },
+          "end": {
+            "monotonic_ns": 389063335388125,
+            "physical_footprint_bytes": 22299752,
+            "user_cpu_ns": 13252921,
+            "system_cpu_ns": 6194299
+          }
+        }
+      ],
+      "startup_to_chrome_ready_ns": 2432091958,
+      "discard_restore": {
+        "start": {
+          "monotonic_ns": 389063335409375,
+          "physical_footprint_bytes": 22299752,
+          "user_cpu_ns": 13252921,
+          "system_cpu_ns": 6194299
+        },
+        "discarded": {
+          "monotonic_ns": 389063443547041,
+          "physical_footprint_bytes": 22381696,
+          "user_cpu_ns": 13380512,
+          "system_cpu_ns": 6281498
+        },
+        "restore_start": {
+          "monotonic_ns": 389063948638083,
+          "physical_footprint_bytes": 22348928,
+          "user_cpu_ns": 13676783,
+          "system_cpu_ns": 6471812
+        },
+        "restored": {
+          "monotonic_ns": 389064169389791,
+          "physical_footprint_bytes": 22463640,
+          "user_cpu_ns": 14217313,
+          "system_cpu_ns": 6705540
+        }
+      }
+    }
+  ],
+  "outcome": "passed"
+}

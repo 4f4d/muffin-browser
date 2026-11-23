@@ -1,0 +1,23 @@
+{
+  "source_commit": "207e2240346801a42b645dea066d66f365353a5e",
+  "source_worktree_clean": true,
+  "binary_sha256": "09e1df8893074e43361cf15468bb97a76848e3151a665abd1470c48275a943d5",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "outcome": "passed",
+  "kind": "macos_local_full_verifier",
+  "command": "python3 tools/verify.py --artifacts <new-output>/native",
+  "tool_tests": 83,
+  "fixture_tests": 1,
+  "ui_tests": 27,
+  "rust_tests": 45,
+  "native_smoke_steps": 59,
+  "release_rejected_debug_control": true,
+  "cargo_audit_allowed_warnings": [
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2024-0429"
+  ],
+  "log_sha256": "44a2e9b262ef8b238b2a35b4fc2ac6220c71fbfcd55b2d9902c1caca4a9cc39f",
+  "native_smoke_sha256": "3cf2a3c1ecc195de4f2f9d7096a602af4f057c08a5937891ec68f41e54ed04f4"
+}

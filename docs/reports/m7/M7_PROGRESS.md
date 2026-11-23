@@ -20,6 +20,40 @@ The independent reviewer ran the portable verifier on the exact source, extracte
 
 Run the crash fixture from the same clean checkout with `python3 tests/native/run_crash_smoke.py --binary-source-commit "$(git rev-parse HEAD)" --out <new-directory>`. Match its binary hash to the full verifier's debug smoke receipt before using the result as build evidence.
 
+## macOS packaging policy and performance follow-up
+
+### Package execution policy
+
+The local archive retains its verified SHA-256. Its extracted executable has an arm64 linker-generated ad hoc signature. Strict bundle verification and `spctl --assess --type execute` both exited 1 with the missing-resources diagnostic. The test used the current enabled assessment settings and the archive and app as extracted, both with no recorded quarantine attribute. This is a packaged execution-policy failure. Finder and quarantine-triggered launch behavior remain open. The Mach-O deployment target is 11.0. The qualification run remains on macOS 15.8.3. [Exact package policy receipt](../platform/m7/macos-arm64-package-policy.json)
+
+For direct macOS distribution, the remaining sequence is an owner-approved Developer ID signing and notarization policy, a sealed final bundle, and a new archive assessment with its own hashes. Recheck a quarantined copy in a disposable macOS session. [Apple distribution guidance](https://developer.apple.com/documentation/technologyoverviews/distribution), [signing decision](../../DECISIONS_PENDING.md)
+
+### Cold link delivery
+
+Launch Services cold-started a uniquely identified debug bundle and delivered the loopback HTTP URL outside its command-line arguments. The fixture received the targeted GET. The initial regular window showed the fixture URL and title, then exited through the isolated debug channel. A separate injected shutdown timeout exercised the fallback. AppKit matched the fixture bundle ID, bundle path and executable path, stopped that exact app, and confirmed it had exited before the isolated directory was removed. Both checks used the debug build from `bce769d` with the committed harness at `207e224`. Release-bundle cold launch and system default-browser adoption remain open. [Cold URL receipt](../platform/m7/macos-arm64-cold-launch.json), [timeout cleanup receipt](../platform/m7/macos-arm64-cold-cleanup.json)
+
+### Physical Mac shell benchmark
+
+Five fresh debug app processes ran on a 10-core Apple M4 with 24 GiB, macOS 15.8.3 and WebKit 20621.3.11.3, on battery with Low Power Mode enabled. Each trial loaded ten copies of the fixed loopback page into separate tabs. It sampled the main process’s physical footprint and CPU at one, five and ten loaded tabs after a 0.5-second settle and a two-second idle window. The shell PID uses macOS `proc_pid_rusage`. [Raw per-trial benchmark](../platform/m7/macos-arm64-shell-benchmark.json), [Apple SDK API](https://github.com/apple-oss-distributions/xnu/blob/main/libsyscall/wrappers/libproc/libproc.h)
+
+| Loaded tabs | Median shell footprint | Footprint range | Median shell CPU during idle |
+|---|---:|---:|---:|
+| 1 | 19.63 MiB | 19.52–19.81 MiB | 0.07% of one core |
+| 5 | 20.27 MiB | 19.86–20.52 MiB | 0.09% of one core |
+| 10 | 20.97 MiB | 20.73–21.45 MiB | 0.10% of one core |
+
+Median time from process spawn to the fixture's chrome-ready observation was 2.44 seconds (2.43–2.61 seconds). The first loopback navigation reached fixture ready in a median of 216 ms. Observed discard and restore took 108 ms and 220 ms respectively. The commands and 50 ms polling belong to these wall-clock observations. The median footprint change 0.5 seconds after discard was +0.02 MiB at the host, leaving memory reclamation unverified. Scope is the debug shell binary from `bce769d`. Release startup, first paint, Safari comparison and attributed WebKit process memory and CPU remain open. [Benchmark harness](../../../tests/native/run_shell_benchmark.py), [raw timings and footprint](../platform/m7/macos-arm64-shell-benchmark.json)
+
+Run either follow-up harness from a clean checkout with `--binary <debug-executable> --verified-smoke <matching-native/smoke.json> --out <new-ignored-directory>`. The receipts record separate harness and application source commits. Keep the Mac idle during the benchmark and record its power configuration. [Cold launch harness](../../../tests/native/run_cold_launch_smoke.py), [benchmark harness](../../../tests/native/run_shell_benchmark.py)
+
+### Follow-up verification
+
+The full local verifier passed on clean `207e224` with 83 tooling tests, one fixture test, 27 UI tests, 45 Rust tests and 59 native smoke steps. The independent reviewer checked the benchmark, independently matched the debug executable and smoke hashes, and cleared the cold-launch harness after reviewing its normal and forced-cleanup receipts. The package execution-policy failure remains open. [Full verifier receipt](../platform/m7/macos-arm64-follow-up-verifier.json)
+
+### WebContent recovery
+
+The public navigation delegate reports termination against a `WKWebView`. The available public interfaces did not establish which live WebContent process belonged to the isolated fixture, and WebKit can reuse processes. Actual WebContent loss and recovery remain unverified. Earlier host-crash evidence covers the separate Muffin shell process. [Apple termination callback](https://developer.apple.com/documentation/webkit/wknavigationdelegate/webviewwebcontentprocessdidterminate(_:)), [Apple process pool documentation](https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/processpool), [host crash receipt](../platform/m7/macos-arm64-host-crash.json)
+
 ## Security review
 
 Assets in scope include browser authority, regular and private profile state, downloaded files and distribution integrity. The principal inputs are remote pages and redirects, OS link events, second-instance requests, downloaded data, and the packaged executable.
@@ -34,8 +68,8 @@ Assets in scope include browser authority, regular and private profile state, do
 
 ## Open qualification
 
-- Launch the distribution build from Finder and exercise OS default-browser selection, cold launch with a link, Gatekeeper, installation and removal in a disposable environment.
-- Measure startup, first paint, CPU and physical memory across the application and its attributable WebKit processes against Safari in fixed scenarios. Include hardware, OS, engine and power conditions. Record installer and runtime dependencies separately.
+- Launch the distribution build from Finder and exercise OS default-browser selection, cold launch with a link, Gatekeeper, installation and removal in a disposable environment. The current archive fails the package execution-policy check.
+- Measure release startup, first paint, CPU and physical memory across the application and its attributable WebKit processes against Safari in fixed scenarios. Record installer and runtime dependencies separately.
 - Confirm renderer termination and recovery with attributable WebContent evidence.
 - Record the distribution identity, signing, notarization, update verification and rollback policy before distribution testing. The decision register tracks approvals and the remaining launch gates. [Decision register](../../DECISIONS_PENDING.md)
 - Qualify native accessibility and input with the owner on Mac. Windows 11, GNOME X11 and GNOME Wayland retain their prior evidence and platform status. [Generated status](../../STATUS.json)

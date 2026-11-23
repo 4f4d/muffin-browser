@@ -1,0 +1,30 @@
+{
+  "app_commit": "bce769de8892e78cca94d6299e265fd4d3fef578",
+  "harness_commit": "207e2240346801a42b645dea066d66f365353a5e",
+  "harness_worktree_clean": true,
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "binary_sha256": "2e6684907f8f1601d5449e8d17da104091785296bca05db3f3f6c8468f75b5ce",
+  "native_debug_smoke_sha256": "87b0e62023eca3dab66e1b9874722f07689977363e3606e0ddc6090017a487af",
+  "kind": "cold_launch_failure_cleanup_fault_injection",
+  "fault": "suppressed isolated fixture quit command",
+  "outcome": "passed",
+  "expected_original_error": "TimeoutExpired",
+  "observations": [
+    {
+      "action": "check",
+      "running": true
+    },
+    {
+      "action": "force_if_running",
+      "running": true
+    },
+    {
+      "action": "check",
+      "running": false
+    }
+  ],
+  "fixture_directory_removed": true,
+  "raw_timeout_receipt_sha256": "d7a5129a85c7bcc4ea77f3683291e2f55679d80416b2ee9fa2a533c1c842521c"
+}

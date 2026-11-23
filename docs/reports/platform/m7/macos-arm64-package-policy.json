@@ -1,0 +1,82 @@
+{
+  "kind": "macos_local_package_policy_assessment",
+  "source_commit": "bce769de8892e78cca94d6299e265fd4d3fef578",
+  "binary_sha256": "7d6f4680808d244df6eabf749cb0cc5c2ab56b4bd27b1c94d1f828cadfec14ce",
+  "archive_sha256": "df974304b3a98db36ac1545738c6342bd810a7607da53a8245b76b06300b3ea3",
+  "binary_arch": "arm64",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "os_build": "24H241",
+  "quarantine_attribute_present_on_archive": false,
+  "quarantine_attribute_present_on_bundle": false,
+  "policy_checks": {
+    "codesign_display": {
+      "command": [
+        "/usr/bin/codesign",
+        "-d",
+        "--verbose=2",
+        "Muffin Qualification.app"
+      ],
+      "exit_code": 0,
+      "output": [
+        "Executable=Muffin Qualification.app/Contents/MacOS/muffin",
+        "Identifier=muffin-da7c7aaaa29a8291",
+        "Format=app bundle with Mach-O thin (arm64)",
+        "CodeDirectory v=20400 size=40152 flags=0x20002(adhoc,linker-signed) hashes=1251+0 location=embedded",
+        "Signature=adhoc",
+        "Info.plist=not bound",
+        "TeamIdentifier=not set",
+        "Sealed Resources=none",
+        "Internal requirements=none"
+      ]
+    },
+    "codesign_verify": {
+      "command": [
+        "/usr/bin/codesign",
+        "--verify",
+        "--strict",
+        "--verbose=2",
+        "Muffin Qualification.app"
+      ],
+      "exit_code": 1,
+      "output": [
+        "Muffin Qualification.app: code has no resources but signature indicates they must be present"
+      ]
+    },
+    "gatekeeper_status": {
+      "command": [
+        "/usr/sbin/spctl",
+        "--status"
+      ],
+      "exit_code": 0,
+      "output": [
+        "assessments enabled"
+      ]
+    },
+    "gatekeeper_execute_assessment": {
+      "command": [
+        "/usr/sbin/spctl",
+        "--assess",
+        "--type",
+        "execute",
+        "-vv",
+        "Muffin Qualification.app"
+      ],
+      "exit_code": 1,
+      "output": [
+        "Muffin Qualification.app: code has no resources but signature indicates they must be present"
+      ]
+    }
+  },
+  "mach_o_build_metadata": [
+    "Load command 10",
+    "      cmd LC_BUILD_VERSION",
+    "  cmdsize 32",
+    " platform MACOS",
+    "    minos 11.0",
+    "      sdk 26.2",
+    "   ntools 1",
+    "     tool LD",
+    "  version 1230.1"
+  ]
+}

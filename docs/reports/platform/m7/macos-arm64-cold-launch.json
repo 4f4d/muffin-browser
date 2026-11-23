@@ -1,0 +1,22 @@
+{
+  "kind": "macos_debug_cold_launchservices_open_url",
+  "harness_commit": "207e2240346801a42b645dea066d66f365353a5e",
+  "harness_worktree_clean": true,
+  "app_commit": "bce769de8892e78cca94d6299e265fd4d3fef578",
+  "binary_sha256": "2e6684907f8f1601d5449e8d17da104091785296bca05db3f3f6c8468f75b5ce",
+  "native_debug_smoke_sha256": "87b0e62023eca3dab66e1b9874722f07689977363e3606e0ddc6090017a487af",
+  "host_arch": "arm64",
+  "macos_version": "15.8.3",
+  "webkit_bundle_version": "20621.3.11.11.3",
+  "steps": [
+    "open -n -W sent a cold HTTP URL event to a unique debug bundle",
+    {
+      "cold_url": "http://127.0.0.1:58976/first?cold-launch=1",
+      "title": "Muffin fixture | First page",
+      "window_count": 1,
+      "fixture_get_observed": true
+    },
+    "the disposable browser closed and open -W returned"
+  ],
+  "outcome": "passed"
+}

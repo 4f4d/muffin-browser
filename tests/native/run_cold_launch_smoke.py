@@ -24,28 +24,34 @@ ObjC.import('AppKit');
 function run(argv) {
     const [bundleID, bundlePath, executablePath, action] = argv;
     const apps = $.NSRunningApplication.runningApplicationsWithBundleIdentifier(bundleID);
-    if (apps.count === 0) return 'closed';
-    if (apps.count !== 1) throw Error('ambiguous fixture identity');
+    const count = Number(apps.count);
+    if (count === 0) return 'closed';
+    if (count !== 1) throw Error('ambiguous fixture identity');
     const app = apps.objectAtIndex(0);
     if (ObjC.unwrap(app.bundleURL.path) !== bundlePath ||
         ObjC.unwrap(app.executableURL.path) !== executablePath) {
         throw Error('unexpected fixture application paths');
     }
-    if (action === 'stop' && !app.forceTerminate) throw Error('fixture termination failed');
+    if (action === 'stop' && String(app.forceTerminate) !== 'true') {
+        throw Error('fixture termination failed');
+    }
     return 'running';
 }
 """
 
 
 def fixture_running(bundle_id, bundle, *, stop=False):
-    result = run(
+    result = subprocess.run([
         "/usr/bin/osascript", "-l", "JavaScript", "-e", FIXTURE_APPLICATION,
         bundle_id, str(bundle), str(bundle / "Contents/MacOS/muffin"),
-        "stop" if stop else "check", capture_output=True, text=True,
-    ).stdout.strip()
-    if result not in {"closed", "running"}:
+        "stop" if stop else "check",
+    ], capture_output=True, text=True, timeout=6)
+    if result.returncode:
+        raise RuntimeError(f"fixture application lookup failed: {result.stderr.strip()}")
+    state = result.stdout.strip()
+    if state not in {"closed", "running"}:
         raise RuntimeError("AppKit returned an unexpected fixture state")
-    return result == "running"
+    return state == "running"
 
 
 def clean_up(launch, control, bundle_id, bundle):
